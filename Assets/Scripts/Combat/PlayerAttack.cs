@@ -10,7 +10,6 @@ public class PlayerAttack : MonoBehaviour
     private bool isStriking; //TODO: if logic gets longer than ~100 lines of code, re-implement this using State Machine
     private float attackSpeed;
 
-
     private void Awake()
     {
         //TODO: handle this via Observer pattern for dynamic updates
@@ -27,6 +26,7 @@ public class PlayerAttack : MonoBehaviour
                 //TODO: instantiate in correct position
                 Instantiate(WeaponStrikePrefab, transform);
                 StartCoroutine(strikeCooldown());
+
             }
         }
     }

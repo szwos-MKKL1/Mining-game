@@ -16,8 +16,8 @@ public class DestroyTilemap : MonoBehaviour
         //Debug.Log("Collision!, other.tag: " + other.tag + " this.tag: " + this.tag);
 
 
-        //TODO: this is also kind of resource heavy, but propably the only right way to work for miltiple tilemaps and multiple scenes
-        //TODO: alsow instead of accessing Tilemap component, it should be encapsulated in some kind of TileMapController component, that will handle tile states, drops etc
+        //TODO: this is also kind of resource heavy, but propably the only right way to work for multiple tilemaps and multiple scenes
+        //TODO: also instead of accessing Tilemap component, it should be encapsulated in some kind of TileMapController component, that will handle tile states, drops etc
         targetTilemap = other.gameObject.GetComponent<Tilemap>();
         if (targetTilemap.CompareTag("DestructibleTilemap"))
         {
