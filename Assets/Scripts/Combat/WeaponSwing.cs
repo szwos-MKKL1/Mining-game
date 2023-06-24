@@ -27,7 +27,7 @@ public class WeaponSwing : MonoBehaviour
 
     public void Start()
     {
-
+        //this should not get updated mid animation, hence no subscribing to PlayerStats event
         attackSpeed = GetComponentInParent<PlayerStats>().AttackSpeed;
         T = 1 / attackSpeed;
         StartCoroutine(EndAmination(T));
@@ -41,11 +41,7 @@ public class WeaponSwing : MonoBehaviour
 
     public void Update()
     {
-        //Time.timeScale = 0.01f;
-        
-        //Mathf.PI here describes part of circle that will be traversed
-        t +=  (Time.deltaTime / T) * SwingArc;
-
+        t += (Time.deltaTime / T) * SwingArc;
 
         if(DynamicMouseFollow)
         {
@@ -56,7 +52,7 @@ public class WeaponSwing : MonoBehaviour
             mouseAngle = Mathf.Atan2(mousePos.y, mousePos.x);
         }
 
-        //some math is wrong here, bcs this only works correctly for SwingArc ~ 4.2
+        //TODO: some math is wrong here, bcs this only works correctly for SwingArc ~ 4.2
         angle = t + mouseAngle + SwingArc / 2;
 
 
@@ -70,7 +66,7 @@ public class WeaponSwing : MonoBehaviour
         }
 
 
-
+        //Debug.Log(angle);
         //Debug.Log((-Mathf.Sin(t) * radius).ToString() + ", " + (Mathf.Cos(t) * radius).ToString());
         //Debug.Log(parentTransform.position);
         transform.position = new Vector3(transform.parent.position.x + (- Mathf.Sin(angle) * radius), transform.parent.position.y + (Mathf.Cos(angle) * radius), transform.position.z);

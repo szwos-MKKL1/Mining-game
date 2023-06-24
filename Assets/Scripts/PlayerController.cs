@@ -9,14 +9,16 @@ public class PlayerController : MonoBehaviour
 
     public Rigidbody2D rb;
 
-    [SerializeField]
-    public float speed = 5;
+    private float speed;
 
     // Start is called before the first frame update
     void Start()
     {
         if(rb == null)
             rb = GetComponent<Rigidbody2D>();
+
+        GetComponent<PlayerStats>().Subscribe(() => { speed = GetComponent<PlayerStats>().MovementSpeed; });
+        speed = GetComponent<PlayerStats>().MovementSpeed;
     }
 
     // Update is called once per frame

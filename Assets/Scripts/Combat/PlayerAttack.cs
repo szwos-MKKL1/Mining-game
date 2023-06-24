@@ -7,13 +7,13 @@ public class PlayerAttack : MonoBehaviour
     //TODO: instead take this from Inventory.CurrentWeapon or something like that
     public GameObject WeaponStrikePrefab;
 
-    private bool isStriking; //TODO: if logic gets longer than ~100 lines of code, re-implement this using State Machine
+    private bool isStriking;
     private float attackSpeed;
 
-    private void Awake()
+    private void Start()
     {
-        //TODO: handle this via Observer pattern for dynamic updates
-        attackSpeed = GetComponentInParent<PlayerStats>().AttackSpeed;
+        attackSpeed = GetComponent<PlayerStats>().AttackSpeed;
+        GetComponent<PlayerStats>().Subscribe(() => { attackSpeed = GetComponent<PlayerStats>().AttackSpeed; });
     }
 
     // Update is called once per frame
@@ -23,7 +23,6 @@ public class PlayerAttack : MonoBehaviour
         {
             if(!isStriking)
             {
-                //TODO: instantiate in correct position
                 Instantiate(WeaponStrikePrefab, transform);
                 StartCoroutine(strikeCooldown());
 

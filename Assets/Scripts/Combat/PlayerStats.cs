@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 public class PlayerStats : MonoBehaviour
 {
@@ -7,15 +8,41 @@ public class PlayerStats : MonoBehaviour
     //it should be stored and updated in this class (in future for smooth updating implement Observer pattern,
     //where each class might subscribe to this one)
 
+    private UnityEvent UpdateStats;
+
     //unit is Hz - how many times per second player can strike
     [SerializeField]
-    public float attackSpeed = 1.0f;
+    private float attackSpeed = 1.0f;
 
     public float AttackSpeed
     {
         get { return attackSpeed; }
-        set { attackSpeed = value; } //TODO: exposing public setter is not desired here, leaving it now just for testing purposes
+        set {
+            attackSpeed = value;
+            UpdateStats.Invoke();
+        } 
     }
-    
+
+    [SerializeField]
+    private float movementSpeed = 5.0f;
+    public float MovementSpeed
+    {
+        get { return movementSpeed; }
+        set
+        {
+            movementSpeed = value;
+            UpdateStats.Invoke();
+        }
+    }
+
+    public void Subscribe(UnityAction call)
+    {
+        if(UpdateStats == null)
+        {
+            UpdateStats = new UnityEvent();
+        }
+
+        UpdateStats.AddListener(call); 
+    }
 
 }
