@@ -133,11 +133,11 @@ GameObject:
   m_Component:
   - component: {fileID: 3341667}
   - component: {fileID: 3341666}
+  - component: {fileID: 3341672}
   - component: {fileID: 3341669}
   - component: {fileID: 3341668}
   - component: {fileID: 3341670}
   - component: {fileID: 3341671}
-  - component: {fileID: 3341672}
   m_Layer: 0
   m_Name: Player
   m_TagString: CausesDamage
@@ -238,7 +238,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rb: {fileID: 0}
-  speed: 5
 --- !u!50 &3341670
 Rigidbody2D:
   serializedVersion: 4
@@ -314,6 +313,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   attackSpeed: 2
+  movementSpeed: 5
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
