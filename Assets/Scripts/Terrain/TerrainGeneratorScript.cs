@@ -10,10 +10,8 @@ namespace Terrain
         void Start()
         {
             //Some generation settings
-            GenerationData generationData = new GenerationData
-            {
-                AbstractBlock = ScriptableObject.CreateInstance<AirBlockBase>()
-            };
+            GenerationData generationData = new GenerationData();
+            generationData.chunkSize = new Vector2Int(2, 2);
 
             //Generate terrain
             TerrainGenerator terrainGenerator = new TerrainGenerator();
@@ -21,18 +19,28 @@ namespace Terrain
 
             
             //Populate map with generated tiles
-            byte[,] data = terrainData.TileMap;
-            TilePalette tilePalette = terrainData.TilePalette;
             tilemap.ClearAllTiles();
-            for (int x = 0; x < terrainData.sizeX ; x++)
+            for (int chunkx = 0; chunkx < generationData.chunkSize.x; chunkx++)
             {
-                for (int y = 0; y < terrainData.sizeY; y++)
+                for (int chunky = 0; chunky < generationData.chunkSize.y; chunky++)
                 {
-                    TileBase tile = tilePalette.GetTile(data[x, y]);
-                    if(tile != null)
-                        tilemap.SetTile(new Vector3Int(x, y, 0), tile);
+                    TerrainChunk chunk = terrainData.terrainChunks[chunkx, chunky];
+                    for (int x = 0; x < 512 ; x++)
+                    {
+                        for (int y = 0; y < 512; y++)
+                        {
+                            int xInWorld = chunkx * 512 + x;
+                            int yInWorld = chunky * 512 + y;
+
+                            TileBase tile = chunk.Blocks[x, y].Texture;
+                            Debug.Log("x " + x + " y " + y + tile);
+                            if(tile != null)
+                                tilemap.SetTile(new Vector3Int(xInWorld, yInWorld, 0), tile);
+                        }
+                    }
                 }
             }
+            
         
         }
     

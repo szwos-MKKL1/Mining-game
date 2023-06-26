@@ -5,12 +5,17 @@ namespace Terrain
 {
     public class TerrainChunk
     {
-        private AbstractBlock[,] blocks = new AbstractBlock[512,512];
-        private Vector2Int inWorldPosition;//TODO should be int or vector2int?
+        public const int ChunkSizeX = 512;
+        public const int ChunkSizeY = 512;
+        private BlockBase[,] blocks = new BlockBase[ChunkSizeX,ChunkSizeY];
+        private Vector2Int inWorldPosition;
 
-        
-        
-        public AbstractBlock[,] Blocks
+        public TerrainChunk(Vector2Int inWorldPosition)
+        {
+            this.inWorldPosition = inWorldPosition;
+        }
+
+        public BlockBase[,] Blocks
         {
             get => blocks;
             set => blocks = value;

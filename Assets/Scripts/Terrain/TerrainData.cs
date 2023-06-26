@@ -7,18 +7,16 @@ namespace Terrain
 {
     public class TerrainData
     {
-        public int chunkSizeX;
-        public int chunkSizeY;
+        public Vector2Int chunkSize;
 
-        private TerrainChunk[,] terrainChunks;
+        public TerrainChunk[,] terrainChunks;
         
         public TerrainData(Vector2Int size)
         {
-            chunkSizeX = size.x;
-            chunkSizeY = size.y;
+            chunkSize = size;
             terrainChunks = new TerrainChunk[size.x,size.y];
         }
 
-
+        public Vector2Int WorldSize => new Vector2Int(chunkSize.x * TerrainChunk.ChunkSizeX, chunkSize.y * TerrainChunk.ChunkSizeY);
     }
 }

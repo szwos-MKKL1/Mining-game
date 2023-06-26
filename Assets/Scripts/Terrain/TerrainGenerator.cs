@@ -13,7 +13,7 @@ namespace Terrain
             List<IGenerationPhase> generationPhases = new List<IGenerationPhase>();
             generationPhases.Add(new RawPhase(generationData));
 
-            TerrainData terrainData = new TerrainData(new Vector2Int(generationData.SizeX, generationData.SizeY));
+            TerrainData terrainData = new TerrainData(generationData.chunkSize);
             
             foreach (var vPhase in generationPhases)
             {

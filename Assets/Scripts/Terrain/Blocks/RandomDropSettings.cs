@@ -7,8 +7,14 @@ namespace Terrain.Blocks
 {
     public class RandomDropSettings
     {
-        public List<RandomItemStack> items = new List<RandomItemStack>();
-        public uint rollRoundCount = 1;
+        private List<RandomItemStack> items;
+        private uint rollRoundCount = 1;
+
+        public RandomDropSettings(List<RandomItemStack> items, uint rollRoundCount)
+        {
+            this.items = items;
+            this.rollRoundCount = rollRoundCount;
+        }
 
         public ItemStack[] Roll()
         {

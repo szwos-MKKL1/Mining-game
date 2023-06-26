@@ -1,4 +1,6 @@
-﻿using Terrain.Blocks;
+﻿using System.Diagnostics.CodeAnalysis;
+using Terrain.Blocks;
+using UnityEngine;
 using UnityEngine.Tilemaps;
 
 namespace Terrain
@@ -8,9 +10,9 @@ namespace Terrain
      */
     public class GenerationData
     {
-        public int SizeX = 512;
-        public int SizeY = 512;
+        [NotNull]
+        public Vector2Int chunkSize;
         public IBorderShape BorderShape = new CircleBorder(200);
-        public AbstractBlock AbstractBlock;
+        public BlockBase blockBase;
     }
 }
