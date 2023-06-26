@@ -7,23 +7,18 @@ namespace Terrain
 {
     public class TerrainData
     {
-        public int sizeX;
-        public int sizeY;
-        private byte[,] tileMap;
+        public int chunkSizeX;
+        public int chunkSizeY;
 
+        private TerrainChunk[,] terrainChunks;
+        
         public TerrainData(Vector2Int size)
         {
-            sizeX = size.x;
-            sizeY = size.y;
-            tileMap = new byte[size.x, size.y];
+            chunkSizeX = size.x;
+            chunkSizeY = size.y;
+            terrainChunks = new TerrainChunk[size.x,size.y];
         }
 
-        public TilePalette TilePalette { get; set; }
 
-        public byte[,] TileMap
-        {
-            get => tileMap;
-            set => tileMap = value;
-        }
     }
 }

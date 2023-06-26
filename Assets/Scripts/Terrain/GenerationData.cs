@@ -1,4 +1,5 @@
-﻿using UnityEngine.Tilemaps;
+﻿using Terrain.Blocks;
+using UnityEngine.Tilemaps;
 
 namespace Terrain
 {
@@ -10,6 +11,6 @@ namespace Terrain
         public int SizeX = 512;
         public int SizeY = 512;
         public IBorderShape BorderShape = new CircleBorder(200);
-        public TileBase baseTile;
+        public AbstractBlock AbstractBlock;
     }
 }

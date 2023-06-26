@@ -1,3 +1,4 @@
+using Terrain.Blocks;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -6,13 +7,12 @@ namespace Terrain
     public class TerrainGeneratorScript : MonoBehaviour
     {
         public Tilemap tilemap;
-        public TileBase TileBase;
         void Start()
         {
             //Some generation settings
             GenerationData generationData = new GenerationData
             {
-                baseTile = TileBase
+                AbstractBlock = ScriptableObject.CreateInstance<AirBlockBase>()
             };
 
             //Generate terrain
