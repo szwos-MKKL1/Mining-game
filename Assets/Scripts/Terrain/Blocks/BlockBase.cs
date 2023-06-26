@@ -6,7 +6,7 @@ namespace Terrain.Blocks
     {
         public override void OnBreak(BlockEventData blockEventData)
         {
-            ///Debug.Log("Breaking block " + blockEventData.posInWorld);
+            Debug.Log("Breaking block " + blockEventData.posInWorld);
         }
     }
 }
