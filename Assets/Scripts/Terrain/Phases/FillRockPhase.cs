@@ -1,8 +1,7 @@
 ﻿using Terrain.Blocks;
 using Terrain.Generators;
-using UnityEngine;
 
-namespace Terrain
+namespace Terrain.Phases
 {
     public class FillRockPhase : IGenerationPhase
     {

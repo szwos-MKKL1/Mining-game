@@ -9,17 +9,18 @@ namespace Terrain.Generators
     /**
      * Uses top values of perlin noise to generate veins
      */
-    public class VeinGenerator
+    public class VeinGenerator : IDecorateGenerator
     {
         private readonly IBlockProvider blockProvider;
         private INoise mNoise;
         private float veinSize;
 
         //Uses simple simplex noise
-        public VeinGenerator(IBlockProvider blockProvider, float frequency, float veinSize = 0.05f)
+        public VeinGenerator(IBlockProvider blockProvider, int seed, float frequency, float veinSize = 0.05f)
         {
             this.blockProvider = blockProvider;
             FastNoiseLite fastNoiseLite = new FastNoiseLite();
+            fastNoiseLite.SetSeed(seed);
             fastNoiseLite.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
             fastNoiseLite.SetFrequency(frequency);
             this.mNoise = new FastNoiseAsINoise(fastNoiseLite);

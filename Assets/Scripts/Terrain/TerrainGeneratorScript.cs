@@ -1,4 +1,7 @@
+using System.Collections.Generic;
 using Terrain.Blocks;
+using Terrain.Generators;
+using Terrain.Phases;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -12,6 +15,16 @@ namespace Terrain
             //Some generation settings
             GenerationData generationData = new GenerationData();
             generationData.chunkSize = new Vector2Int(2, 2);
+            generationData.BorderShape = new CircleBorder(new Vector2Int(1024, 1024), 10);
+            generationData.generationPhases = new List<IGenerationPhase>()
+            {
+                new RawPhase(generationData),
+                new FillRockPhase(generationData, new StandardProvider(BlockRegistry.ROCK)),
+                new DecoratorPhase(generationData,
+                    new VeinGenerator(new StandardProvider(BlockRegistry.ORE), 0, 0.05f),
+                    new WormCaveGenerator(new StandardProvider(BlockRegistry.AIR), 0, 0.005f, 0.3f, 0.4f)
+                )
+            };
 
             //Generate terrain
             TerrainGenerator terrainGenerator = new TerrainGenerator();
@@ -34,13 +47,8 @@ namespace Terrain
                             int yInWorld = chunky * 512 + y;
 
                             var tileBase = chunk.Blocks[x, y].Texture;
-                            if (tileBase != null)
-                            {
-                                TileBase tile = tileBase;
-                                //Debug.Log("x " + x + " y " + y + tile);
-                                if(tile != null)
-                                    tilemap.SetTile(new Vector3Int(xInWorld, yInWorld, 0), tile);
-                            }
+                            if(tileBase != null)
+                                tilemap.SetTile(new Vector3Int(xInWorld, yInWorld, 0), tileBase);
                         }
                     }
                 }

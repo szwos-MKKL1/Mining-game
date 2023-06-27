@@ -1,8 +1,7 @@
 ﻿using Terrain.Blocks;
-using Terrain.Generators;
 using UnityEngine;
 
-namespace Terrain
+namespace Terrain.Phases
 {
     //First phase of terrain generation where only barrier is set and terrain filled with base material
     public class RawPhase : IGenerationPhase
@@ -48,9 +47,9 @@ namespace Terrain
                 }
             }
 
-            //TODO is this needed?
-            terrainChunk.Blocks = blocks;
-            terrainChunk.CanBuild = canBuild;
+            // //TODO is this needed?
+            // terrainChunk.Blocks = blocks;
+            // terrainChunk.CanBuild = canBuild;
 
             return terrainChunk;
         }

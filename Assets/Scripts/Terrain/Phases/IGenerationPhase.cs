@@ -1,4 +1,4 @@
-﻿namespace Terrain
+﻿namespace Terrain.Phases
 {
     public interface IGenerationPhase
     {

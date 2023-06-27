@@ -1,5 +1,7 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using Terrain.Blocks;
+using Terrain.Phases;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -12,7 +14,9 @@ namespace Terrain
     {
         [NotNull]
         public Vector2Int chunkSize;
-        public IBorderShape BorderShape = new CircleBorder(new Vector2Int(1024, 1024), 10);
-        public BlockBase blockBase;
+        [NotNull]
+        public IBorderShape BorderShape;
+        [NotNull]
+        public List<IGenerationPhase> generationPhases;
     }
 }

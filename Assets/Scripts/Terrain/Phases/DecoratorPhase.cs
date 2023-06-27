@@ -1,19 +1,18 @@
 ﻿using Terrain.Blocks;
 using Terrain.Generators;
 
-namespace Terrain
+namespace Terrain.Phases
 {
     public class DecoratorPhase : IGenerationPhase
     {
         private readonly GenerationData generationData;
-        private VeinGenerator mVeinGenerator;
+        private readonly IDecorateGenerator[] mDecorateGenerators;
 
-        public DecoratorPhase(GenerationData generationData, VeinGenerator veinGenerator)
+        public DecoratorPhase(GenerationData generationData, params IDecorateGenerator[] decorateGenerators)
         {
             this.generationData = generationData;
-            this.mVeinGenerator = veinGenerator;
+            this.mDecorateGenerators = decorateGenerators;
         }
-
 
         public void Generate(TerrainData terrainData)
         {
@@ -40,9 +39,12 @@ namespace Terrain
                     int yInWorld = chunky * TerrainChunk.ChunkSizeY + yInChunk;
 
                     if (!canBuild[xInChunk, yInChunk]) continue;
-                    
-                    BlockBase blockBase = mVeinGenerator.GetBlock(xInWorld, yInWorld);
-                    if (blockBase != null) blocks[xInChunk, yInChunk] = blockBase;
+
+                    foreach (var generator in mDecorateGenerators)
+                    {
+                        BlockBase blockBase = generator.GetBlock(xInWorld, yInWorld);
+                        if (blockBase != null) blocks[xInChunk, yInChunk] = blockBase;
+                    }
                 }
             }
 

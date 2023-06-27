@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace Terrain
 {
-    //TODO add center of circle
     public class CircleBorder : IBorderShape
     {
         private readonly int sqRadius;
