@@ -1,6 +1,7 @@
 ﻿using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using Terrain.Blocks;
+using Terrain.Noise;
 using UnityEngine;
 
 namespace Terrain.Generators
@@ -11,18 +12,31 @@ namespace Terrain.Generators
     public class VeinGenerator
     {
         private readonly IBlockProvider blockProvider;
-        private FastNoiseLite fastNoiseLite;
+        private INoise mNoise;
         private float veinSize;
-        private float frequency;
 
-        public VeinGenerator(IBlockProvider blockProvider)
+        //Uses simple simplex noise
+        public VeinGenerator(IBlockProvider blockProvider, float frequency, float veinSize = 0.05f)
         {
             this.blockProvider = blockProvider;
+            FastNoiseLite fastNoiseLite = new FastNoiseLite();
+            fastNoiseLite.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+            fastNoiseLite.SetFrequency(frequency);
+            this.mNoise = new FastNoiseAsINoise(fastNoiseLite);
+            this.veinSize = veinSize;
+        }
+
+        //Can use custom noise
+        public VeinGenerator(IBlockProvider blockProvider, INoise noise, float veinSize = 0.05f)
+        {
+            this.blockProvider = blockProvider;
+            this.mNoise = noise;
+            this.veinSize = veinSize;
         }
 
         public BlockBase GetBlock(float x, float y)
         {
-            return fastNoiseLite.GetNoise(x, y) > (1 - veinSize) ? blockProvider.GetNextBlock() : null;
+            return mNoise.GetNoise(x, y) > (1 - veinSize) ? blockProvider.GetNextBlock() : null;
         }
         
         public BlockBase[,] Generate(Vector2Int size)

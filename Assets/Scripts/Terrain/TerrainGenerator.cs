@@ -15,7 +15,7 @@ namespace Terrain
             List<IGenerationPhase> generationPhases = new List<IGenerationPhase>();
             generationPhases.Add(new RawPhase(generationData));
             generationPhases.Add(new FillRockPhase(generationData, new StandardProvider(BlockRegistry.ROCK)));
-
+            generationPhases.Add(new DecoratorPhase(generationData, new VeinGenerator(new StandardProvider(BlockRegistry.ORE), 0.05f)));
             TerrainData terrainData = new TerrainData(generationData.chunkSize);
             
             foreach (var vPhase in generationPhases)
