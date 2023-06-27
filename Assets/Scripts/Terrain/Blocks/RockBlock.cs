@@ -15,7 +15,7 @@ namespace Terrain.Blocks
 
         public RockBlock(TileBase texture) : base(texture)
         {
-            Debug.Log("dupa " + texture);
+            
         }
     }
 }

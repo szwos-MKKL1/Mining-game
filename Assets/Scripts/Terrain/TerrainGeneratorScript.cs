@@ -33,10 +33,14 @@ namespace Terrain
                             int xInWorld = chunkx * 512 + x;
                             int yInWorld = chunky * 512 + y;
 
-                            TileBase tile = chunk.Blocks[x, y].Texture;
-                            //Debug.Log("x " + x + " y " + y + tile);
-                            if(tile != null)
-                                tilemap.SetTile(new Vector3Int(xInWorld, yInWorld, 0), tile);
+                            var tileBase = chunk.Blocks[x, y].Texture;
+                            if (tileBase != null)
+                            {
+                                TileBase tile = tileBase;
+                                //Debug.Log("x " + x + " y " + y + tile);
+                                if(tile != null)
+                                    tilemap.SetTile(new Vector3Int(xInWorld, yInWorld, 0), tile);
+                            }
                         }
                     }
                 }

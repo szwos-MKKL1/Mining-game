@@ -1,5 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Terrain.Blocks;
+using Terrain.Generators;
 using UnityEngine;
 
 namespace Terrain
@@ -12,6 +14,7 @@ namespace Terrain
         {
             List<IGenerationPhase> generationPhases = new List<IGenerationPhase>();
             generationPhases.Add(new RawPhase(generationData));
+            generationPhases.Add(new FillRockPhase(generationData, new StandardProvider(BlockRegistry.ROCK)));
 
             TerrainData terrainData = new TerrainData(generationData.chunkSize);
             

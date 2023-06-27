@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 using UnityEngine;
 
 namespace Terrain
@@ -14,6 +15,14 @@ namespace Terrain
             sqRadius = (int)(radius * radius);
             centerX = center.x;
             centerY = center.y;
+        }
+
+        public CircleBorder(Vector2Int mapSize, int offset)
+        {
+            centerX = mapSize.x / 2;
+            centerY = mapSize.y / 2;
+            float radius = Math.Min(centerX, centerY) - offset;
+            sqRadius = (int)(radius * radius);
         }
         
         public bool IsInsideBorder(int posX, int posY)

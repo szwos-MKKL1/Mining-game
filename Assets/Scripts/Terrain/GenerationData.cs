@@ -12,7 +12,7 @@ namespace Terrain
     {
         [NotNull]
         public Vector2Int chunkSize;
-        public IBorderShape BorderShape = new CircleBorder(500, new Vector2Int(512, 512));
+        public IBorderShape BorderShape = new CircleBorder(new Vector2Int(1024, 1024), 10);
         public BlockBase blockBase;
     }
 }
