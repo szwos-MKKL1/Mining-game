@@ -22,7 +22,7 @@ namespace Terrain
                 new FillRockPhase(generationData, new StandardProvider(BlockRegistry.ROCK)),
                 new DecoratorPhase(generationData,
                     new VeinGenerator(new StandardProvider(BlockRegistry.ORE), 0, 0.05f),
-                    new WormCaveGenerator(new StandardProvider(BlockRegistry.AIR), 0, 0.005f, 0.3f, 0.4f)
+                    new WormGenerator(new StandardProvider(BlockRegistry.AIR), 0, 0.005f, -0.9f)
                 )
             };
 
