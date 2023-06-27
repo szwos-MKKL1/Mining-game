@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using UnityEngine;
 
 namespace Terrain
 {
@@ -6,14 +7,23 @@ namespace Terrain
     public class CircleBorder : IBorderShape
     {
         private readonly int sqRadius;
-        public CircleBorder(float radius)
+        private readonly int centerX;
+        private readonly int centerY;
+        public CircleBorder(float radius, Vector2Int center)
         {
             sqRadius = (int)(radius * radius);
+            centerX = center.x;
+            centerY = center.y;
         }
         
         public bool IsInsideBorder(int posX, int posY)
         {
-            return posX * posX + posY * posY < sqRadius;
+            return sq(posX - centerX) + sq(posY - centerY) < sqRadius;
+        }
+
+        private static int sq(int x)
+        {
+            return x * x;
         }
     }
 }

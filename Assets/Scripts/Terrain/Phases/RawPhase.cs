@@ -49,7 +49,7 @@ namespace Terrain
                             ? BlockRegistry.AIR
                             : BlockRegistry.ROCK;
                     }
-                    else blocks[xInChunk, yInChunk] = BlockRegistry.AIR;
+                    else blocks[xInChunk, yInChunk] = BlockRegistry.BEDROCK;
                 }
             }
 

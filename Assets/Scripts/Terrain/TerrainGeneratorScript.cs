@@ -25,6 +25,7 @@ namespace Terrain
                 for (int chunky = 0; chunky < generationData.chunkSize.y; chunky++)
                 {
                     TerrainChunk chunk = terrainData.terrainChunks[chunkx, chunky];
+                    Debug.Log(chunk);
                     for (int x = 0; x < 512 ; x++)
                     {
                         for (int y = 0; y < 512; y++)
@@ -33,7 +34,7 @@ namespace Terrain
                             int yInWorld = chunky * 512 + y;
 
                             TileBase tile = chunk.Blocks[x, y].Texture;
-                            Debug.Log("x " + x + " y " + y + tile);
+                            //Debug.Log("x " + x + " y " + y + tile);
                             if(tile != null)
                                 tilemap.SetTile(new Vector3Int(xInWorld, yInWorld, 0), tile);
                         }
