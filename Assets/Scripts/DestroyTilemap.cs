@@ -21,13 +21,16 @@ public class DestroyTilemap : MonoBehaviour
         //TODO: this is also kind of resource heavy, but propably the only right way to work for multiple tilemaps and multiple scenes
         //TODO: also instead of accessing Tilemap component, it should be encapsulated in some kind of TileMapController component, that will handle tile states, drops etc
         targetTilemap = other.gameObject.GetComponent<Tilemap>();
-        if (targetTilemap.CompareTag("DestructibleTilemap"))
+        if(targetTilemap != null)
         {
-            List<Vector3Int> cellPositions = GetPositions();
-
-            foreach(var cellPosition in cellPositions)
+            if (targetTilemap.CompareTag("DestructibleTilemap"))
             {
-                targetTilemap.SetTile(cellPosition, null);
+                List<Vector3Int> cellPositions = GetPositions();
+
+                foreach (var cellPosition in cellPositions)
+                {
+                    targetTilemap.SetTile(cellPosition, null);
+                }
             }
         }
     }
