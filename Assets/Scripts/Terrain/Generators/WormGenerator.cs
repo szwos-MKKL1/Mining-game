@@ -30,10 +30,12 @@ namespace Terrain.Generators
             ImageDebug.SaveImg(new Vector2Int(1024, 1024), mNoise, "noise2.png");
         }
         
-        public WormGenerator(IBlockProvider blockProvider, INoise noise, float threshold)
+        public WormGenerator(IBlockProvider blockProvider, INoise3 noise, float threshold)
         {
+            this.threshold = (threshold + 1)/2;
+            const float nextLayerOffset = 40f;
+            this.mNoise = new EquationNoise((x,y) => (math.pow(noise.GetNoise(x,y,0),2) + math.pow(noise.GetNoise(x,y,nextLayerOffset),2))/this.threshold);
             this.blockProvider = blockProvider;
-            this.mNoise = noise;
             this.threshold = threshold;
         }
         
