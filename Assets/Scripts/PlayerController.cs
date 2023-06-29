@@ -28,6 +28,8 @@ public class PlayerController : MonoBehaviour
         yInput = Input.GetAxis("Vertical");
 
         rb.velocity = new Vector2(xInput * speed, yInput * speed);
+
+
         
     }
 }
