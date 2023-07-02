@@ -20,7 +20,7 @@ namespace Terrain.Phases
             {
                 for (int chunky = 0; chunky < generationData.chunkSize.y; chunky++)
                 {
-                    PopulateChunk(terrainData.terrainChunks[chunkx, chunky]);
+                    PopulateChunk(terrainData.Chunks[chunkx, chunky]);
                 }
             }
         }

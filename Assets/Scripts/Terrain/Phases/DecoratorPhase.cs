@@ -20,7 +20,7 @@ namespace Terrain.Phases
             {
                 for (int chunky = 0; chunky < generationData.chunkSize.y; chunky++)
                 {
-                    PopulateChunk(terrainData.terrainChunks[chunkx, chunky]);
+                    PopulateChunk(terrainData.Chunks[chunkx, chunky]);
                 }
             }
         }
@@ -29,8 +29,8 @@ namespace Terrain.Phases
         {
             BlockBase[,] blocks = terrainChunk.Blocks;
             bool[,] canBuild = terrainChunk.CanBuild;
-            int chunkx = terrainChunk.InWorldPosition.x;
-            int chunky = terrainChunk.InWorldPosition.y;
+            int chunkx = terrainChunk.WorldPos.x;
+            int chunky = terrainChunk.WorldPos.y;
             for (int xInChunk = 0; xInChunk < TerrainChunk.ChunkSizeX; xInChunk++)
             {
                 for (int yInChunk = 0; yInChunk < TerrainChunk.ChunkSizeY; yInChunk++)

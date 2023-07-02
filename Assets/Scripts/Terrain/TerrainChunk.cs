@@ -3,35 +3,30 @@ using UnityEngine;
 
 namespace Terrain
 {
-    public class TerrainChunk
+    public class TerrainChunk : DataChunk
     {
-        public const int ChunkSizeX = 512;
-        public const int ChunkSizeY = 512;
+        public const int ChunkSizeX = 128;
+        public const int ChunkSizeY = 128;
         private BlockBase[,] blocks = new BlockBase[ChunkSizeX,ChunkSizeY];
         private bool[,] canBuild = new bool[ChunkSizeX,ChunkSizeY];
-        private Vector2Int inWorldPosition;
 
-        public TerrainChunk(Vector2Int inWorldPosition)
+        public TerrainChunk(Vector2Int inWorldPosition) : base(inWorldPosition)
         {
-            this.inWorldPosition = inWorldPosition;
         }
 
+        public BlockBase GetBlock(Vector2Int localPos) => blocks[localPos.x, localPos.y];
+        public bool GetBuildPermission(Vector2Int localPos) => canBuild[localPos.x, localPos.y];
+        
         public bool[,] CanBuild
         {
             get => canBuild;
             set => canBuild = value;
         }
-
+        
         public BlockBase[,] Blocks
         {
             get => blocks;
             set => blocks = value;
-        }
-
-        public Vector2Int InWorldPosition
-        {
-            get => inWorldPosition;
-            set => inWorldPosition = value;
         }
     }
 }

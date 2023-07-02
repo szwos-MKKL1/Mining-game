@@ -21,7 +21,7 @@ namespace Terrain.Phases
             {
                 for (int chunky = 0; chunky < generationData.chunkSize.y; chunky++)
                 {
-                    terrainData.terrainChunks[chunkx, chunky] = GenerateChunk(chunkx, chunky);
+                    terrainData.Chunks[chunkx, chunky] = GenerateChunk(chunkx, chunky);
                 }
             }
         }
@@ -46,10 +46,7 @@ namespace Terrain.Phases
                     else blocks[xInChunk, yInChunk] = BlockRegistry.BEDROCK;
                 }
             }
-
-            // //TODO is this needed?
-            // terrainChunk.Blocks = blocks;
-            // terrainChunk.CanBuild = canBuild;
+            
 
             return terrainChunk;
         }

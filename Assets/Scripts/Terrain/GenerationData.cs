@@ -18,5 +18,7 @@ namespace Terrain
         public IBorderShape BorderShape;
         [NotNull]
         public List<IGenerationPhase> generationPhases;
+
+        public byte borderWeight;
     }
 }
