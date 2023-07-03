@@ -11,8 +11,8 @@ namespace Terrain.DecorateGenerators
     public class VeinGenerator : IDecorateGenerator
     {
         private readonly IBlockProvider blockProvider;
-        private INoise mNoise;
-        private float veinSize;
+        private readonly INoise mNoise;
+        private readonly float veinSize;
 
         //Uses simple simplex noise
         public VeinGenerator(IBlockProvider blockProvider, int seed, float frequency, float veinSize = 0.05f)
