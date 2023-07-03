@@ -7,6 +7,7 @@ using Terrain.PathGraph;
 using UnityEngine;
 namespace Terrain.Phases
 {
+    [PhaseDependency(typeof(RawPhase), DependencyOrder.Before)]
     public class CavePathPhase : IGenerationPhase
     {
         private readonly GenerationData generationData;
@@ -29,17 +30,17 @@ namespace Terrain.Phases
             GraphDebug.DrawGraph(graph, Color.white, 200);
 
             const int seed = 69;
-            CostApplicatorSettings costApplicatorSettings = new CostApplicatorSettings(terrainData.RealSize)
-                {
-                    Destination = startPoint,
-                    BorderMultiplier = 1f,
-                    DistanceMultiplier = 100f,
-                    RandomMax = 100,
-                    RandomMin = 100
-                };
-
-            CostApplicator costApplicator = new CostApplicator(costApplicatorSettings, dict, seed);
-            costApplicator.Apply(graph);
+            // CostApplicatorSettings costApplicatorSettings = new CostApplicatorSettings(terrainData.RealSize)
+            //     {
+            //         Destination = startPoint,
+            //         BorderMultiplier = 1f,
+            //         DistanceMultiplier = 100f,
+            //         RandomMax = 100,
+            //         RandomMin = 100
+            //     };
+            //
+            // CostApplicator costApplicator = new CostApplicator(costApplicatorSettings, dict, seed);
+            // costApplicator.Apply(graph);
         }
     }
 }

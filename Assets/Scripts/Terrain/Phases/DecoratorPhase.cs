@@ -3,6 +3,7 @@ using Terrain.DecorateGenerators;
 
 namespace Terrain.Phases
 {
+    [PhaseDependency(typeof(RawPhase), DependencyOrder.Before)]
     public class DecoratorPhase : IGenerationPhase
     {
         private readonly GenerationData generationData;

@@ -55,33 +55,33 @@ namespace Terrain.PathGraph
         //TODO isn't this basically A*?
         
         //TODO Note to self, instead of saving branches as next nodes, save them as individual paths
-        public Path NextRandomPath()
-        {
-            List<PathNode> branchingNodes = new();
-            HashSet<PathNode> allPathNodes = new HashSet<PathNode>();
-            GraphNode currentNode = startNode;
-            PathNode rootNode = new PathNode(currentNode);
-            PathNode currentPathNode = rootNode;
-            allPathNodes.Add(rootNode);
-            while (true)
-            {
-                if (currentNode.ConnectedNodes == null || currentNode.ConnectedNodes.Count == 0) break;
-                GraphNode nextNode = currentNode.ConnectedNodes.Where(n => !allPathNodes.Contains(n)).MinBy(n => n.Cost);
-                
-                if (RndPercentage(0.5f))
-                {
-                    //Branch
-                    branchingNodes.Add(new PathNode(currentNode.ConnectedNodes.Where(n => n != nextNode).MinBy(n => n.Cost), 1));
-                }
-
-                PathNode nextPathNode = new PathNode(nextNode);
-                allPathNodes.Add(nextPathNode);
-                currentPathNode.AddNextNode(nextPathNode);
-                currentPathNode = nextPathNode;
-
-            }
-            return null;
-        }
+        // public Path NextRandomPath()
+        // {
+        //     List<PathNode> branchingNodes = new();
+        //     HashSet<PathNode> allPathNodes = new HashSet<PathNode>();
+        //     GraphNode currentNode = startNode;
+        //     PathNode rootNode = new PathNode(currentNode);
+        //     PathNode currentPathNode = rootNode;
+        //     allPathNodes.Add(rootNode);
+        //     while (true)
+        //     {
+        //         if (currentNode.ConnectedNodes == null || currentNode.ConnectedNodes.Count == 0) break;
+        //         GraphNode nextNode = currentNode.ConnectedNodes.Where(n => !allPathNodes.Contains(n)).MinBy(n => n.Cost);
+        //         
+        //         if (RndPercentage(0.5f))
+        //         {
+        //             //Branch
+        //             branchingNodes.Add(new PathNode(currentNode.ConnectedNodes.Where(n => n != nextNode).MinBy(n => n.Cost), 1));
+        //         }
+        //
+        //         PathNode nextPathNode = new PathNode(nextNode);
+        //         allPathNodes.Add(nextPathNode);
+        //         currentPathNode.AddNextNode(nextPathNode);
+        //         currentPathNode = nextPathNode;
+        //
+        //     }
+        //     return null;
+        // }
 
         private bool RndPercentage(float chance)
         {

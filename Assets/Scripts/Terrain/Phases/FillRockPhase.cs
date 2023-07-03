@@ -1,9 +1,12 @@
-﻿using Terrain.Blocks;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
+using Terrain.Blocks;
 using Terrain.DecorateGenerators.BlockProvider;
 using Terrain.Generators;
 
 namespace Terrain.Phases
 {
+    [PhaseDependency(typeof(RawPhase), DependencyOrder.Before)]
     public class FillRockPhase : IGenerationPhase
     {
         private readonly GenerationData generationData;

@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using InternalDebug;
 using Terrain.Blocks;
-using Terrain.Generators;
+using Terrain.DecorateGenerators;
+using Terrain.DecorateGenerators.BlockProvider;
 using Terrain.Noise;
 using Terrain.Phases;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
 using UnityEngine.Tilemaps;
 
 namespace Terrain
@@ -40,12 +40,12 @@ namespace Terrain
             generationData.generationPhases = new List<IGenerationPhase>()
             {
                 new RawPhase(generationData),
-                // new FillRockPhase(generationData, new StandardProvider(BlockRegistry.ROCK)),
-                // new DecoratorPhase(generationData,
-                //     new VeinGenerator(new StandardProvider(BlockRegistry.ORE), 0, 0.05f),
-                //     new WormGenerator(new StandardProvider(BlockRegistry.AIR), 0, 0.005f, -0.9f),
-                //     new WormGenerator(new StandardProvider(BlockRegistry.ORE), new FastNoiseAsINoise(fastNoiseLite), -0.9f)
-                // ),
+                new FillRockPhase(generationData, new StandardProvider(BlockRegistry.ROCK)),
+                new DecoratorPhase(generationData,
+                    new VeinGenerator(new StandardProvider(BlockRegistry.ORE), 0, 0.05f),
+                    new WormGenerator(new StandardProvider(BlockRegistry.AIR), 0, 0.005f, -0.9f),
+                    new WormGenerator(new StandardProvider(BlockRegistry.ORE), new FastNoiseAsINoise(fastNoiseLite), -0.9f)
+                ),
                 new CavePathPhase(generationData)
             };
             

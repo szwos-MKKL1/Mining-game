@@ -4,16 +4,16 @@ namespace Terrain.DecorateGenerators.BlockProvider
 {
     public class StandardProvider : IBlockProvider
     {
-        private readonly BlockBase BlockBase;
+        private readonly BlockBase mBlockBase;
 
         public StandardProvider(BlockBase blockBase)
         {
-            BlockBase = blockBase;
+            mBlockBase = blockBase;
         }
 
         public BlockBase GetNextBlock()
         {
-            return BlockBase;
+            return mBlockBase;
         }
     }
 }
