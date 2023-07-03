@@ -5,15 +5,15 @@ using UnityEngine;
 
 namespace Terrain.PathGraph
 {
+    //TODO use list
     public class Path : IEnumerable<PathNodeEnumeratorElement>
     {
         private readonly PathNode firstNode;
-        
         public Path(PathNode firstNode)
         {
             this.firstNode = firstNode;
         }
-        
+
         public IEnumerator<PathNodeEnumeratorElement> GetEnumerator()
         {
             return new PathEnumerator(firstNode);
