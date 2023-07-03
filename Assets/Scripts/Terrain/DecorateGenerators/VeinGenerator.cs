@@ -1,10 +1,9 @@
-﻿using System.CodeDom.Compiler;
-using System.Collections.Generic;
-using Terrain.Blocks;
+﻿using Terrain.Blocks;
+using Terrain.DecorateGenerators.BlockProvider;
 using Terrain.Noise;
 using UnityEngine;
 
-namespace Terrain.Generators
+namespace Terrain.DecorateGenerators
 {
     /**
      * Uses top values of perlin noise to generate veins

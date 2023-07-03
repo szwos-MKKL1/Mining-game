@@ -1,7 +1,7 @@
 ﻿using Terrain.Blocks;
 using UnityEngine;
 
-namespace Terrain.Generators
+namespace Terrain.DecorateGenerators
 {
     public interface IDecorateGenerator
     {

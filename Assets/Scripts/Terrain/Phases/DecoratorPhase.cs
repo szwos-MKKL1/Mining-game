@@ -1,5 +1,5 @@
 ﻿using Terrain.Blocks;
-using Terrain.Generators;
+using Terrain.DecorateGenerators;
 
 namespace Terrain.Phases
 {

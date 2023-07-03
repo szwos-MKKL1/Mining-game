@@ -1,6 +1,6 @@
 ﻿using Terrain.Blocks;
 
-namespace Terrain.Generators
+namespace Terrain.DecorateGenerators.BlockProvider
 {
     public class StandardProvider : IBlockProvider
     {

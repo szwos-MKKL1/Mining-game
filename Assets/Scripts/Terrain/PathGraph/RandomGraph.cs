@@ -3,7 +3,7 @@ using System.Linq;
 using DelaunatorSharp;
 using UnityEngine;
 
-namespace Terrain
+namespace Terrain.PathGraph
 {
     /**
      * Builds graph by placing vertices(nodes) randomly(approximation of poisson distribution) in given area

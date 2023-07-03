@@ -1,6 +1,7 @@
 ﻿using Terrain.Blocks;
+using Terrain.Generators;
 
-namespace Terrain.Generators
+namespace Terrain.DecorateGenerators.BlockProvider
 {
     public class BlockProviderFactory
     {

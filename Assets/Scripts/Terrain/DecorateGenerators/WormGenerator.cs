@@ -1,11 +1,12 @@
 ﻿using InternalDebug;
 using Terrain.Blocks;
+using Terrain.DecorateGenerators.BlockProvider;
 using Terrain.Noise;
 using Unity.Mathematics;
 using UnityEngine;
 using Random = System.Random;
 
-namespace Terrain.Generators
+namespace Terrain.DecorateGenerators
 {
     public class WormGenerator : IDecorateGenerator
     {

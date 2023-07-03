@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using UnityEngine;
 
-namespace Terrain
+namespace Terrain.PathGraph
 {
     public class Graph : IEnumerable<GraphNode>, ICollection<GraphNode>
     {
