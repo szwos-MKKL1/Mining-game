@@ -26,6 +26,8 @@ namespace Terrain
             generationData.chunkSize = new Vector2Int(10, 10);
             generationData.BorderShape = new CircleBorder(new Vector2Int(generationData.chunkSize.x*TerrainChunk.ChunkSizeX, generationData.chunkSize.y*TerrainChunk.ChunkSizeY), 10);
             generationData.borderWeight = 64;
+            generationData.borderMultiplier = 1;
+            generationData.distanceMultiplier = 100f;
             
             
             FastNoiseLite fastNoiseLite = new FastNoiseLite();

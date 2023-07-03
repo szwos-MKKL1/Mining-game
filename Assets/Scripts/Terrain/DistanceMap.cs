@@ -29,7 +29,7 @@ namespace Terrain
             for (int s = 0; s < steps; s++)
             {
                 Dictionary<Vector2Int, byte> nextActiveCells = new();
-                foreach (var cell in activeCells)
+                foreach (KeyValuePair<Vector2Int, byte> cell in activeCells)
                 {
                     //Find neighbors
                     foreach (var neighborvec in neighbors)
@@ -48,12 +48,6 @@ namespace Terrain
                         if (!b) nextActiveCells[neighborPos] = dist;
                     }
                 }
-                // byte[,] distMap2 = new byte[size.x,size.y];
-                // foreach (var cell2 in nextActiveCells)
-                // {
-                //     distMap2[cell2.Key.x, cell2.Key.y] = 255;
-                // }
-                // ImageDebug.SaveImg(distMap2, "a" + s + ".png");
                 activeCells = nextActiveCells;
             }
 
@@ -64,7 +58,7 @@ namespace Terrain
         {
             
             byte[,] distMap = new byte[size.x,size.y];
-            foreach (var cell in Generate(steps))
+            foreach (KeyValuePair<Vector2Int, byte> cell in Generate(steps))
             {
                 distMap[cell.Key.x, cell.Key.y] = cell.Value;
             }
