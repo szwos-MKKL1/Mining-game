@@ -23,12 +23,20 @@ namespace Terrain.Phases
 
             Vector2Int startPoint = new Vector2Int(100, 100);
             
-            RandomGraph randomGraph = new RandomGraph(terrainData.RealSize, 50, 68);
+            RandomGraph randomGraph = new RandomGraph(terrainData.RealSize, 300, 68);
             Graph graph = randomGraph.GetGraph();
-            GraphDebug.DrawGraph(graph, Color.red, 200);
+            //GraphDebug.DrawGraph(graph, Color.red, 200);
             graph.RemoveWhere(s => !terrainData.GetBuildPermission(new Vector2Int((int)s.Pos.x, (int)s.Pos.y)));
-            GraphDebug.DrawGraph(graph, Color.white, 200);
+            //GraphDebug.DrawGraph(graph, Color.white, 200);
+            PathFinder pathFinder = new PathFinder(graph, new Vector2Int(0, 0), terrainData.RealSize, terrainData.RealSize);
+            var realtimeSinceStartup = Time.realtimeSinceStartup;
 
+            for (int i = 0; i < 5; i++)
+            {
+                GraphDebug.DrawPath(pathFinder.NextRandomPath(), Color.blue, 200);
+            }
+            
+            Debug.Log($"Pathing took {Time.realtimeSinceStartup-realtimeSinceStartup}s");
             const int seed = 69;
             // CostApplicatorSettings costApplicatorSettings = new CostApplicatorSettings(terrainData.RealSize)
             //     {

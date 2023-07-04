@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using Unity.Mathematics;
 using UnityEngine;
 using Random = System.Random;
 
@@ -11,12 +13,14 @@ namespace Terrain.PathGraph
         private GraphNode startNode;
         private GraphNode destinationNode;
         private Random mRandom;
+        private float reversedSizeSquared; // 1/przekątna prostokąta świata
 
-        public PathFinder(Graph graph, Vector2Int startPos, Vector2Int destinationPos, int seed = 0)
+        public PathFinder(Graph graph, Vector2Int startPos, Vector2Int destinationPos,Vector2Int size ,int seed = 0)
         {
             mGraph = graph;
             startNode = FindClosestNode(startPos);
             destinationNode = FindClosestNode(destinationPos);
+            reversedSizeSquared = 1f / math.sqrt(size.x * size.x + size.y * size.y);
             mRandom = new Random(seed);
         }
 
@@ -40,52 +44,85 @@ namespace Terrain.PathGraph
 
             return closestNode;
         }
-
-        //This algorithm should go like this:
-        //1. Start from "startNode", "currentNode" = "startNode"
-        //2. Go to node that has lowest cost and wasn't already visited. Set this node as "nextNode"
-        // 2.1 If none available nodes were found set "nextNode" to null
-        //3. Randomly choose if should branch.
-        //  3.1 If node should branch, choose node that wasn't visited and that isn't "nextNode"
-        //  3.2 Choose it's length randomly and add to list "branchingNodes"
-        //4. "currentNode".next = "nextNode"
-        //5. "currentNode" = "nextNode"
-        //6. Go To step until "nextNode"==null
-        //7. For each element of "branchingNodes" perform this algorithm from step 1\
-        //TODO isn't this basically A*?
+        
         
         //TODO Note to self, instead of saving branches as next nodes, save them as individual paths
-        // public Path NextRandomPath()
-        // {
-        //     List<PathNode> branchingNodes = new();
-        //     HashSet<PathNode> allPathNodes = new HashSet<PathNode>();
-        //     GraphNode currentNode = startNode;
-        //     PathNode rootNode = new PathNode(currentNode);
-        //     PathNode currentPathNode = rootNode;
-        //     allPathNodes.Add(rootNode);
-        //     while (true)
-        //     {
-        //         if (currentNode.ConnectedNodes == null || currentNode.ConnectedNodes.Count == 0) break;
-        //         GraphNode nextNode = currentNode.ConnectedNodes.Where(n => !allPathNodes.Contains(n)).MinBy(n => n.Cost);
-        //         
-        //         if (RndPercentage(0.5f))
-        //         {
-        //             //Branch
-        //             branchingNodes.Add(new PathNode(currentNode.ConnectedNodes.Where(n => n != nextNode).MinBy(n => n.Cost), 1));
-        //         }
-        //
-        //         PathNode nextPathNode = new PathNode(nextNode);
-        //         allPathNodes.Add(nextPathNode);
-        //         currentPathNode.AddNextNode(nextPathNode);
-        //         currentPathNode = nextPathNode;
-        //
-        //     }
-        //     return null;
-        // }
+        public Path NextRandomPath()
+        {
+            HashSet<GraphNode> visited = new();
+            C5.IntervalHeap<PathNode> heap = new();
+            heap.Add(new PathNode(startNode));
+            visited.Add(startNode);
+            PathNode current;
+            while (!heap.IsEmpty)
+            {
+                current = heap.FindMin();
+                heap.DeleteMin();
+                foreach (var neighbour in current.currentNode.ConnectedNodes)
+                {
+                    if (visited.Contains(neighbour)) continue;
+                    if (neighbour == destinationNode)
+                    {
+                        //Reconstruct path
+                        LinkedList<GraphNode> pathList = new();
+                        pathList.AddFirst(destinationNode);
+                        PathNode next = current;
+                        while (next.currentNode != startNode)
+                        {
+                            pathList.AddFirst(next.currentNode);
+                            next = next.cameFrom;
+                        }
+
+                        pathList.AddFirst(startNode);
+                        return new Path(pathList);
+                    }
+
+                    visited.Add(neighbour);
+                    int randVal = mRandom.Next(0, 500);
+                    float randomh = calcH(neighbour, destinationNode);
+                    //Debug.Log($"Node randomValue {randVal} randomH {randomh} combined {current.CostSoFar + randVal + randomh}");
+                    PathNode neighbourPathNode = new PathNode(neighbour, current.CostSoFar + randVal, (int)(randomh*500));
+                    neighbourPathNode.cameFrom = current;
+                    heap.Add(neighbourPathNode);
+                }
+            }
+            return null;
+        }
+
+        private float calcH(GraphNode currentNode, GraphNode destNode)
+        {
+            return DistanceMethods.SqrtEuclidianDistance(currentNode.Pos.ToVectorInt(), destNode.Pos.ToVectorInt())*reversedSizeSquared;
+        }
 
         private bool RndPercentage(float chance)
         {
             return mRandom.NextDouble() <= chance;
+        }
+    }
+
+    class PathNode : IComparable<PathNode>
+    {
+        private int costSoFar;
+        private int h;
+        public GraphNode currentNode;
+        public PathNode cameFrom;
+        public PathNode(GraphNode currentNode, int costSoFar=0, int h=0)
+        {
+            this.currentNode = currentNode;
+            this.costSoFar = costSoFar;
+            this.h = h;
+        }
+
+        public int GraphCost => currentNode.Cost;
+        public int CostSoFar => costSoFar;
+        public int H => h;
+        public int Fcost => CostSoFar + GraphCost + h;
+
+        public int CompareTo(PathNode other)
+        {
+            if (ReferenceEquals(this, other)) return 0;
+            if (ReferenceEquals(null, other)) return 1;
+            return Fcost.CompareTo(other.Fcost);
         }
     }
 }

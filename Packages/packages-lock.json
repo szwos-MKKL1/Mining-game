@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.github-glitchenzo.nugetforunity": {
+      "version": "https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "f9fb82dbaa73fd209d6565775b57ee6268645ea2"
+    },
     "com.nol1fe.delaunator": {
       "version": "https://github.com/nol1fe/delaunator-sharp.git?path=DelaunatorSharp.Unity",
       "depth": 0,
