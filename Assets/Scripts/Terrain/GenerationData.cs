@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Terrain.Blocks;
+using Terrain.PathGraph;
 using Terrain.Phases;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -10,19 +11,32 @@ namespace Terrain
     /**
      * Stores all essential data used for terrain generation
      */
-    public class GenerationData
+    [CreateAssetMenu(menuName = "Generation Data")]
+    public class GenerationData : ScriptableObject
     {
-        [NotNull]
-        public Vector2Int chunkSize;
-        [NotNull]
-        public IBorderShape BorderShape;
-        [NotNull]
+        [SerializeField]
+        public Vector2Int chunkSize = new Vector2Int(10,10);
+        [SerializeField]
+        public BorderType borderShapeType = BorderType.Circle;
+        [SerializeField]
         public List<IGenerationPhase> generationPhases;
+        [SerializeField]
+        public byte borderWeight = 64;
+        [SerializeField]
+        public PathFindingSettings pathFindingSettings;
 
-        public byte borderWeight;
-        public float borderMultiplier = 1f;
-        public float distanceMultiplier = 1f;
-        public int randomMin = 0;
-        public int randomMax = 100;
+        private IBorderShape borderShape;
+
+        public IBorderShape BorderShape
+        {
+            get => borderShape;
+            set => borderShape = value;
+        }
+
+        public override string ToString()
+        {
+            return
+                $"chunksize: {chunkSize} borderShapeType: {borderShapeType} generationPhases: {generationPhases} borderWeight: {borderWeight} PathFindingSettings: {pathFindingSettings}";
+        }
     }
 }

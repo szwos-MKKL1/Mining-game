@@ -9,19 +9,21 @@ namespace Terrain.PathGraph
 {
     public class PathFinder
     {
-        private Graph mGraph;
-        private GraphNode startNode;
-        private GraphNode destinationNode;
-        private Random mRandom;
-        private float reversedSizeSquared; // 1/przekątna prostokąta świata
+        private readonly Graph mGraph;
+        private readonly GraphNode startNode;
+        private readonly GraphNode destinationNode;
+        private readonly Random mRandom;
+        private readonly float reversedSizeSquared; // 1/przekątna prostokąta świata
+        private readonly PathFindingSettings pathFindingSettings;
 
-        public PathFinder(Graph graph, Vector2Int startPos, Vector2Int destinationPos,Vector2Int size ,int seed = 0)
+        public PathFinder(Graph graph, Vector2Int startPos, Vector2Int destinationPos, Vector2Int size, PathFindingSettings pathFindingSettings, int seed = 0)
         {
             mGraph = graph;
             startNode = FindClosestNode(startPos);
             destinationNode = FindClosestNode(destinationPos);
             reversedSizeSquared = 1f / math.sqrt(size.x * size.x + size.y * size.y);
             mRandom = new Random(seed);
+            this.pathFindingSettings = pathFindingSettings;
         }
 
         private GraphNode FindClosestNode(Vector2Int pos)
@@ -45,14 +47,14 @@ namespace Terrain.PathGraph
             return closestNode;
         }
         
-        
-        //TODO Note to self, instead of saving branches as next nodes, save them as individual paths
         public Path NextRandomPath()
         {
             HashSet<GraphNode> visited = new();
             C5.IntervalHeap<PathNode> heap = new();
+            
             heap.Add(new PathNode(startNode));
             visited.Add(startNode);
+            
             PathNode current;
             while (!heap.IsEmpty)
             {
@@ -78,11 +80,13 @@ namespace Terrain.PathGraph
                     }
 
                     visited.Add(neighbour);
-                    int randVal = mRandom.Next(0, 500);
+                    
+                    int randVal = mRandom.Next(pathFindingSettings.RandomCostMin, pathFindingSettings.RandomCostMax);
                     float randomh = calcH(neighbour, destinationNode);
-                    //Debug.Log($"Node randomValue {randVal} randomH {randomh} combined {current.CostSoFar + randVal + randomh}");
-                    PathNode neighbourPathNode = new PathNode(neighbour, current.CostSoFar + randVal, (int)(randomh*500));
+                    
+                    PathNode neighbourPathNode = new PathNode(neighbour, current.CostSoFar + randVal, (int)(randomh*100*pathFindingSettings.DistanceMultiplier));
                     neighbourPathNode.cameFrom = current;
+                    
                     heap.Add(neighbourPathNode);
                 }
             }
@@ -122,7 +126,29 @@ namespace Terrain.PathGraph
         {
             if (ReferenceEquals(this, other)) return 0;
             if (ReferenceEquals(null, other)) return 1;
+            var a = new PathFindingSettings();
+
             return Fcost.CompareTo(other.Fcost);
+        }
+    }
+
+    [Serializable]
+    public class PathFindingSettings
+    {
+        public int randomCostMin = 0;
+        public int randomCostMax = 100;
+        public float distanceMultiplier = 1f;
+
+        public int RandomCostMin => randomCostMin;
+
+        public int RandomCostMax => randomCostMax;
+
+        public float DistanceMultiplier => distanceMultiplier;
+
+        public override string ToString()
+        {
+            return
+                $"randomCostMin: {randomCostMin} randomCostMax: {randomCostMax} distanceMultiplier:{distanceMultiplier}";
         }
     }
 }
