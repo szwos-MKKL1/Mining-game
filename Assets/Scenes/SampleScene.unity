@@ -899,7 +899,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1149892907}
   - component: {fileID: 1149892906}
-  - component: {fileID: 1149892905}
+  - component: {fileID: 1149892909}
   m_Layer: 0
   m_Name: Inventory UI
   m_TagString: Untagged
@@ -907,20 +907,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1149892905
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1149892904}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d204ec435f901c740b065c70aa3ab9c2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  columns: 4
-  rows: 4
 --- !u!114 &1149892906
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -952,6 +938,19 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1149892909
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1149892904}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6603635fc0a1bce429e2979d2bc78bb9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ListEntryTemplate: {fileID: 0}
 --- !u!1 &1441693816
 GameObject:
   m_ObjectHideFlags: 0
