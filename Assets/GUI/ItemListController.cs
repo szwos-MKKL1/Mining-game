@@ -7,6 +7,74 @@ using UnityEngine.UIElements;
 
 public class ItemListController
 {
+    [SerializeField]
+    public Inventory inventory;
+
+    VisualTreeAsset listEntryTemplate;
+
+    ListView itemList;
+    Label itemLabel;
+    VisualElement itemIcon;
+    List<ItemData> allItemData;
+
+    public void InitializeItemList(VisualElement root, VisualTreeAsset listElementTemplate)
+    {
+        //TODO: reconsider this (dynamic updating, event system)
+        allItemData = inventory.GetAllItems();
+
+        itemList = root.Q<ListView>("item-list");
+
+        itemLabel = root.Q<Label>("item-label"); //This will return nullptr for now
+        itemIcon = root.Q<VisualElement>("item-icon");
+
+        FillItemList();
+
+    }
+
+    
+
+
+    private void FillItemList()
+    {
+
+        itemList.makeItem = () =>
+        {
+            //TODO: delete those filthy vars
+            var newListEntry = listEntryTemplate.Instantiate();
+
+            var newListEntryLogic = new ItemListEntryController();
+
+            newListEntry.userData = newListEntryLogic;
+
+            newListEntryLogic.SetVisualElement(newListEntry);
+
+            return newListEntry;
+        };
+
+        itemList.bindItem = (item, index) =>
+        {
+            (item.userData as ItemListEntryController).SetItemData(allItemData[index]);
+        };
+
+        itemList.fixedItemHeight = 45;
+        itemList.itemsSource = allItemData; //This "should" work bcs ItemData derives ScriptableObject, but im not sure :)
+
+
+    }
+
+    public void Update()
+    {
+        allItemData = inventory.GetAllItems();
+    }
+
+    //TODO: OnItemSelected
+    
+
+}
+
+
+/*public class ItemListController
+{
     private ListView itemList;
     private VisualTreeAsset listEntryTemplate;
 
@@ -42,7 +110,7 @@ public class ItemListController
         itemList.itemsSource = items;
     }
 
-    /*public void Start()
+    *//*public void Start()
     { 
         VisualElement root = GetComponent<UIDocument>().rootVisualElement;
         
@@ -71,8 +139,8 @@ public class ItemListController
         listView.itemsChosen += objects => Debug.Log(objects);
         listView.selectionChanged += objects => Debug.Log(objects);
 
-    }*/
-}
+    }*//*
+}*/
 
 
 

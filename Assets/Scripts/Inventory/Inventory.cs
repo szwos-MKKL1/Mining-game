@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Inventory : MonoBehaviour
 {
+    //TODO: two separate containers is a bad idea
     public List<InventoryItem> inventory = new List<InventoryItem>();
     private Dictionary<ItemData, InventoryItem> itemDict = new Dictionary<ItemData, InventoryItem>();
 
@@ -44,5 +45,16 @@ public class Inventory : MonoBehaviour
             }
         }
 
+    }
+
+    public List<ItemData> GetAllItems()
+    {
+        List<ItemData> items = new List<ItemData>();
+        foreach(var i in inventory)
+        {
+            items.Add(i.ItemData);
+        }
+
+        return items;
     }
 }

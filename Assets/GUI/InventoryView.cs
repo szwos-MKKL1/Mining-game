@@ -6,13 +6,13 @@ using UnityEngine.UIElements;
 public class InventoryView : MonoBehaviour
 {
     [SerializeField]
-    VisualTreeAsset ListEntryTemplate; //TODO: what is that???
+    VisualTreeAsset ListEntryTemplate;
 
     private void OnEnable()
     {
         var uiDocument = GetComponent<UIDocument>();
 
         var itemListController = new ItemListController();
-        itemListController.Init(uiDocument.rootVisualElement, ListEntryTemplate);
+        itemListController.InitializeItemList(uiDocument.rootVisualElement, ListEntryTemplate);
     }
 }

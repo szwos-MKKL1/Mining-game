@@ -1,7 +1,0 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/GUI/stylesheets/Inventory%20style.uss?fileID=7433441132597879392&amp;guid=c4fd1dc6cc0979244b9d5e999b7aeb44&amp;type=3#Inventory style" />
-    <ui:VisualElement name="Inventory_container" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); margin-left: 10%; margin-right: 10%; margin-top: 10%; margin-bottom: 10%; flex-direction: row;">
-        <ui:VisualElement name="CharacterEquipment" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); min-width: auto; min-height: auto;" />
-    </ui:VisualElement>
-    <ui:ListView focusable="true" name="ItemList" style="max-width: 60%; min-width: 60%;" />
-</ui:UXML>

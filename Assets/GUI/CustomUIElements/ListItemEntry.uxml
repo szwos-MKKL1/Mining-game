@@ -1,0 +1,6 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+<Style src="ListItemEntry.uss" />
+<ui:VisualElement name="list-item-entry">
+    <ui:Label text="Label" display-tooltip-when-elided="true" name="item-display-name" />
+</ui:VisualElement>
+</ui:UXML>
