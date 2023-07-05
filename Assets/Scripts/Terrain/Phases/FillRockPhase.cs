@@ -31,22 +31,18 @@ namespace Terrain.Phases
 
         private void PopulateChunk(TerrainChunk terrainChunk)
         {
-            BlockBase[,] blocks = terrainChunk.Blocks;
-            bool[,] canBuild = terrainChunk.CanBuild;
+
+            BlockBase[] blocks = terrainChunk.Blocks;
+            bool[] canBuild = terrainChunk.CanBuild;
             for (int xInChunk = 0; xInChunk < TerrainChunk.ChunkSizeX; xInChunk++)
             {
                 for (int yInChunk = 0; yInChunk < TerrainChunk.ChunkSizeY; yInChunk++)
                 {
-                    // int xInWorld = chunkx * TerrainChunk.ChunkSizeX + xInChunk;
-                    // int yInWorld = chunky * TerrainChunk.ChunkSizeY + yInChunk;
-
-                    if (canBuild[xInChunk, yInChunk])
-                        blocks[xInChunk, yInChunk] = blockProvider.GetNextBlock();
+                    int loc = xInChunk * TerrainChunk.ChunkSizeX + yInChunk;
+                    if (canBuild[loc])
+                        blocks[loc] = blockProvider.GetNextBlock();
                 }
             }
-
-            terrainChunk.Blocks = blocks;
-            terrainChunk.CanBuild = canBuild;
         }
     }
 }

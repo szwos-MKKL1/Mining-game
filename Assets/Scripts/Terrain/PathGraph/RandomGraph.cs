@@ -15,8 +15,16 @@ namespace Terrain.PathGraph
         private readonly Delaunator delaunator;
         public RandomGraph(Vector2Int size, int nodeCount, int seed)
         {
-            var pointDistribution = new BestCandidatePoints(size, 10, seed);
+            var realtimeSinceStartup = Time.realtimeSinceStartup;
+            
+            var pointDistribution = new BestCandidatePoints(size, 6, seed);
+            
+            Debug.Log($"pointDistribution in {Time.realtimeSinceStartup-realtimeSinceStartup}s");
+            realtimeSinceStartup = Time.realtimeSinceStartup;
+            
             delaunator = new Delaunator(pointDistribution.GetSamples(nodeCount).Select(vec => new Point(vec.x, vec.y)).Cast<IPoint>().ToArray());
+            
+            Debug.Log($"delaunator in {Time.realtimeSinceStartup-realtimeSinceStartup}s");
         }
 
         public Graph GetGraph()

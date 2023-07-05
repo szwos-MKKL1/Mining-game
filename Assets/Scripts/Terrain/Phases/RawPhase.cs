@@ -29,22 +29,25 @@ namespace Terrain.Phases
 
         private TerrainChunk GenerateChunk(int chunkx, int chunky)
         {
+
             TerrainChunk terrainChunk = new TerrainChunk(new Vector2Int(chunkx, chunky));
-            BlockBase[,] blocks = terrainChunk.Blocks;
-            bool[,] canBuild = terrainChunk.CanBuild;
+            BlockBase[] blocks = terrainChunk.Blocks;
+            bool[] canBuild = terrainChunk.CanBuild;
+            
+            
             for (int xInChunk = 0; xInChunk < TerrainChunk.ChunkSizeX; xInChunk++)
             {
+                int xInWorld = chunkx * TerrainChunk.ChunkSizeX + xInChunk;
                 for (int yInChunk = 0; yInChunk < TerrainChunk.ChunkSizeY; yInChunk++)
                 {
-                    int xInWorld = chunkx * TerrainChunk.ChunkSizeX + xInChunk;
                     int yInWorld = chunky * TerrainChunk.ChunkSizeY + yInChunk;
-
+                    int loc = xInChunk * TerrainChunk.ChunkSizeX + yInChunk;
                     if (borderShape.IsInsideBorder(xInWorld, yInWorld))
                     {
-                        canBuild[xInChunk, yInChunk] = true;
-                        blocks[xInChunk, yInChunk] = BlockRegistry.AIR;
+                        canBuild[loc] = true;
+                        blocks[loc] = BlockRegistry.AIR;
                     }
-                    else blocks[xInChunk, yInChunk] = BlockRegistry.BEDROCK;
+                    else blocks[loc] = BlockRegistry.BEDROCK;
                 }
             }
             
