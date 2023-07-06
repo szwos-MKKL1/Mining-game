@@ -9,6 +9,11 @@ public class PlayerController : MonoBehaviour
 
     public Rigidbody2D rb;
 
+    [SerializeField]
+    public GameObject inventory;
+
+    private GameObject inventoryRef;
+
     private float speed;
 
     // Start is called before the first frame update
@@ -19,6 +24,7 @@ public class PlayerController : MonoBehaviour
 
         GetComponent<PlayerStats>().Subscribe(() => { speed = GetComponent<PlayerStats>().MovementSpeed; });
         speed = GetComponent<PlayerStats>().MovementSpeed;
+
     }
 
     // Update is called once per frame
@@ -29,7 +35,15 @@ public class PlayerController : MonoBehaviour
 
         rb.velocity = new Vector2(xInput * speed, yInput * speed);
 
+        if(Input.GetButtonDown("Inventory"))
+        {
+            inventoryRef = Instantiate(inventory);
+        }
 
+        if(Input.GetButtonUp("Inventory"))
+        {
+            Destroy(inventoryRef);
+        }
         
     }
 }

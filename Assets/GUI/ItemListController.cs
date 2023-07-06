@@ -7,8 +7,7 @@ using UnityEngine.UIElements;
 
 public class ItemListController
 {
-    [SerializeField]
-    public Inventory inventory;
+    Inventory inventory;
 
     VisualTreeAsset listEntryTemplate;
 
@@ -17,7 +16,8 @@ public class ItemListController
     VisualElement itemIcon;
     List<ItemData> allItemData;
 
-    public void InitializeItemList(VisualElement root, VisualTreeAsset listElementTemplate)
+
+    public void InitializeItemList(VisualElement root, VisualTreeAsset listElementTemplate, Inventory inventory)
     {
         //TODO: reconsider this (dynamic updating, event system)
         allItemData = inventory.GetAllItems();
@@ -60,11 +60,6 @@ public class ItemListController
         itemList.itemsSource = allItemData; //This "should" work bcs ItemData derives ScriptableObject, but im not sure :)
 
 
-    }
-
-    public void Update()
-    {
-        allItemData = inventory.GetAllItems();
     }
 
     //TODO: OnItemSelected
