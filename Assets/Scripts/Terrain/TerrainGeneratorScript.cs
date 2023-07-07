@@ -62,43 +62,43 @@ namespace Terrain
             Debug.Log($"Finished generating in {Time.realtimeSinceStartup-realtimeSinceStartup}s");
 
             //Populate map with generated tiles
-            tilemap.ClearAllTiles();
-             Debug.Log("Start rendering");
-             for (int chunkx = 0; chunkx < generationData.chunkSize.x; chunkx++)
-             {
-                 for (int chunky = 0; chunky < generationData.chunkSize.y; chunky++)
-                 {
-                     TerrainChunk chunk = terrainData.Chunks[chunkx, chunky];
-                     int i = 0;
-                     TileBase[] tiles = new TileBase[128*128];
-                     Vector3Int[] positions = new Vector3Int[128 * 128];
-                     for (int x = 0; x < 128 ; x++)
-                     {
-                         for (int y = 0; y < 128; y++)
-                         {
-                             int xInWorld = chunkx * 128 + x;
-                             int yInWorld = chunky * 128 + y;
-            
-                             var tileBase = chunk.Blocks[x * 128 + y].Texture;
-                             if (tileBase != null)
-                             {
-                                 tiles[i] = tileBase;
-                                 positions[i] = new Vector3Int(xInWorld, yInWorld, 0);
-                                 i++;
-                             }
-                                 //tilemap.SetTile(new Vector3Int(xInWorld, yInWorld, 0), tileBase);
-                                 
-                             
-            
-                         }
-                     }
-                     Array.Resize(ref tiles, i);
-                     Array.Resize(ref positions, i);
-                     tilemap.SetTiles(positions, tiles);
-                     //tilemap.SetTilesBlock(new BoundsInt(chunkx*128, chunky*128,0,128,128,0), tiles);
-                 }
-             }
-            Debug.Log("Finished rendering");
+            // tilemap.ClearAllTiles();
+            //  Debug.Log("Start rendering");
+            //  for (int chunkx = 0; chunkx < generationData.chunkSize.x; chunkx++)
+            //  {
+            //      for (int chunky = 0; chunky < generationData.chunkSize.y; chunky++)
+            //      {
+            //          TerrainChunk chunk = terrainData.Chunks[chunkx, chunky];
+            //          int i = 0;
+            //          TileBase[] tiles = new TileBase[128*128];
+            //          Vector3Int[] positions = new Vector3Int[128 * 128];
+            //          for (int x = 0; x < 128 ; x++)
+            //          {
+            //              for (int y = 0; y < 128; y++)
+            //              {
+            //                  int xInWorld = chunkx * 128 + x;
+            //                  int yInWorld = chunky * 128 + y;
+            //
+            //                  var tileBase = chunk.Blocks[x * 128 + y].Texture;
+            //                  if (tileBase != null)
+            //                  {
+            //                      tiles[i] = tileBase;
+            //                      positions[i] = new Vector3Int(xInWorld, yInWorld, 0);
+            //                      i++;
+            //                  }
+            //                      //tilemap.SetTile(new Vector3Int(xInWorld, yInWorld, 0), tileBase);
+            //                      
+            //                  
+            //
+            //              }
+            //          }
+            //          Array.Resize(ref tiles, i);
+            //          Array.Resize(ref positions, i);
+            //          tilemap.SetTiles(positions, tiles);
+            //          //tilemap.SetTilesBlock(new BoundsInt(chunkx*128, chunky*128,0,128,128,0), tiles);
+            //      }
+            //  }
+            // Debug.Log("Finished rendering");
         }
 
         private void OnDrawGizmosSelected()

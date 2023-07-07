@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using DelaunatorSharp;
@@ -43,6 +44,12 @@ namespace Terrain.Phases
 
             Graph combinedGraph = new Graph(pathList);
             GraphDebug.DrawGraph(combinedGraph, Color.green, 10);
+            Graph cavernConnectionGraph = new RandomGraph(combinedGraph).GetGraph();
+            GraphDebug.DrawGraph(cavernConnectionGraph, Color.blue, 300);
+
+            //Remove edges that are too long
+            cavernConnectionGraph.RemoveWhere(edge => DistanceMethods.ManhattanDistance(edge.P.Pos, edge.Q.Pos) > 150);
+            GraphDebug.DrawGraph(cavernConnectionGraph, Color.cyan, 300);
 
             Debug.Log($"Pathing took {Time.realtimeSinceStartup-realtimeSinceStartup}s");
         }

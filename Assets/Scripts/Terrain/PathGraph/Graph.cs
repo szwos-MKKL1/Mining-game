@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using NugetForUnity;
 using UnityEngine;
 
 namespace Terrain.PathGraph
@@ -95,6 +96,21 @@ namespace Terrain.PathGraph
             return nodes.Remove(node);
         }
 
+        public bool Remove(GraphEdge graphEdge)
+        {
+            //TODO check always two
+            if (!nodes.TryGetValue(graphEdge.P, out var nodeP) || 
+                !nodes.TryGetValue(graphEdge.Q, out var nodeQ))
+                return false;
+            nodeP.ConnectedNodes.Remove(nodeQ);
+            nodeQ.ConnectedNodes.Remove(nodeP);
+            
+            //Remove unconnected nodes
+            if (nodeP.ConnectedNodes.Count == 0) Remove(nodeP);
+            if (nodeQ.ConnectedNodes.Count == 0) Remove(nodeQ);
+            return true;
+        }
+
         public int Count => nodes.Count;
         public bool IsReadOnly => false;
 
@@ -102,6 +118,12 @@ namespace Terrain.PathGraph
         {
             List<GraphNode> toRemove = nodes.Where(node => predicate(node)).ToList();
             return toRemove.Sum(node => Remove(node) ? 1 : 0);
+        }
+        
+        public int RemoveWhere([NotNull]Predicate<GraphEdge> predicate)
+        {
+            List<GraphEdge> toRemove = GetEdges().Where(edge => predicate(edge)).ToList();
+            return toRemove.Sum(edge => Remove(edge) ? 1 : 0);
         }
 
         public IEnumerable<GraphEdge> GetEdges()
@@ -130,6 +152,11 @@ namespace Terrain.PathGraph
             }
 
             return edges;
+        }
+
+        public IEnumerable<GraphNode> GetVertices()
+        {
+            return this;
         }
 
         public IEnumerator<GraphNode> GetEnumerator()

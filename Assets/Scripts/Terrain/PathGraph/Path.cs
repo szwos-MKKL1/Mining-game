@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -31,6 +32,12 @@ namespace Terrain.PathGraph
             }
 
             return edges;
+        }
+
+        public Graph AsGraph()
+        {
+            //TODO
+            throw new System.NotImplementedException();
         }
 
         public IEnumerator<GraphNode> GetEnumerator()

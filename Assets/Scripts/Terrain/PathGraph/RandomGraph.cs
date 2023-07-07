@@ -27,6 +27,21 @@ namespace Terrain.PathGraph
             Debug.Log($"delaunator in {Time.realtimeSinceStartup-realtimeSinceStartup}s");
         }
 
+        //TODO point distribution as parameter
+        public RandomGraph(Graph graph)
+        {
+            var realtimeSinceStartup = Time.realtimeSinceStartup;
+
+            var pointDistribution = new PointsAroundGraph(graph, new RangeInt(1, 6), 20);
+            
+            Debug.Log($"pointDistribution in {Time.realtimeSinceStartup-realtimeSinceStartup}s");
+            realtimeSinceStartup = Time.realtimeSinceStartup;
+            
+            delaunator = new Delaunator(pointDistribution.GetSamples().Select(vec => new Point(vec.x, vec.y)).Cast<IPoint>().ToArray());
+            
+            Debug.Log($"delaunator2 in {Time.realtimeSinceStartup-realtimeSinceStartup}s");
+        }
+
         public Graph GetGraph()
         {
             return new Graph(GetNodesSet());

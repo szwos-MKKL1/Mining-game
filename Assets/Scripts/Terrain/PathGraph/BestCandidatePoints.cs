@@ -5,7 +5,7 @@ using Random = System.Random;
 namespace Terrain.PathGraph
 {
     //https://bost.ocks.org/mike/algorithms/ really good visualization
-    public class BestCandidatePoints
+    public class BestCandidatePoints : IPointGenerator
     {
         private int numberOfCandidates;
         private Random random;
@@ -18,6 +18,11 @@ namespace Terrain.PathGraph
             this.numberOfCandidates = numberOfCandidates;
             this.mapSize = mapSize;
             random = new Random(seed);
+        }
+        
+        public IEnumerable<Vector2> GetSamples()
+        {
+            return GetSamples(200);
         }
 
         public IEnumerable<Vector2> GetSamples(int sampleCount)
