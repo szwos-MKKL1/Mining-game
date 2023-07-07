@@ -21,6 +21,7 @@ namespace Terrain.PathGraph
             mGraph = graph;
             startNode = FindClosestNode(startPos);
             destinationNode = FindClosestNode(destinationPos);
+            if (startNode == null || destinationNode == null) throw new Exception("One of the pathing nodes was null!");
             reversedSizeSquared = 1f / math.sqrt(size.x * size.x + size.y * size.y);
             mRandom = new Random(seed);
             this.pathFindingSettings = pathFindingSettings;

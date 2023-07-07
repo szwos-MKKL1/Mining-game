@@ -7,7 +7,7 @@ namespace Terrain
         private Vector2Int chunkCount;
         private Vector2Int chunkSize;
 
-        private T[,] chunks;
+        private T[,] chunks;//TODO save using some kind of dictionary/map
         
         public ChunkedData(Vector2Int chunkCount, Vector2Int chunkSize)
         {

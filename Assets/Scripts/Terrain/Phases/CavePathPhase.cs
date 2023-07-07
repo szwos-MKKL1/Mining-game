@@ -41,6 +41,9 @@ namespace Terrain.Phases
                 pathList.Add(p);
             }
 
+            Graph combinedGraph = new Graph(pathList);
+            GraphDebug.DrawGraph(combinedGraph, Color.green, 10);
+
             Debug.Log($"Pathing took {Time.realtimeSinceStartup-realtimeSinceStartup}s");
         }
     }

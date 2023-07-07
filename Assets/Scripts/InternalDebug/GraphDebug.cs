@@ -37,10 +37,9 @@ namespace InternalDebug
             using IEnumerator<GraphNode> enumerator = path.GetEnumerator();
             enumerator.MoveNext();
             Vector2 p1 = enumerator.Current.Pos;
-            Vector2 p2;
             while (enumerator.MoveNext())
             {
-                p2 = enumerator.Current.Pos;
+                var p2 = enumerator.Current.Pos;
                 Debug.DrawLine(p1*0.16f,p2*0.16f,color,duration,false);
                 p1 = p2;
             }

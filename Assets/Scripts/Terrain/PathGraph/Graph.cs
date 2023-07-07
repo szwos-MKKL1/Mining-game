@@ -7,6 +7,9 @@ using UnityEngine;
 
 namespace Terrain.PathGraph
 {
+    /**
+     * Class implementing planar graph "using half-edge data structure (vertices are doubly connected)"//TODO
+     */
     public class Graph : IEnumerable<GraphNode>, ICollection<GraphNode>
     {
         private HashSet<GraphNode> nodes;
@@ -14,6 +17,53 @@ namespace Terrain.PathGraph
         public Graph(HashSet<GraphNode> nodes)
         {
             this.nodes = nodes;
+        }
+
+        public Graph(Path path)
+        {
+            nodes = new HashSet<GraphNode>();
+            foreach (var n in path)
+            {
+                nodes.Add(n);
+            }
+        }
+
+        /**
+         * Combines multiple paths into one undirected graph
+         * @param paths paths created from the same graph
+         */
+        public Graph(IEnumerable<Path> paths)
+        {
+            //key Old node, value new node
+            IEnumerable<Path> enumerable = paths as Path[] ?? paths.ToArray();
+            Dictionary<GraphNode, GraphNode> dictionary = new();
+
+            //Get all edges and add them
+            foreach (var path in enumerable)
+            {
+                foreach (var edge in path.GetEdges())
+                {
+                    if (!dictionary.TryGetValue(edge.P, out var newP))
+                    {
+                        newP = new GraphNode(edge.P.Pos);
+                        dictionary.Add(edge.P, newP);
+                    }
+                    
+                    if (!dictionary.TryGetValue(edge.Q, out var newQ))
+                    {
+                        newQ = new GraphNode(edge.Q.Pos);
+                        dictionary.Add(edge.Q, newQ);
+                    }
+                    newP.ConnectedNodes.Add(newQ);
+                    newQ.ConnectedNodes.Add(newP);
+                }
+            }
+
+            nodes = new HashSet<GraphNode>();
+            foreach (var n in dictionary.Values)
+            {
+                nodes.Add(n);
+            }
         }
 
         public void Add(GraphNode item)
@@ -54,6 +104,34 @@ namespace Terrain.PathGraph
             return toRemove.Sum(node => Remove(node) ? 1 : 0);
         }
 
+        public IEnumerable<GraphEdge> GetEdges()
+        {
+            HashSet<GraphNode> ready = new();
+            Queue<GraphNode> toCheck = new();
+            List<GraphEdge> edges = new();
+            using IEnumerator<GraphNode> a = this.GetEnumerator();
+            a.MoveNext();
+            toCheck.Enqueue(a.Current);
+            while (toCheck.Count != 0)
+            {
+                List<GraphNode> _toCheck = new();
+                while (toCheck.Count > 0)
+                {
+                    var current = toCheck.Dequeue();
+                    foreach (var currentChild in current.ConnectedNodes.Where(currentChild => !ready.Contains(currentChild)))
+                    {
+                        _toCheck.Add(currentChild);
+                        edges.Add(new GraphEdge(current, currentChild));
+                    }
+                    ready.Add(current);
+                }
+
+                foreach (var n in _toCheck) toCheck.Enqueue(n);
+            }
+
+            return edges;
+        }
+
         public IEnumerator<GraphNode> GetEnumerator()
         {
             return nodes.GetEnumerator();
@@ -63,6 +141,23 @@ namespace Terrain.PathGraph
         {
             return GetEnumerator();
         }
+    }
+
+    public class GraphEdge
+    {
+        private GraphNode p;
+        private GraphNode q;
+
+        public GraphEdge(GraphNode p, GraphNode q)
+        {
+            this.p = p;
+            this.q = q;
+        }
+
+        public GraphNode P => p;
+
+        public GraphNode Q => q;
+        
     }
     
     public class GraphNode
