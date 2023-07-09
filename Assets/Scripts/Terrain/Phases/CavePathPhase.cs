@@ -50,7 +50,9 @@ namespace Terrain.Phases
             //Remove edges that are too long
             cavernConnectionGraph.RemoveWhere(edge => DistanceMethods.ManhattanDistance(edge.P.Pos, edge.Q.Pos) > 150);
             GraphDebug.DrawGraph(cavernConnectionGraph, Color.cyan, 300);
-
+            CellularAutomataSimulator.Create(new Vector2Int(128*10, 1150), new bool[128*10 * 1150],
+                new Vector2Int(128, 128));
+            
             Debug.Log($"Pathing took {Time.realtimeSinceStartup-realtimeSinceStartup}s");
         }
     }
