@@ -6,6 +6,8 @@ using DelaunatorSharp;
 using InternalDebug;
 using Terrain.PathGraph;
 using UnityEngine;
+using UnityEngine.Profiling;
+
 namespace Terrain.Phases
 {
     [PhaseDependency(typeof(RawPhase), DependencyOrder.Before)]
@@ -33,7 +35,7 @@ namespace Terrain.Phases
             graph.RemoveWhere(s => !terrainData.GetBuildPermission(new Vector2Int((int)s.Pos.x, (int)s.Pos.y)));
             //GraphDebug.DrawGraph(graph, Color.white, 200);
             PathFinder pathFinder = new PathFinder(graph, startPoint, destinationPoint, terrainData.RealSize, generationData.pathFindingSettings);
-            var realtimeSinceStartup = Time.realtimeSinceStartup;
+            
             
             for (int i = 0; i < 5; i++)
             {
@@ -50,9 +52,22 @@ namespace Terrain.Phases
             //Remove edges that are too long
             cavernConnectionGraph.RemoveWhere(edge => DistanceMethods.ManhattanDistance(edge.P.Pos, edge.Q.Pos) > 150);
             GraphDebug.DrawGraph(cavernConnectionGraph, Color.cyan, 300);
-            CellularAutomataSimulator.Create(new Vector2Int(128*10, 1150), new bool[128*10 * 1150],
-                new Vector2Int(128, 128));
+            var realtimeSinceStartup = Time.realtimeSinceStartup;
+            Profiler.BeginSample("CellularAutomataSimulator");
+            //CellularAutomataSimulator simulator = CellularAutomataSimulator.Create(new Vector2Int(128*10, 1150), new bool[128*10 * 1150],
+            //    new Vector2Int(128, 128));
+            CellularAutomataSimulator simulator = CellularAutomataSimulator.CreateRandom(new Vector2Int(50,50), new Vector2Int(1, 1), 0.4f);
+            ImageDebug.SaveImg(simulator.GetCurrentMap(), "simulation-step0.png");
+            simulator.SimulationStep();
+            ImageDebug.SaveImg(simulator.GetCurrentMap(), "simulation-step1.png");
+            simulator.SimulationStep();
+            ImageDebug.SaveImg(simulator.GetCurrentMap(), "simulation-step2.png");
+            simulator.SimulationStep();
+            ImageDebug.SaveImg(simulator.GetCurrentMap(), "simulation-step3.png");
             
+            Profiler.EndSample();
+
+
             Debug.Log($"Pathing took {Time.realtimeSinceStartup-realtimeSinceStartup}s");
         }
     }
