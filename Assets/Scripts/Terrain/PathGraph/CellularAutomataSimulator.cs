@@ -1,5 +1,10 @@
-﻿using JetBrains.Annotations;
+﻿using System;
+using JetBrains.Annotations;
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.VisualScripting;
 using UnityEngine;
 using Random = Unity.Mathematics.Random;
 
@@ -7,190 +12,107 @@ namespace Terrain.PathGraph
 {
     public class CellularAutomataSimulator
     {
-        private SimulationChunk[,] chunks;
-        private Vector2Int mapSize;
-        private Vector2Int chunkCount;
-        private Vector2Int chunkSize;
-        private bool borderValue = true;
-
-        private CellularAutomataSimulator(Vector2Int chunkCount, Vector2Int mapSize, Vector2Int chunkSize,
-            SimulationChunk[,] chunks)
+        private NativeArray<bool> cellMap;
+        private int2 mapSize;
+        public static CellularAutomataSimulator CreateFromMap(Vector2Int mapSize, bool[] cellMap)
         {
-            this.chunkCount = chunkCount;
-            this.mapSize = mapSize;
-            this.chunkSize = chunkSize;
-            this.chunks = chunks;
-        }
-
-        public static CellularAutomataSimulator Create(Vector2Int mapSize, bool[,] initialMap, Vector2Int chunkSize)
-        {
-            Vector2Int chunkCount = new Vector2Int(Mathf.CeilToInt((float)mapSize.x / chunkSize.x),
-                Mathf.CeilToInt((float)mapSize.y / chunkSize.y));
-            SimulationChunk[,] chunks = new SimulationChunk[chunkCount.x,chunkCount.y];
-            for (int y = 0; y < chunkCount.y; y++)
+            if (mapSize.x * mapSize.y != cellMap.Length) throw new Exception("MapSize doesn't fit cellMap");//TODO message
+            var simulator = new CellularAutomataSimulator
             {
-                int yChunkSize = Mathf.Min(mapSize.y - y * chunkSize.y, chunkSize.y);
-                for (int x = 0; x < chunkCount.x; x++)
-                {
-                    int xChunkSize = Mathf.Min(mapSize.x - x * chunkSize.x, chunkSize.x);
-
-                    Vector2Int thisChunkSize = new Vector2Int(xChunkSize, yChunkSize);
-                    SimulationChunk simulationChunk = new SimulationChunk(thisChunkSize, new Vector2Int(x, y));
-                    bool[,] data = simulationChunk.Data;
-                    for (int yLocal = 0; yLocal < yChunkSize; yLocal++)
-                    {
-                        for (int xLocal = 0; xLocal < xChunkSize; xLocal++)
-                        {
-                            data[xLocal, yLocal] = initialMap[xChunkSize * x + xLocal,yChunkSize * y + yLocal];
-                        }
-                    }
-                    chunks[x,y] = simulationChunk;
-                }
-            }
-
-            return new CellularAutomataSimulator(chunkCount, mapSize, chunkSize, chunks);
-        }
-        //TODO fix a lot of copied code
-        public static CellularAutomataSimulator CreateRandom(Vector2Int mapSize, Vector2Int chunkSize,
-            float aliveChance, int seed = 0)
-        {
-            System.Random random = new System.Random(seed);
-            Vector2Int chunkCount = new Vector2Int(Mathf.CeilToInt((float)mapSize.x / chunkSize.x),
-                Mathf.CeilToInt((float)mapSize.y / chunkSize.y));
-            SimulationChunk[,] chunks = new SimulationChunk[chunkCount.x,chunkCount.y];
-            for (int y = 0; y < chunkCount.y; y++)
-            {
-                int yChunkSize = Mathf.Min(mapSize.y - y * chunkSize.y, chunkSize.y);
-                for (int x = 0; x < chunkCount.x; x++)
-                {
-                    int xChunkSize = Mathf.Min(mapSize.x - x * chunkSize.x, chunkSize.x);
-
-                    Vector2Int thisChunkSize = new Vector2Int(xChunkSize, yChunkSize);
-                    SimulationChunk simulationChunk = new SimulationChunk(thisChunkSize, new Vector2Int(x, y));
-                    bool[,] data = simulationChunk.Data;
-                    for (int yLocal = 0; yLocal < yChunkSize; yLocal++)
-                    {
-                        for (int xLocal = 0; xLocal < xChunkSize; xLocal++)
-                        {
-                            data[xLocal, yLocal] = random.GetWithChance(aliveChance);
-                        }
-                    }
-
-                    chunks[x,y] = simulationChunk;
-                }
-            }
-
-            return new CellularAutomataSimulator(chunkCount, mapSize, chunkSize, chunks);
+                cellMap = new NativeArray<bool>(cellMap, Allocator.Persistent),
+                mapSize = new int2(mapSize.x, mapSize.y) 
+            };
+            return simulator;
         }
         
-        public bool[,] GetCurrentMap()
+        public static CellularAutomataSimulator CreateRandom(Vector2Int mapSize, float aliveChance, int seed)
         {
-            bool[,] result = new bool[mapSize.x,mapSize.y];
-            for (int y = 0; y < chunkCount.y; y++)
+            System.Random random = new System.Random(seed);
+            int size = mapSize.x * mapSize.y;
+            bool[] map = new bool[size];
+            for (int i = 0; i < size; i++)
             {
-                for (int x = 0; x < chunkCount.x; x++)
-                {
-                    SimulationChunk chunk = chunks[x,y];
-                    for (int yLocal = 0; yLocal < chunk.Size.y; yLocal++)
-                    {
-                        for (int xLocal = 0; xLocal < chunk.Size.x; xLocal++)
-                        {
-                            result[x*chunkSize.x + xLocal, y*chunkSize.y + yLocal] = chunk.Data[xLocal, yLocal];
-                        }
-                    }
-                }
+                map[i] = random.GetWithChance(aliveChance);
             }
 
-            return result;
-        }
+            return CreateFromMap(mapSize, map);
+        } 
 
-        //TODO optimize
-        public void SimulationStep()
+        public NativeArray<bool> CellMap => cellMap;
+
+        public int2 MapSize => mapSize;
+
+        public void ExecuteStep(int innerloopBatchCount=64)
         {
-            SimulationChunk[,] newChunks = new SimulationChunk[chunkCount.x,chunkCount.y];
-            for (int y = 0; y < chunkCount.y; y++)
-            {
-                for (int x = 0; x < chunkCount.x; x++)
-                {
-                    newChunks[x,y] = SimulationStepChunk(chunks[x,y]);
-                }
-            }
-
-            chunks = newChunks;
+            var job = GetSimulationStepJob();
+            job.Schedule(job.ArraySize, innerloopBatchCount).Complete();
+            cellMap.Dispose();
+            cellMap = job.Result;
         }
 
-        private SimulationChunk SimulationStepChunk(SimulationChunk oldChunk)
+        //Set cellmap to result of job after completion
+        public CellularAutomataJob GetSimulationStepJob()
         {
-            SimulationChunk newChunk = new SimulationChunk(oldChunk.Size, oldChunk.Pos);
-            bool[,] data = newChunk.Data;
-            Vector2Int size = oldChunk.Size;
-            for (int y = 0; y < size.y; y++)
+            int cellCount = mapSize.x*mapSize.y;
+            var job = new CellularAutomataJob
             {
-                for (int x = 0; x < size.x; x++)
-                {
-                    int aliveNeighbours = CountNeighbours(oldChunk, x, y);
-                    bool toSet = aliveNeighbours + (data[x,y] ? 1 : 0) >= 4;
-                    data[x,y] = toSet;
-                }
-            }
+                mapSize = mapSize,
+                oldMap = cellMap,
+                newMap = new NativeArray<bool>(cellCount, Allocator.Persistent),
+            };
+            
+            return job;
+        }
+    }
 
-            return newChunk;
+    [BurstCompile]
+    public struct CellularAutomataJob : IJobParallelFor
+    {
+        [ReadOnly]
+        public int2 mapSize;
+        [ReadOnly]
+        public NativeArray<bool> oldMap;
+        [WriteOnly]
+        public NativeArray<bool> newMap;
+
+        public void Execute(int index)
+        {
+            int2 pos = IntToPos(index);
+            int count = NeighbourCount(pos) + (oldMap[index] ? 1 : 0);
+            newMap[index] = count >= 4;
         }
 
-        private readonly Vector2Int[] neighbours = {
-            new(1, 1),new(1, 0),new(1, -1),new(0, -1),
-            new(-1, -1),new(-1, 0),new(-1, 1),new(0, 1)
-        };
-        private int CountNeighbours(SimulationChunk chunk, int xLocal, int yLocal)
+        private int NeighbourCount(int2 pos)
         {
             int count = 0;
-            for (int i = 0; i < 8; i++)
+            for (int xoffset = 0; xoffset < 3; xoffset++)
             {
-                Vector2Int localPos = new Vector2Int(xLocal, yLocal) + neighbours[i];
-                if (IsAlive(chunk, localPos.x, localPos.y)) count++;
+                for (int yoffset = 0; yoffset < 3; yoffset++)
+                {
+                    if (xoffset == 0 && yoffset == 0) continue; //Skip parent cell, with 0 offset
+                    int x = pos.x + xoffset;
+                    int y = pos.y + yoffset;
+                    
+                    if (x < 0) x = mapSize.x - 1;
+                    else if (x >= mapSize.x) x = 0;
+                    
+                    if (y < 0) y = mapSize.y - 1;
+                    else if (y >= mapSize.y) y = 0;
+
+                    if (oldMap[PosToInt(x, y)]) count++;
+                }
             }
 
             return count;
         }
 
-        private bool IsAlive(SimulationChunk baseChunk, int xLocal, int yLocal)
-        {
-            Vector2Int originPos = baseChunk.Pos*chunkSize;
-            Vector2Int thisChunkSize = baseChunk.Size;
-            if (xLocal < 0 || xLocal >= thisChunkSize.x || yLocal < 0 || yLocal >= thisChunkSize.y)
-            {
-                return IsAlive(originPos.x + xLocal, originPos.y + yLocal);
-            }
+        //index = pos.x + pos.y * mapSize.x
+        private int2 IntToPos(int index) => new int2(index % mapSize.x, index / mapSize.y);
+        private int PosToInt(int2 pos) => pos.x + pos.y * mapSize.x;
+        private int PosToInt(int x, int y) => x + y * mapSize.x;
 
-            return baseChunk.Data[xLocal, yLocal];
-        }
+        public int ArraySize => mapSize.x*mapSize.y;
 
-        private bool IsAlive(int x, int y)
-        {
-            if (x < 0 || x >= mapSize.x || y < 0 || y >= mapSize.y) return borderValue;
-            var chunk = chunks[x / chunkSize.x, y / chunkSize.y];
-            return chunk.Data[x % chunkSize.x, y % chunkSize.y];
-        }
-    }
-
-    class SimulationChunk
-    {
-        private bool[,] data;
-        private Vector2Int size;
-        private Vector2Int pos;
-
-        public SimulationChunk(Vector2Int size, Vector2Int pos)
-        {
-            this.size = size;
-            this.data = new bool[size.x,size.y];
-            this.pos = pos;
-        }
-        public Vector2Int Size => size;
-        public Vector2Int Pos => pos;
-        public bool[,] Data
-        {
-            get => data;
-            set => data = value;
-        }
+        public NativeArray<bool> Result => newMap;
     }
 }

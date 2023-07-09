@@ -5,6 +5,7 @@ using System.Linq;
 using DelaunatorSharp;
 using InternalDebug;
 using Terrain.PathGraph;
+using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Profiling;
 
@@ -52,19 +53,15 @@ namespace Terrain.Phases
             //Remove edges that are too long
             cavernConnectionGraph.RemoveWhere(edge => DistanceMethods.ManhattanDistance(edge.P.Pos, edge.Q.Pos) > 150);
             GraphDebug.DrawGraph(cavernConnectionGraph, Color.cyan, 300);
+            
+            //var sim = CellularAutomataSimulator.CreateFromMap(new Vector2Int(1000, 1000), new bool[1000 * 1000]);
+            var sim = CellularAutomataSimulator.CreateRandom(new Vector2Int(1000, 1000), 0.4f, 0);
             var realtimeSinceStartup = Time.realtimeSinceStartup;
             Profiler.BeginSample("CellularAutomataSimulator");
-            //CellularAutomataSimulator simulator = CellularAutomataSimulator.Create(new Vector2Int(128*10, 1150), new bool[128*10 * 1150],
-            //    new Vector2Int(128, 128));
-            CellularAutomataSimulator simulator = CellularAutomataSimulator.CreateRandom(new Vector2Int(50,50), new Vector2Int(1, 1), 0.4f);
-            ImageDebug.SaveImg(simulator.GetCurrentMap(), "simulation-step0.png");
-            simulator.SimulationStep();
-            ImageDebug.SaveImg(simulator.GetCurrentMap(), "simulation-step1.png");
-            simulator.SimulationStep();
-            ImageDebug.SaveImg(simulator.GetCurrentMap(), "simulation-step2.png");
-            simulator.SimulationStep();
-            ImageDebug.SaveImg(simulator.GetCurrentMap(), "simulation-step3.png");
-            
+            sim.ExecuteStep();
+            //ImageDebug.SaveImg(sim.CellMap.ToArray(), new Vector2Int(1000, 1000), "step1.png");
+            sim.ExecuteStep();
+            //ImageDebug.SaveImg(sim.CellMap.ToArray(), new Vector2Int(1000, 1000), "step2.png");
             Profiler.EndSample();
 
 
