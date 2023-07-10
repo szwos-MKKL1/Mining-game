@@ -14,13 +14,14 @@ namespace Terrain.PathGraph
     {
         private NativeArray<bool> cellMap;
         private int2 mapSize;
+
         public static CellularAutomataSimulator CreateFromMap(Vector2Int mapSize, bool[] cellMap)
         {
             if (mapSize.x * mapSize.y != cellMap.Length) throw new Exception("MapSize doesn't fit cellMap");//TODO message
             var simulator = new CellularAutomataSimulator
             {
                 cellMap = new NativeArray<bool>(cellMap, Allocator.Persistent),
-                mapSize = new int2(mapSize.x, mapSize.y) 
+                mapSize = new int2(mapSize.x, mapSize.y)
             };
             return simulator;
         }
@@ -36,7 +37,9 @@ namespace Terrain.PathGraph
             }
 
             return CreateFromMap(mapSize, map);
-        } 
+        }
+
+        public int AliveThreshold { get; set; } = 4;
 
         public NativeArray<bool> CellMap => cellMap;
 
@@ -59,6 +62,7 @@ namespace Terrain.PathGraph
                 mapSize = mapSize,
                 oldMap = cellMap,
                 newMap = new NativeArray<bool>(cellCount, Allocator.Persistent),
+                alivethreshold = 4
             };
             
             return job;
@@ -74,20 +78,22 @@ namespace Terrain.PathGraph
         public NativeArray<bool> oldMap;
         [WriteOnly]
         public NativeArray<bool> newMap;
+        [ReadOnly]
+        public int alivethreshold;
 
         public void Execute(int index)
         {
             int2 pos = IntToPos(index);
             int count = NeighbourCount(pos) + (oldMap[index] ? 1 : 0);
-            newMap[index] = count >= 4;
+            newMap[index] = count > alivethreshold;
         }
 
         private int NeighbourCount(int2 pos)
         {
             int count = 0;
-            for (int xoffset = 0; xoffset < 3; xoffset++)
+            for (int xoffset = -1; xoffset < 2; xoffset++)
             {
-                for (int yoffset = 0; yoffset < 3; yoffset++)
+                for (int yoffset = -1; yoffset < 2; yoffset++)
                 {
                     if (xoffset == 0 && yoffset == 0) continue; //Skip parent cell, with 0 offset
                     int x = pos.x + xoffset;
