@@ -53,19 +53,23 @@ namespace Terrain.Phases
             //Remove edges that are too long
             cavernConnectionGraph.RemoveWhere(edge => DistanceMethods.ManhattanDistance(edge.P.Pos, edge.Q.Pos) > 150);
             GraphDebug.DrawGraph(cavernConnectionGraph, Color.cyan, 300);
+
             
-            //var sim = CellularAutomataSimulator.CreateFromMap(new Vector2Int(1000, 1000), new bool[1000 * 1000]);
-            var sim = CellularAutomataSimulator.CreateRandom(new Vector2Int(1000, 1000), 0.4f, 0);
-            var realtimeSinceStartup = Time.realtimeSinceStartup;
-            Profiler.BeginSample("CellularAutomataSimulator");
-            sim.ExecuteStep();
-            //ImageDebug.SaveImg(sim.CellMap.ToArray(), new Vector2Int(1000, 1000), "step1.png");
-            sim.ExecuteStep();
-            //ImageDebug.SaveImg(sim.CellMap.ToArray(), new Vector2Int(1000, 1000), "step2.png");
-            Profiler.EndSample();
-
-
-            Debug.Log($"Pathing took {Time.realtimeSinceStartup-realtimeSinceStartup}s");
+            
+            // //var sim = CellularAutomataSimulator.CreateFromMap(new Vector2Int(1000, 1000), new bool[1000 * 1000]);
+            // var sim = CellularAutomataSimulator.CreateRandom(new Vector2Int(100, 100), 0.4f, 0);
+            // sim.AliveThreshold = 5;
+            // ImageDebug.SaveImg(sim.CellMap.ToArray(), new Vector2Int(100, 100), "step0.png");
+            // var realtimeSinceStartup = Time.realtimeSinceStartup;
+            // Profiler.BeginSample("CellularAutomataSimulator");
+            // for (int i = 0; i < 30; i++)
+            // {
+            //     sim.ExecuteStep();
+            //     ImageDebug.SaveImg(sim.CellMap.ToArray(), new Vector2Int(100, 100), "step"+(i+1)+".png");
+            // }
+            // //ImageDebug.SaveImg(sim.CellMap.ToArray(), new Vector2Int(1000, 1000), "step2.png");
+            // Profiler.EndSample();
+            // Debug.Log($"Pathing took {Time.realtimeSinceStartup-realtimeSinceStartup}s");
         }
     }
 }
