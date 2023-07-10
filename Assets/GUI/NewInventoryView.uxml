@@ -1,0 +1,35 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/GUI/InventoryStyles.uss?fileID=7433441132597879392&amp;guid=479828129fb35354885b80d4e07d4516&amp;type=3#InventoryStyles" />
+    <ui:VisualElement name="Container" style="flex-grow: 1; background-color: rgba(29, 29, 29, 0.72); border-bottom-width: 1px;">
+        <ui:VisualElement name="Header" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); flex-direction: row; height: 100px; max-height: 150px; min-height: 100px; margin-left: 10px; margin-right: 10px; margin-bottom: 10px; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 1px; border-bottom-color: rgb(255, 124, 0); align-self: auto; align-items: stretch;">
+            <ui:Label tabindex="-1" text="INVENTORY" display-tooltip-when-elided="true" name="label_Header" class="header_main" style="-unity-text-align: upper-center; border-left-width: 10px; border-right-width: 10px; border-top-width: 10px; border-bottom-width: 10px; justify-content: flex-start; align-self: center;" />
+            <ui:VisualElement name="Container_Level" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); flex-direction: row; justify-content: center; padding-top: 10px; flex-wrap: nowrap; align-self: auto; align-items: stretch;">
+                <ui:Label tabindex="-1" text="30" display-tooltip-when-elided="true" name="Level_Value" class="header_main" style="font-size: 50px; -unity-text-align: middle-left;" />
+                <ui:VisualElement name="Container_Level_Bar" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
+                    <ui:Label tabindex="-1" text="LEVEL" display-tooltip-when-elided="true" name="Header" style="font-size: 18px;" />
+                    <ui:VisualElement name="Bar_Outer" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); height: 100px; width: 250px; border-left-color: rgb(255, 128, 0); border-right-color: rgb(255, 128, 0); border-top-color: rgb(255, 128, 0); border-bottom-color: rgb(255, 128, 0); border-left-width: 1px; border-right-width: 1px; border-top-width: 1px; border-bottom-width: 1px; border-top-left-radius: 3px; border-bottom-left-radius: 3px; border-top-right-radius: 3px; border-bottom-right-radius: 3px;">
+                        <ui:VisualElement name="Bar_Inner" style="flex-grow: 1; background-color: rgb(152, 89, 26); width: 75%; height: 100%; border-left-color: rgb(152, 89, 26); border-right-color: rgb(152, 89, 26); border-top-color: rgb(152, 89, 26); border-bottom-color: rgb(152, 89, 26); border-left-width: 1px; border-right-width: 1px; border-top-width: 1px; border-bottom-width: 1px; border-top-left-radius: 2px; border-bottom-left-radius: 2px;" />
+                    </ui:VisualElement>
+                    <ui:Label tabindex="-1" text="1500/2000" display-tooltip-when-elided="true" name="Experience_Value" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="Container_Currency" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); flex-direction: row; align-items: center; justify-content: center; padding-top: 10px;">
+                <ui:VisualElement name="Icon" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); width: 60px; height: 60px; background-image: url(&apos;project://database/Assets/GUI/Textures/COIN.png?fileID=2800000&amp;guid=e4ce17dccc1d4ca488b955c33483f46f&amp;type=3#COIN&apos;); max-width: 60px; min-width: 60px; max-height: 60px; min-height: 60px;" />
+                <ui:Label tabindex="-1" text="521" display-tooltip-when-elided="true" name="Value" class="header_main" />
+            </ui:VisualElement>
+            <ui:VisualElement name="Container_Weight" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); flex-direction: row; align-items: center; justify-content: flex-end; padding-top: 10px;">
+                <ui:VisualElement name="Icon" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); width: 60px; height: 60px; background-image: url(&apos;project://database/Assets/GUI/Textures/WEIGHT.png?fileID=2800000&amp;guid=3ff29558eb752ae4e97db1b847e92410&amp;type=3#WEIGHT&apos;); max-width: 60px; min-width: 60px; max-height: 60px; min-height: 60px;" />
+                <ui:Label tabindex="-1" text="100/200" display-tooltip-when-elided="true" name="Value" class="header_main" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="Body" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); flex-direction: row-reverse; padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px;">
+            <ui:VisualElement name="ItemDetails" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); width: 25%; margin-left: 0; margin-right: 15px; margin-top: 50px; margin-bottom: 50px; padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px; border-left-color: rgb(255, 128, 0); border-right-color: rgb(255, 128, 0); border-top-color: rgb(255, 128, 0); border-bottom-color: rgb(255, 128, 0); border-left-width: 1px; border-right-width: 1px; border-top-width: 1px; border-bottom-width: 1px; max-width: 25%;">
+                <ui:Label tabindex="-1" text="Item Name" display-tooltip-when-elided="true" name="FriendlyName" style="font-size: 36px;" />
+                <ui:Label tabindex="-1" text="An enchanted golden apple (in Java Edition) or enchanted apple (in Bedrock Edition), is a rare, uncraftable variant of the golden apple that grants much more powerful effects when consumed. " display-tooltip-when-elided="true" name="Description" style="padding-top: 10px; padding-bottom: 10px; font-size: 20px; white-space: normal;" />
+                <ui:VisualElement name="Container_Buttons" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); flex-direction: row; padding-left: 1px; padding-right: 2px; padding-top: 10px; padding-bottom: 0;">
+                    <ui:Button text="EQUIP" display-tooltip-when-elided="true" name="btn_Equip" style="flex-grow: 1; height: 52px; font-size: 24px; background-color: rgb(226, 137, 45); border-left-color: rgb(226, 137, 45); border-right-color: rgb(226, 137, 45); border-top-color: rgb(226, 137, 45); border-bottom-color: rgb(226, 137, 45); width: auto; max-width: none;" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
