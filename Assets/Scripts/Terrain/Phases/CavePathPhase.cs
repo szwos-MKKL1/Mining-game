@@ -54,7 +54,17 @@ namespace Terrain.Phases
             cavernConnectionGraph.RemoveWhere(edge => DistanceMethods.ManhattanDistance(edge.P.Pos, edge.Q.Pos) > 150);
             GraphDebug.DrawGraph(cavernConnectionGraph, Color.cyan, 300);
 
+            InitialStateGenerator initialStateGenerator =
+                new InitialStateGenerator(
+                    terrainData.RealSize,
+                    cavernConnectionGraph,
+                    new LayerSettings[]
+                    {
+                        new(10, 45),
+                        new(15, 20)
+                    });
             
+            initialStateGenerator.GetInitialMap();
             
             // //var sim = CellularAutomataSimulator.CreateFromMap(new Vector2Int(1000, 1000), new bool[1000 * 1000]);
             // var sim = CellularAutomataSimulator.CreateRandom(new Vector2Int(100, 100), 0.4f, 0);
