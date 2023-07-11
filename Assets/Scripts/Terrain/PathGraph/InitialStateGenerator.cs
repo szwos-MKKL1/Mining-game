@@ -27,9 +27,6 @@ namespace Terrain.PathGraph
         {
             int sizexy = size.x * size.y;
             NativeArray<byte> layerIdMap = new NativeArray<byte>(sizexy, Allocator.Persistent);
-            //Fill array with default value of 255
-            for (int i = 0; i < sizexy; i++) layerIdMap[i] = 255;
-
             int nodeCount = nodes.Length;
             NativeArray<int2> nodesArray = new(nodeCount, Allocator.TempJob);
             for (int i = 0; i < nodeCount; i++)
@@ -37,10 +34,8 @@ namespace Terrain.PathGraph
                 Vector2 pos = nodes[i].Pos;
                 nodesArray[i] = new int2((int)pos.x, (int)pos.y);
             }
-
-            NativeArray<LayerSettings> layersArray = new NativeArray<LayerSettings>(layers, Allocator.TempJob);
-
-            FillLayerMapJob fillLayerMapJob = new FillLayerMapJob()
+            NativeArray<LayerSettings> layersArray = new(layers, Allocator.TempJob);
+            FillLayerMapJob fillLayerMapJob = new FillLayerMapJob
             {
                 layerIdMap = layerIdMap,
                 layers = layersArray,
@@ -49,23 +44,42 @@ namespace Terrain.PathGraph
                 mapSize1D = sizexy,
                 nodes = nodesArray
             };
-            var startTime = Time.realtimeSinceStartup;
             fillLayerMapJob.Schedule(nodeCount, 64).Complete();
-            Debug.Log($"Complete took {Time.realtimeSinceStartup-startTime}s");
             nodesArray.Dispose();
             layersArray.Dispose();
-            
-            
+
+            //TODO remove debug
             ImageDebug.SaveImg(fillLayerMapJob.Result.ToArray(), new Vector2Int(size.x, size.y), "layers.png", 10);
+            
+            
+            
             layerIdMap.Dispose();
             return null;
         }
     }
 
+    //TODO works but not used here
+    // public struct FillNativeArray<T> : IJobParallelFor where T : struct
+    // {
+    //     private NativeArray<T> array;
+    //     private T value;
+    //
+    //     public FillNativeArray(NativeArray<T> array, T value)
+    //     {
+    //         this.array = array;
+    //         this.value = value;
+    //     }
+    //
+    //     public void Execute(int index)
+    //     {
+    //         array[index] = value;
+    //     }
+    // }
+
     public struct FillLayerMapJob : IJobParallelFor
     {
         [NativeDisableParallelForRestriction]
-        public NativeArray<byte> layerIdMap; //default to 255
+        public NativeArray<byte> layerIdMap; // values 0 = no layer, 1 = layer with id 0, 2 = layer 1...
         
         [ReadOnly] public NativeArray<LayerSettings> layers;
         [ReadOnly] public int layerCount;
@@ -80,12 +94,12 @@ namespace Terrain.PathGraph
             {
                 LayerSettings layer = layers[layerId];
                 //Generate circle
-                GenerateCircle(nodePos, layer.radius, (byte)layerId);
+                GenerateCircle(nodePos, layer.radius, (byte)(layerId+1)); //Layer id in layerMap should be 1 larger than it's value in layers array
             }
         }
 
         //TODO could be optimized by saving where layers in current node were already generated, starting from layer 0 to layer 1,2..
-        private void GenerateCircle(int2 center, int radius, byte val)
+        private void GenerateCircle(int2 center, int radius, byte layerId)
         {
             int top = center.y + radius;
             int bottom = center.y - radius;
@@ -104,9 +118,9 @@ namespace Terrain.PathGraph
                     //Is inside circle
                     
                     byte oldval = layerIdMap[index];
-                    if (val < oldval) //If there is already layer on current grid node with higher priority, then skip
+                    if (oldval == 0 || layerId < oldval) //If there is already layer on current grid node with higher priority, then skip
                     {
-                        layerIdMap[index] = val;
+                        layerIdMap[index] = layerId;
                     }
                 }
             }
