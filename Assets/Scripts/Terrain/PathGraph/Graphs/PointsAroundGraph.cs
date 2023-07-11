@@ -22,6 +22,7 @@ namespace Terrain.PathGraph
             mRandom = new System.Random(seed);
         }
 
+        //TODO count of points should be affected by length of edge
         public IEnumerable<Vector2> GetSamples()
         {
             List<Vector2> sample = new();
