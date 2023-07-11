@@ -60,26 +60,32 @@ namespace Terrain.Phases
                     cavernConnectionGraph,
                     new LayerSettings[]
                     {
-                        new(10, 45),
-                        new(15, 20)
+                        new(7, 100),
+                        new(25, 45)
                     });
             
-            initialStateGenerator.GetInitialMap();
+            bool[] initial = initialStateGenerator.GetInitialMap();
+            for (int i = 0; i < 100; i++)
+            {
+                initial[i] = true;
+            }
+            //ImageDebug.SaveImg(initial, terrainData.RealSize, "initial.png");
             
-            // //var sim = CellularAutomataSimulator.CreateFromMap(new Vector2Int(1000, 1000), new bool[1000 * 1000]);
-            // var sim = CellularAutomataSimulator.CreateRandom(new Vector2Int(100, 100), 0.4f, 0);
-            // sim.AliveThreshold = 5;
-            // ImageDebug.SaveImg(sim.CellMap.ToArray(), new Vector2Int(100, 100), "step0.png");
-            // var realtimeSinceStartup = Time.realtimeSinceStartup;
-            // Profiler.BeginSample("CellularAutomataSimulator");
-            // for (int i = 0; i < 30; i++)
-            // {
-            //     sim.ExecuteStep();
-            //     ImageDebug.SaveImg(sim.CellMap.ToArray(), new Vector2Int(100, 100), "step"+(i+1)+".png");
-            // }
-            // //ImageDebug.SaveImg(sim.CellMap.ToArray(), new Vector2Int(1000, 1000), "step2.png");
-            // Profiler.EndSample();
-            // Debug.Log($"Pathing took {Time.realtimeSinceStartup-realtimeSinceStartup}s");
+            var sim = CellularAutomataSimulator.CreateFromMap(terrainData.RealSize, initial);
+            //var sim = CellularAutomataSimulator.CreateRandom(new Vector2Int(100, 100), 0.4f, 0);
+            sim.AliveThreshold = 4;
+            //ImageDebug.SaveImg(sim.CellMap.ToArray(), terrainData.RealSize, "step0.png");
+            var realtimeSinceStartup = Time.realtimeSinceStartup;
+            Profiler.BeginSample("CellularAutomataSimulator");
+            for (int i = 0; i < 15; i++)
+            {
+                sim.ExecuteStep();
+                //ImageDebug.SaveImg(sim.CellMap.ToArray(), terrainData.RealSize, "step"+(i+1)+".png");
+            }
+            //ImageDebug.SaveImg(sim.CellMap.ToArray(), new Vector2Int(1000, 1000), "step2.png");
+            Profiler.EndSample();
+            sim.Dispose();
+            Debug.Log($"Pathing took {Time.realtimeSinceStartup-realtimeSinceStartup}s");
         }
     }
 }

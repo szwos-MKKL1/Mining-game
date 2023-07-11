@@ -10,7 +10,7 @@ using Random = Unity.Mathematics.Random;
 
 namespace Terrain.PathGraph
 {
-    public class CellularAutomataSimulator
+    public class CellularAutomataSimulator : IDisposable
     {
         private NativeArray<bool> cellMap;
         private int2 mapSize;
@@ -62,10 +62,15 @@ namespace Terrain.PathGraph
                 mapSize = mapSize,
                 oldMap = cellMap,
                 newMap = new NativeArray<bool>(cellCount, Allocator.Persistent),
-                alivethreshold = 4
+                alivethreshold = AliveThreshold
             };
             
             return job;
+        }
+
+        public void Dispose()
+        {
+            cellMap.Dispose();
         }
     }
 

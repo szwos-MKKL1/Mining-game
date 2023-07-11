@@ -25,15 +25,43 @@ namespace Terrain.PathGraph
 
         public bool[] GetInitialMap(int seed=0)
         {
+            var startTime = Time.realtimeSinceStartup;
+            NativeArray<byte> layerMap = GenerateLayerMap();
+            //ImageDebug.SaveImg(layerMap.Result.ToArray(), new Vector2Int(size.x, size.y), "layers.png", 10);
+            System.Random random = new System.Random(seed);
             int sizexy = size.x * size.y;
-            NativeArray<byte> layerIdMap = new NativeArray<byte>(sizexy, Allocator.Persistent);
+            bool[] aliveMap = new bool[sizexy];
+            for (int i = 0; i < sizexy; i++)
+            {
+                int layerId = layerMap[i]-1;
+                if (layerId < 0) continue;
+                byte perc = layers[layerId].percentChance;
+                aliveMap[i] = perc switch
+                {
+                    0 => false,
+                    >= 100 => true,
+                    _ => random.Next(0, 100) <= perc
+                };
+
+            }
+
+            layerMap.Dispose();
+            return aliveMap;
+        }
+        [BurstCompile]
+        private NativeArray<byte> GenerateLayerMap()
+        {
+            int sizexy = size.x * size.y;
             int nodeCount = nodes.Length;
+            
+            NativeArray<byte> layerIdMap = new(sizexy, Allocator.Persistent);
             NativeArray<int2> nodesArray = new(nodeCount, Allocator.TempJob);
             for (int i = 0; i < nodeCount; i++)
             {
                 Vector2 pos = nodes[i].Pos;
                 nodesArray[i] = new int2((int)pos.x, (int)pos.y);
             }
+            
             NativeArray<LayerSettings> layersArray = new(layers, Allocator.TempJob);
             FillLayerMapJob fillLayerMapJob = new FillLayerMapJob
             {
@@ -44,17 +72,10 @@ namespace Terrain.PathGraph
                 mapSize1D = sizexy,
                 nodes = nodesArray
             };
-            fillLayerMapJob.Schedule(nodeCount, 64).Complete();
+            fillLayerMapJob.Schedule(nodeCount, 8).Complete();
             nodesArray.Dispose();
             layersArray.Dispose();
-
-            //TODO remove debug
-            ImageDebug.SaveImg(fillLayerMapJob.Result.ToArray(), new Vector2Int(size.x, size.y), "layers.png", 10);
-            
-            
-            
-            layerIdMap.Dispose();
-            return null;
+            return layerIdMap;
         }
     }
 
@@ -76,6 +97,7 @@ namespace Terrain.PathGraph
     //     }
     // }
 
+    [BurstCompile]
     public struct FillLayerMapJob : IJobParallelFor
     {
         [NativeDisableParallelForRestriction]
