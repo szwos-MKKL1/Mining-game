@@ -5,13 +5,20 @@ using UnityEngine;
 
 public class ExampleCollectibleItem : MonoBehaviour, ICollectible
 {
+    public delegate void ItemCollectedCallback(bool status);
+
     public static event HandleItemCollected OnItemCollected;
-    public delegate void HandleItemCollected(ItemData itemData);
+    public delegate void HandleItemCollected(ItemData itemData, ItemCollectedCallback callback);
     public ItemData itemData;
 
     public void Collect()
     {
-        Destroy(gameObject);
-        OnItemCollected?.Invoke(itemData);
+        OnItemCollected?.Invoke(itemData, HandleItemCollectedCallback);
+    }
+
+    private void HandleItemCollectedCallback(bool status)
+    {
+        if(status)
+            Destroy(gameObject);
     }
 }

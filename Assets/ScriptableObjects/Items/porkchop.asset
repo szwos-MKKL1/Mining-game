@@ -12,5 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ad9e567091e7e641b1b326c4bdf705f, type: 3}
   m_Name: porkchop
   m_EditorClassIdentifier: 
+  ID: 4b373f19-3270-4ed1-a859-f00672f76487
   displayName: porkchop
+  description: 'Cooked porkchop is a food item that can be eaten by the player. '
+  sellPrice: 16
   icon: {fileID: 21300000, guid: 4487a3fc50295b84081d7522fccd4fe3, type: 3}

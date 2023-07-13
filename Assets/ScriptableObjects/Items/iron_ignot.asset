@@ -12,5 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ad9e567091e7e641b1b326c4bdf705f, type: 3}
   m_Name: iron_ignot
   m_EditorClassIdentifier: 
+  ID: a455a3c6-2f33-47fb-9b55-efb5c20872b1
   displayName: iron ignot
+  description: 'Iron ingots are versatile metal ingots used extensively in crafting. '
+  sellPrice: 100
   icon: {fileID: 21300000, guid: d34c2e61766a6914294ff4c61e1fadf0, type: 3}

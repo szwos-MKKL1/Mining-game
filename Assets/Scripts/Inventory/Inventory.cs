@@ -10,12 +10,12 @@ public class Inventory : MonoBehaviour
 
     private void OnEnable()
     {
-        ExampleCollectibleItem.OnItemCollected += Add;
+        //ExampleCollectibleItem.OnItemCollected += Add;
     }
 
     private void OnDisable()
     {
-        ExampleCollectibleItem.OnItemCollected -= Add;
+        //ExampleCollectibleItem.OnItemCollected -= Add;
     }
 
     public void Add(ItemData itemData)

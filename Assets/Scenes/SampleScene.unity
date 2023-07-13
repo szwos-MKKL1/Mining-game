@@ -900,6 +900,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1118102734}
   - component: {fileID: 1118102733}
+  - component: {fileID: 1118102735}
   m_Layer: 0
   m_Name: UITEST
   m_TagString: Untagged
@@ -938,6 +939,23 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1118102735
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1118102732}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca0ad6bb16351884e9f1ce737cd8fd0c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  StoredItems:
+  - Details: {fileID: 11400000, guid: 7e0093d41299d7b4d91563a51ab5fe81, type: 2}
+  - Details: {fileID: 11400000, guid: 9b2ce6f44f1dae04fa777c6dd1221b08, type: 2}
+  inventoryWidth: 9
+  inventoryHeight: 6
 --- !u!1 &1441693816
 GameObject:
   m_ObjectHideFlags: 0

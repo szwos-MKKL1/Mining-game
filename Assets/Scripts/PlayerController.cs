@@ -9,9 +9,9 @@ public class PlayerController : MonoBehaviour
 
     public Rigidbody2D rb;
 
+    //TODO: remove those 2
     [SerializeField]
     public GameObject inventory;
-
     private GameObject inventoryRef;
 
     private float speed;
