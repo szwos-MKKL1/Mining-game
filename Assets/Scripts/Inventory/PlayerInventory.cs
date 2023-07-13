@@ -32,15 +32,15 @@ public sealed class PlayerInventory : MonoBehaviour
     public int inventoryWidth;
     public int inventoryHeight;
 
-    private void OnEnable()
-    {
-        ExampleCollectibleItem.OnItemCollected += AddItem;
-    }
-
-    private void OnDisable()
-    {
-        ExampleCollectibleItem.OnItemCollected -= AddItem;
-    }
+    // private void OnEnable()
+    // {
+    //     ExampleCollectibleItem.OnItemCollected += AddItem;
+    // }
+    //
+    // private void OnDisable()
+    // {
+    //     ExampleCollectibleItem.OnItemCollected -= AddItem;
+    // }
 
     private void Awake()
     {
@@ -66,45 +66,40 @@ public sealed class PlayerInventory : MonoBehaviour
         itemDetailBody = itemDetails.Q<Label>("Body");
         itemDetailPrice = itemDetails.Q<Label>("SellPrice");
 
-        //TODO: check if this is possible with vanilla unity in this version
-        //TODO: propably could be done with Coroutines
-        await UniTask.WaitForEndOfFrame();
-
-        ConfigureSlotDimensions();
 
         isInventoryReady = true;
     }
-
+    
     private void ConfigureSlotDimensions()
     {
         VisualElement firstSlot = inventoryGrid.Children().First();
-
+    
         slotWidth = Mathf.RoundToInt(firstSlot.worldBound.width);
         slotHeight = Mathf.RoundToInt(firstSlot.worldBound.height);
     }
 
-    private async Task<bool> GetPositionForItem(VisualElement newItem)
-    {
-        for(int y = 0; y < inventoryWidth; y++)
-        {
-            for(int x = 0; x < inventoryHeight; x++)
-            {
-                SetItemPosition(newItem, new Vector2( slotWidth * x,slotHeight * y));
-
-                await UniTask.WaitForEndOfFrame();
-
-                StoredItem overlappingItem = StoredItems.FirstOrDefault(s =>
-                    s.RootVisual != null &&
-                    s.RootVisual.layout.Overlaps(newItem.layout));
-
-                if (overlappingItem == null) 
-                {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
+    // private async Task<bool> GetPositionForItem(VisualElement newItem)
+    // {
+    //     for(int y = 0; y < inventoryWidth; y++)
+    //     {
+    //         for(int x = 0; x < inventoryHeight; x++)
+    //         {
+    //             SetItemPosition(newItem, new Vector2( slotWidth * x,slotHeight * y));
+    //
+    //             await UniTask.WaitForEndOfFrame();
+    //
+    //             StoredItem overlappingItem = StoredItems.FirstOrDefault(s =>
+    //                 s.RootVisual != null &&
+    //                 s.RootVisual.layout.Overlaps(newItem.layout));
+    //
+    //             if (overlappingItem == null) 
+    //             {
+    //                 return true;
+    //             }
+    //         }
+    //     }
+    //     return false;
+    //}
 
     private static void SetItemPosition(VisualElement element, Vector2 vector)
     {
@@ -113,68 +108,79 @@ public sealed class PlayerInventory : MonoBehaviour
     }
 
     //TODO: why is it done like this? is it bcs LoadInventory is async?
-    private void Start() => LoadInventory();
-
-    private async void LoadInventory() 
+    private void Start()
     {
-        //TODO: how this works
-        await UniTask.WaitUntil(() => isInventoryReady);
-
-        foreach (StoredItem loadedItem in StoredItems)
+        foreach (var child in inventoryGrid.Children())
         {
-            ItemVisualElement inventoryItemVisual = new ItemVisualElement(loadedItem.Details);
-
-            AddItemToInventoryGrid(inventoryItemVisual);
-
-            bool inventoryHasSpace = await GetPositionForItem(inventoryItemVisual);
-
-            if(!inventoryHasSpace)
-            {
-                //TODO: some indication for the user (propably somewhere else,
-                //you don't want to indicate full inventory, when inventory is allready
-                //full and player wants to pickup another item)
-                Debug.Log("Inventory has no space!");
-                RemoveItemFromInventoryGrid(inventoryItemVisual);
-                continue;
-            }
-
-            ConfigureInventoryItem(loadedItem, inventoryItemVisual);
+            Debug.Log($"aaa {child.name} {StoredItems[1].Details}");
+            var label1 = new Label( "Hell-o-world" );
+            //child.Add( label1 );
+            child.Add(new ItemVisualElement(StoredItems[1].Details));
         }
+        
+        //VisualElement firstSlot = inventoryGrid.Children().First();
     }
 
-    public async void AddItem(ItemData newItem, ExampleCollectibleItem.ItemCollectedCallback callback)
-    {
-        ItemVisualElement inventoryItemVisual = new ItemVisualElement(newItem);
-
-        StoredItem storedItem = new StoredItem();
-        storedItem.Details = newItem;
-        storedItem.RootVisual = inventoryItemVisual;
-
-        AddItemToInventoryGrid(inventoryItemVisual);
-
-        bool inventoryHasSpace = await GetPositionForItem(inventoryItemVisual);
-
-        if(!inventoryHasSpace)
-        {
-            Debug.Log("Inventory has no space!");
-            RemoveItemFromInventoryGrid(inventoryItemVisual);
-            callback?.Invoke(false);
-            return;
-        }
-
-        //TODO: this call could propably be simplified to take only 1st argument
-        ConfigureInventoryItem(storedItem, inventoryItemVisual);
-        callback?.Invoke(true);
-        return;
-    }
-
-    private void AddItemToInventoryGrid(VisualElement item) => inventoryGrid.Add(item);
-    private void RemoveItemFromInventoryGrid(VisualElement item) => inventoryGrid.Remove(item);
-
-    private static void ConfigureInventoryItem(StoredItem item, ItemVisualElement visual)
-    {
-        item.RootVisual = visual;
-        visual.style.visibility = Visibility.Visible;
-    }
+    // private async void LoadInventory() 
+    // {
+    //     //TODO: how this works
+    //     await UniTask.WaitUntil(() => isInventoryReady);
+    //
+    //     foreach (StoredItem loadedItem in StoredItems)
+    //     {
+    //         ItemVisualElement inventoryItemVisual = new ItemVisualElement(loadedItem.Details);
+    //
+    //         AddItemToInventoryGrid(inventoryItemVisual);
+    //
+    //         bool inventoryHasSpace = await GetPositionForItem(inventoryItemVisual);
+    //
+    //         if(!inventoryHasSpace)
+    //         {
+    //             //TODO: some indication for the user (propably somewhere else,
+    //             //you don't want to indicate full inventory, when inventory is allready
+    //             //full and player wants to pickup another item)
+    //             Debug.Log("Inventory has no space!");
+    //             RemoveItemFromInventoryGrid(inventoryItemVisual);
+    //             continue;
+    //         }
+    //
+    //         ConfigureInventoryItem(loadedItem, inventoryItemVisual);
+    //     }
+    // }
+    //
+    // public async void AddItem(ItemData newItem, ExampleCollectibleItem.ItemCollectedCallback callback)
+    // {
+    //     ItemVisualElement inventoryItemVisual = new ItemVisualElement(newItem);
+    //
+    //     StoredItem storedItem = new StoredItem();
+    //     storedItem.Details = newItem;
+    //     storedItem.RootVisual = inventoryItemVisual;
+    //
+    //     AddItemToInventoryGrid(inventoryItemVisual);
+    //
+    //     bool inventoryHasSpace = await GetPositionForItem(inventoryItemVisual);
+    //
+    //     if(!inventoryHasSpace)
+    //     {
+    //         Debug.Log("Inventory has no space!");
+    //         RemoveItemFromInventoryGrid(inventoryItemVisual);
+    //         callback?.Invoke(false);
+    //         return;
+    //     }
+    //
+    //     //TODO: this call could propably be simplified to take only 1st argument
+    //     ConfigureInventoryItem(storedItem, inventoryItemVisual);
+    //     callback?.Invoke(true);
+    //     return;
+    // }
+    //
+    // private void AddItemToInventoryGrid(VisualElement item) => inventoryGrid.Add(item);
+    // private void RemoveItemFromInventoryGrid(VisualElement item) => inventoryGrid.Remove(item);
+    //
+    // private static void ConfigureInventoryItem(StoredItem item, ItemVisualElement visual)
+    // {
+    //     item.RootVisual = visual;
+    //     visual.style.visibility = Visibility.Visible;
+    // }
 
 }

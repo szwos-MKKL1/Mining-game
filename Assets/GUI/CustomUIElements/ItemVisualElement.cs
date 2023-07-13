@@ -12,20 +12,21 @@ namespace CustomUIElements
         public ItemVisualElement(ItemData itemData)
         {
             this.itemData = itemData;
-            name = $"{itemData.displayName}";
-            style.height = PlayerInventory.slotHeight;
-            style.width = PlayerInventory.slotWidth;
-            style.visibility = Visibility.Hidden;
+            name = itemData.displayName;
+            style.width = 50;
+            style.height = 50;
+            
+            style.visibility = Visibility.Visible;
 
             VisualElement icon = new VisualElement
             {
-                style = { backgroundImage = itemData.icon.texture }
+                style = { backgroundImage = itemData.icon.texture, flexGrow = 1f}
             };
             Add(icon);
 
-            //TODO: what does this do?
-            icon.AddToClassList("visual-icon");
-            AddToClassList("visual-icon-container");
+            // //TODO: what does this do?
+            // icon.AddToClassList("visual-icon");
+            // AddToClassList("visual-icon-container");
 
         }
 
