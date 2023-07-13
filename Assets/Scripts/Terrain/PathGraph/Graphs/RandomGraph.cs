@@ -32,7 +32,7 @@ namespace Terrain.PathGraph
         {
             var realtimeSinceStartup = Time.realtimeSinceStartup;
 
-            var pointDistribution = new PointsAroundGraph(graph, new RangeInt(1, 6), 20);
+            var pointDistribution = new PointsAroundGraph(graph, new RangeInt(1, 4), 10);
             
             Debug.Log($"pointDistribution in {Time.realtimeSinceStartup-realtimeSinceStartup}s");
             realtimeSinceStartup = Time.realtimeSinceStartup;

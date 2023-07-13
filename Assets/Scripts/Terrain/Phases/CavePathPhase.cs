@@ -60,7 +60,7 @@ namespace Terrain.Phases
                     cavernConnectionGraph,
                     new LayerSettings[]
                     {
-                        new(7, 100),
+                        new(10, 100),
                         new(25, 45)
                     });
             
@@ -74,15 +74,20 @@ namespace Terrain.Phases
             var sim = CellularAutomataSimulator.CreateFromMap(terrainData.RealSize, initial);
             //var sim = CellularAutomataSimulator.CreateRandom(new Vector2Int(100, 100), 0.4f, 0);
             sim.AliveThreshold = 4;
-            //ImageDebug.SaveImg(sim.CellMap.ToArray(), terrainData.RealSize, "step0.png");
+            ImageDebug.SaveImg(sim.CellMap.ToArray(), terrainData.RealSize, "step0.png");
             var realtimeSinceStartup = Time.realtimeSinceStartup;
             Profiler.BeginSample("CellularAutomataSimulator");
-            for (int i = 0; i < 15; i++)
+            int j = 1;
+            for (int i = 0; i < 11; i++)
             {
                 sim.ExecuteStep();
-                //ImageDebug.SaveImg(sim.CellMap.ToArray(), terrainData.RealSize, "step"+(i+1)+".png");
+                if (i % 2 == 0)
+                {
+                    ImageDebug.SaveImg(sim.CellMap.ToArray(), terrainData.RealSize, "step"+j+".png");
+                    j++;
+                }
+                    
             }
-            //ImageDebug.SaveImg(sim.CellMap.ToArray(), new Vector2Int(1000, 1000), "step2.png");
             Profiler.EndSample();
             sim.Dispose();
             Debug.Log($"Pathing took {Time.realtimeSinceStartup-realtimeSinceStartup}s");
