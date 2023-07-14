@@ -16,6 +16,11 @@ namespace Terrain
         {
             return GetChunk(realPos).GetBlock(GetLocalPos(realPos));
         }
+        
+        public void SetBlock(Vector2Int realPos, BlockBase block)
+        {
+            GetChunk(realPos).SetBlock(GetLocalPos(realPos), block);
+        }
 
         public bool GetBuildPermission(Vector2Int realPos)
         {

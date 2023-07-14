@@ -29,7 +29,7 @@ namespace Terrain
 
         private void CheckForDependencyOrder(List<IGenerationPhase> generationPhases)
         {
-            HashSet<Type> before = new HashSet<Type>();
+            HashSet<Type> before = new();
             foreach (var phase in generationPhases)
             {
                 foreach (var phaseDependencyAttribute in PhaseDependencyAttribute.GetDependencies(phase))

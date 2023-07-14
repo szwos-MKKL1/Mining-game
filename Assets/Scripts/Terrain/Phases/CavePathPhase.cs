@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DelaunatorSharp;
 using InternalDebug;
+using Terrain.Blocks;
 using Terrain.PathGraph;
 using Terrain.PathGraph.CellularAutomata;
 using Terrain.PathGraph.Graphs;
@@ -78,7 +79,7 @@ namespace Terrain.Phases
             var sim = CellularAutomataSimulator.CreateFromMap(terrainData.RealSize, initial);
             //var sim = CellularAutomataSimulator.CreateRandom(new Vector2Int(100, 100), 0.4f, 0);
             sim.AliveThreshold = 5;
-            ImageDebug.SaveImg(sim.CellMap.ToArray(), terrainData.RealSize, "step0.png");
+            //ImageDebug.SaveImg(sim.CellMap.ToArray(), terrainData.RealSize, "step0.png");
             var realtimeSinceStartup = Time.realtimeSinceStartup;
             Profiler.BeginSample("CellularAutomataSimulator");
             int j = 1;
@@ -87,12 +88,24 @@ namespace Terrain.Phases
                 sim.ExecuteStep();
                 if (i % 2 == 0)
                 {
-                    ImageDebug.SaveImg(sim.CellMap.ToArray(), terrainData.RealSize, "step"+j+".png");
+                    //ImageDebug.SaveImg(sim.CellMap.ToArray(), terrainData.RealSize, "step"+j+".png");
                     j++;
                 }
                     
             }
             Profiler.EndSample();
+
+            Vector2Int realsize = terrainData.RealSize;
+            int index = 0;
+            foreach (var alive in sim.CellMap)
+            {
+                if (alive)
+                {
+                    terrainData.SetBlock(new Vector2Int(index % realsize.x, index / realsize.y), BlockRegistry.AIR);
+                }
+
+                index++;
+            }
             sim.Dispose();
             Debug.Log($"Pathing took {Time.realtimeSinceStartup-realtimeSinceStartup}s");
         }

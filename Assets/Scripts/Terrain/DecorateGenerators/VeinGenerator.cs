@@ -12,10 +12,10 @@ namespace Terrain.DecorateGenerators
     {
         private readonly IBlockProvider blockProvider;
         private readonly INoise mNoise;
-        private readonly float veinSize;
+        private readonly float veinThreshold;
 
         //Uses simple simplex noise
-        public VeinGenerator(IBlockProvider blockProvider, int seed, float frequency, float veinSize = 0.05f)
+        public VeinGenerator(IBlockProvider blockProvider, int seed, float frequency, float veinThreshold = 0.05f)
         {
             this.blockProvider = blockProvider;
             FastNoiseLite fastNoiseLite = new FastNoiseLite();
@@ -23,20 +23,20 @@ namespace Terrain.DecorateGenerators
             fastNoiseLite.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
             fastNoiseLite.SetFrequency(frequency);
             this.mNoise = new FastNoiseAsINoise(fastNoiseLite);
-            this.veinSize = veinSize;
+            this.veinThreshold = veinThreshold;
         }
 
         //Can use custom noise
-        public VeinGenerator(IBlockProvider blockProvider, INoise noise, float veinSize = 0.05f)
+        public VeinGenerator(IBlockProvider blockProvider, INoise noise, float veinThreshold = 0.05f)
         {
             this.blockProvider = blockProvider;
             this.mNoise = noise;
-            this.veinSize = veinSize;
+            this.veinThreshold = veinThreshold;
         }
 
         public BlockBase GetBlock(float x, float y)
         {
-            return mNoise.GetNoise(x, y) > (1 - veinSize) ? blockProvider.GetNextBlock() : null;
+            return mNoise.GetNoise(x, y) > (1 - veinThreshold) ? blockProvider.GetNextBlock() : null;
         }
         
         public BlockBase[,] Generate(Vector2Int size)
