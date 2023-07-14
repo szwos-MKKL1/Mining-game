@@ -12,22 +12,20 @@ namespace Terrain.PathGraph
 {
     public class InitialStateGenerator
     {
-        private LayerSettings[] layers;
-        private GraphNode[] nodes;
         private int2 size;
-
-        public InitialStateGenerator(Vector2Int size, IEnumerable<GraphNode> nodes, IEnumerable<LayerSettings> layerSettings)
+        private IEnumerable<GeneratorNode> nodes;
+        private Layer[] layers;
+        
+        public InitialStateGenerator(Vector2Int size, IEnumerable<GeneratorNode> nodes, Layer[] layers)
         {
             this.size = new int2(size.x, size.y);
-            this.nodes = nodes.ToArray();
-            this.layers = layerSettings.ToArray();
+            this.nodes = nodes;
+            this.layers = layers;
         }
 
         public bool[] GetInitialMap(int seed=0)
         {
-            var startTime = Time.realtimeSinceStartup;
             NativeArray<byte> layerMap = GenerateLayerMap();
-            //ImageDebug.SaveImg(layerMap.Result.ToArray(), new Vector2Int(size.x, size.y), "layers.png", 10);
             System.Random random = new System.Random(seed);
             int sizexy = size.x * size.y;
             bool[] aliveMap = new bool[sizexy];
@@ -35,7 +33,7 @@ namespace Terrain.PathGraph
             {
                 int layerId = layerMap[i]-1;
                 if (layerId < 0) continue;
-                byte perc = layers[layerId].percentChance;
+                byte perc = layers[layerId].aliveChance;
                 aliveMap[i] = perc switch
                 {
                     0 => false,
@@ -48,25 +46,42 @@ namespace Terrain.PathGraph
             layerMap.Dispose();
             return aliveMap;
         }
-        [BurstCompile]
+        
         private NativeArray<byte> GenerateLayerMap()
         {
             int sizexy = size.x * size.y;
-            int nodeCount = nodes.Length;
+            int nodeCount = nodes.Count();
+            int layerCount = layers.Length;
             
             NativeArray<byte> layerIdMap = new(sizexy, Allocator.Persistent);
-            NativeArray<int2> nodesArray = new(nodeCount, Allocator.TempJob);
-            for (int i = 0; i < nodeCount; i++)
+            NativeArray<NodePosAndLayerCount> nodesArray = new(nodeCount, Allocator.TempJob);
+            
+            //Saves generation layers for each node, access layer by (nodeIndex * layerCount + layerIndex)
+            NativeArray<LayerGenerationSettings> layerGenArray = new(layerCount*nodeCount, Allocator.TempJob);
+            
+            int i = 0;
+            foreach (var p in nodes)
             {
-                Vector2 pos = nodes[i].Pos;
-                nodesArray[i] = new int2((int)pos.x, (int)pos.y);
+                int2 pos = new int2(p.Pos.x, p.Pos.y);
+                LayerGenerationSettings[] nodeLayers = p.Layers;
+                int nodeLayerCount = nodeLayers.Length;
+                
+                if (nodeLayerCount > layerCount)
+                    throw new Exception("GeneratorNode cannot have more layers than defined");
+                
+                for (int j = 0; j < nodeLayerCount; j++)
+                {
+                    layerGenArray[i * layerCount + j] = nodeLayers[j];
+                }
+                
+                nodesArray[i] = new NodePosAndLayerCount(pos, (byte)nodeLayerCount);
+                i++;
             }
             
-            NativeArray<LayerSettings> layersArray = new(layers, Allocator.TempJob);
             FillLayerMapJob fillLayerMapJob = new FillLayerMapJob
             {
                 layerIdMap = layerIdMap,
-                layers = layersArray,
+                layerGenSettingsForNodes = layerGenArray,
                 layerCount = layers.Length,
                 mapSize = size,
                 mapSize1D = sizexy,
@@ -74,7 +89,7 @@ namespace Terrain.PathGraph
             };
             fillLayerMapJob.Schedule(nodeCount, 8).Complete();
             nodesArray.Dispose();
-            layersArray.Dispose();
+            layerGenArray.Dispose();
             return layerIdMap;
         }
     }
@@ -97,26 +112,85 @@ namespace Terrain.PathGraph
     //     }
     // }
 
+
+    public struct GeneratorNode
+    {
+        private Vector2Int pos;
+        private LayerGenerationSettings[] layers;
+        public GeneratorNode(Vector2Int pos, LayerGenerationSettings[] layers)
+        {
+            this.pos = pos;
+            this.layers = layers;
+        }
+        public Vector2Int Pos => pos;
+        public LayerGenerationSettings[] Layers => layers;
+    }
+    
+    public struct LayerGenerationSettings
+    {
+        public short radius;
+        public byte layerID;//Could also be pointer to Layer struct, but pointer takes 8 bytes while this solution takes only 1 byte
+
+        public LayerGenerationSettings(short radius, byte layerID)
+        {
+            this.radius = radius;
+            this.layerID = layerID;
+        }
+    }
+
+    public struct Layer
+    {
+        public byte aliveChance;
+
+        public Layer(byte aliveChance)
+        {
+            this.aliveChance = aliveChance;
+        }
+    }
+    
+    //
+    //
+    // BURST
+    //
+    //
+
+    //Used to save how many layers each nodes has to generate
+    //It is required because node can have less generation layers than other nodes
+    internal struct NodePosAndLayerCount
+    {
+        public int2 pos;
+        public byte layerCount;
+
+        public NodePosAndLayerCount(int2 pos, byte layerCount)
+        {
+            this.pos = pos;
+            this.layerCount = layerCount;
+        }
+    }
+
     [BurstCompile]
-    public struct FillLayerMapJob : IJobParallelFor
+    internal struct FillLayerMapJob : IJobParallelFor
     {
         [NativeDisableParallelForRestriction]
         public NativeArray<byte> layerIdMap; // values 0 = no layer, 1 = layer with id 0, 2 = layer 1...
         
-        [ReadOnly] public NativeArray<LayerSettings> layers;
-        [ReadOnly] public int layerCount;
+        //Get generation layer for node by nodeIndex*layerCount+layerIndex
+        [ReadOnly] public NativeArray<LayerGenerationSettings> layerGenSettingsForNodes;
+        [ReadOnly] public NativeArray<NodePosAndLayerCount> nodes;
         [ReadOnly] public int2 mapSize;
         [ReadOnly] public int mapSize1D;
-        [ReadOnly] public NativeArray<int2> nodes;
+        [ReadOnly] public int layerCount;
         public void Execute(int index)
         {
-            int2 nodePos = nodes[index];
-            //Get layers
-            for (int layerId = layerCount-1; layerId >= 0; layerId--)
+            NodePosAndLayerCount n = nodes[index];
+            int2 nodePos = n.pos;
+            int baseLayer = layerCount * index;
+            //Get generation layers bottom-up
+            for (int layerOffset = n.layerCount-1; layerOffset >= 0 ; layerOffset--)
             {
-                LayerSettings layer = layers[layerId];
+                LayerGenerationSettings layer = layerGenSettingsForNodes[baseLayer + layerOffset];
                 //Generate circle
-                GenerateCircle(nodePos, layer.radius, (byte)(layerId+1)); //Layer id in layerMap should be 1 larger than it's value in layers array
+                GenerateCircle(nodePos, layer.radius, (byte)(layer.layerID+1)); //Layer id in layerMap should be 1 larger than it's value in layers array
             }
         }
 
@@ -151,19 +225,5 @@ namespace Terrain.PathGraph
         private int squared(int v) => v * v;
 
         public NativeArray<byte> Result => layerIdMap;
-    }
-    
-    
-
-    public struct LayerSettings
-    {
-        public int radius;
-        public byte percentChance;
-
-        public LayerSettings(int radius, byte percentChance)
-        {
-            this.radius = radius;
-            this.percentChance = percentChance;
-        }
     }
 }

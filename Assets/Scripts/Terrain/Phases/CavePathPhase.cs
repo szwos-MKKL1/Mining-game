@@ -54,15 +54,17 @@ namespace Terrain.Phases
             cavernConnectionGraph.RemoveWhere(edge => DistanceMethods.ManhattanDistance(edge.P.Pos, edge.Q.Pos) > 150);
             GraphDebug.DrawGraph(cavernConnectionGraph, Color.cyan, 300);
 
-            InitialStateGenerator initialStateGenerator =
-                new InitialStateGenerator(
-                    terrainData.RealSize,
-                    cavernConnectionGraph,
-                    new LayerSettings[]
-                    {
-                        new(10, 100),
-                        new(25, 45)
-                    });
+            Layer[] layers = { new(100), new(45) };
+            List<GeneratorNode> genNodes = new();
+            foreach (var node in cavernConnectionGraph)
+            {
+                LayerGenerationSettings[] genSettings = {
+                    new(5, 0),
+                    new(70, 1)
+                };
+                genNodes.Add(new GeneratorNode(node.Pos.ToVectorInt(), genSettings));
+            }
+            InitialStateGenerator initialStateGenerator = new InitialStateGenerator(terrainData.RealSize, genNodes, layers);
             
             bool[] initial = initialStateGenerator.GetInitialMap();
             for (int i = 0; i < 100; i++)
