@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace Terrain.PathGraph
+namespace Terrain.PathGraph.Graphs.Points
 {
     public interface IPointGenerator
     {

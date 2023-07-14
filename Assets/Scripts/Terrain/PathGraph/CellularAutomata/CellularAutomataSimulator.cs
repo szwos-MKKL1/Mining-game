@@ -1,14 +1,11 @@
 ﻿using System;
-using JetBrains.Annotations;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
-using Unity.VisualScripting;
 using UnityEngine;
-using Random = Unity.Mathematics.Random;
 
-namespace Terrain.PathGraph
+namespace Terrain.PathGraph.CellularAutomata
 {
     public class CellularAutomataSimulator : IDisposable
     {
@@ -39,12 +36,20 @@ namespace Terrain.PathGraph
             return CreateFromMap(mapSize, map);
         }
 
-        public int AliveThreshold { get; set; } = 4;
+        /// <summary>
+        /// Count of cells in 3x3 neighbourhood, at which cell in middle becomes alive.
+        /// If there are "AliveTreshold" or more, alive cells in 3x3 box, cell in middle becomes alive
+        /// </summary>
+        public int AliveThreshold { get; set; } = 5;
 
         public NativeArray<bool> CellMap => cellMap;
 
         public int2 MapSize => mapSize;
 
+        /// <summary>
+        /// Uses CellularAutomataJob to execute one step of simulation
+        /// </summary>
+        /// <param name="innerloopBatchCount">Used in JobHandle.Schedule</param>
         public void ExecuteStep(int innerloopBatchCount=64)
         {
             var job = GetSimulationStepJob();
@@ -52,8 +57,12 @@ namespace Terrain.PathGraph
             cellMap.Dispose();
             cellMap = job.Result;
         }
-
-        //Set cellmap to result of job after completion
+        
+        
+        /// <summary>
+        /// Returns Job used to execute one step of simulation.
+        /// It should be noted that after each step, cellMap of CellularAutomataSimulator has to be set to result of job for further processing
+        /// </summary>
         public CellularAutomataJob GetSimulationStepJob()
         {
             int cellCount = mapSize.x*mapSize.y;
@@ -90,12 +99,13 @@ namespace Terrain.PathGraph
         {
             int2 pos = IntToPos(index);
             int count = NeighbourCount(pos) + (oldMap[index] ? 1 : 0);
-            newMap[index] = count > alivethreshold;
+            newMap[index] = count >= alivethreshold;
         }
 
         private int NeighbourCount(int2 pos)
         {
             int count = 0;
+            //Loop thru all nodes in 3x3 neighborhood of node given by pos
             for (int xoffset = -1; xoffset < 2; xoffset++)
             {
                 for (int yoffset = -1; yoffset < 2; yoffset++)
@@ -104,6 +114,9 @@ namespace Terrain.PathGraph
                     int x = pos.x + xoffset;
                     int y = pos.y + yoffset;
                     
+                    
+                    //TODO allow user to choose what to do when x,y goes out of map bounds
+                    //If x or y goes outside map bounds, value is looped around
                     if (x < 0) x = mapSize.x - 1;
                     else if (x >= mapSize.x) x = 0;
                     

@@ -3,10 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using NugetForUnity;
 using UnityEngine;
 
-namespace Terrain.PathGraph
+namespace Terrain.PathGraph.Graphs
 {
     /**
      * Class implementing planar graph "using half-edge data structure (vertices are doubly connected)"//TODO

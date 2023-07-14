@@ -6,6 +6,7 @@ using Terrain.DecorateGenerators;
 using Terrain.DecorateGenerators.BlockProvider;
 using Terrain.Noise;
 using Terrain.PathGraph;
+using Terrain.PathGraph.Graphs;
 using Terrain.Phases;
 using UnityEditor;
 using UnityEngine;

@@ -2,7 +2,7 @@
 using UnityEngine;
 using Random = System.Random;
 
-namespace Terrain.PathGraph
+namespace Terrain.PathGraph.Graphs.Points
 {
     //https://bost.ocks.org/mike/algorithms/ really good visualization
     public class BestCandidatePoints : IPointGenerator

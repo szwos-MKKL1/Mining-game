@@ -5,6 +5,8 @@ using System.Linq;
 using DelaunatorSharp;
 using InternalDebug;
 using Terrain.PathGraph;
+using Terrain.PathGraph.CellularAutomata;
+using Terrain.PathGraph.Graphs;
 using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -59,14 +61,14 @@ namespace Terrain.Phases
             foreach (var node in cavernConnectionGraph)
             {
                 LayerGenerationSettings[] genSettings = {
-                    new(5, 0),
-                    new(70, 1)
+                    new(10, 0),
+                    new(25, 1)
                 };
                 genNodes.Add(new GeneratorNode(node.Pos.ToVectorInt(), genSettings));
             }
-            InitialStateGenerator initialStateGenerator = new InitialStateGenerator(terrainData.RealSize, genNodes, layers);
+            InitialMapGenerator initialMapGenerator = new InitialMapGenerator(terrainData.RealSize, genNodes, layers);
             
-            bool[] initial = initialStateGenerator.GetInitialMap();
+            bool[] initial = initialMapGenerator.GetInitialMap();
             for (int i = 0; i < 100; i++)
             {
                 initial[i] = true;
@@ -75,7 +77,7 @@ namespace Terrain.Phases
             
             var sim = CellularAutomataSimulator.CreateFromMap(terrainData.RealSize, initial);
             //var sim = CellularAutomataSimulator.CreateRandom(new Vector2Int(100, 100), 0.4f, 0);
-            sim.AliveThreshold = 4;
+            sim.AliveThreshold = 5;
             ImageDebug.SaveImg(sim.CellMap.ToArray(), terrainData.RealSize, "step0.png");
             var realtimeSinceStartup = Time.realtimeSinceStartup;
             Profiler.BeginSample("CellularAutomataSimulator");

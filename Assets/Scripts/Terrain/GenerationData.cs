@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Terrain.Blocks;
 using Terrain.PathGraph;
+using Terrain.PathGraph.Graphs;
 using Terrain.Phases;
 using UnityEngine;
 using UnityEngine.Tilemaps;

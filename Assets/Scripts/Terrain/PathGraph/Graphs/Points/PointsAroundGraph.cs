@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace Terrain.PathGraph
+namespace Terrain.PathGraph.Graphs.Points
 {
     //Created in class so that it is easier to add more settings later
     public class PointsAroundGraph : IPointGenerator

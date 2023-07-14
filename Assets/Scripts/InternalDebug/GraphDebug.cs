@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Terrain.PathGraph;
+using Terrain.PathGraph.Graphs;
 using UnityEngine;
 
 namespace InternalDebug

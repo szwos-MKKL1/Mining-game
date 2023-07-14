@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using DelaunatorSharp;
+using Terrain.PathGraph.Graphs.Points;
 using UnityEngine;
 
-namespace Terrain.PathGraph
+namespace Terrain.PathGraph.Graphs
 {
     /**
      * Builds graph by placing vertices(nodes) randomly(approximation of poisson distribution) in given area
