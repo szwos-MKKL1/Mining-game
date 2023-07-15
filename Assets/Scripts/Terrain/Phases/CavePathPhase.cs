@@ -67,7 +67,11 @@ namespace Terrain.Phases
                 };
                 genNodes.Add(new GeneratorNode(node.Pos.ToVectorInt(), genSettings));
             }
-            InitialMapGenerator initialMapGenerator = new InitialMapGenerator(terrainData.RealSize, genNodes, layers);
+            
+            InitialMapGenerator initialMapGenerator = new InitialMapGenerator(terrainData.RealSize, layers, new []
+            {
+                new CircleAroundNodeGen(genNodes)
+            });
             
             bool[] initial = initialMapGenerator.GetInitialMap();
             for (int i = 0; i < 100; i++)
