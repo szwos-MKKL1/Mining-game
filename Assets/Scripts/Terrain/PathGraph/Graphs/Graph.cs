@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using Unity.Collections;
 using UnityEngine;
 
 namespace Terrain.PathGraph.Graphs
@@ -10,18 +11,18 @@ namespace Terrain.PathGraph.Graphs
     /**
      * Class implementing planar graph "using half-edge data structure (vertices are doubly connected)"//TODO
      */
-    public class Graph : IEnumerable<GraphNode>, ICollection<GraphNode>
+    public class Graph<T> : ICollection<T> where T : GraphNode<T>
     {
-        private HashSet<GraphNode> nodes;
+        private HashSet<T> nodes;
 
-        public Graph(HashSet<GraphNode> nodes)
+        public Graph(HashSet<T> nodes)
         {
             this.nodes = nodes;
         }
 
-        public Graph(Path path)
+        public Graph(Path<T> path)
         {
-            nodes = new HashSet<GraphNode>();
+            nodes = new HashSet<T>();
             foreach (var n in path)
             {
                 nodes.Add(n);
@@ -32,11 +33,11 @@ namespace Terrain.PathGraph.Graphs
          * Combines multiple paths into one undirected graph
          * @param paths paths created from the same graph
          */
-        public Graph(IEnumerable<Path> paths)
+        public Graph(IEnumerable<Path<T>> paths)
         {
             //key Old node, value new node
-            IEnumerable<Path> enumerable = paths as Path[] ?? paths.ToArray();
-            Dictionary<GraphNode, GraphNode> dictionary = new();
+            IEnumerable<Path<T>> enumerable = paths as Path<T>[] ?? paths.ToArray();
+            Dictionary<T, T> dictionary = new();
 
             //Get all edges and add them
             foreach (var path in enumerable)
@@ -45,13 +46,13 @@ namespace Terrain.PathGraph.Graphs
                 {
                     if (!dictionary.TryGetValue(edge.P, out var newP))
                     {
-                        newP = new GraphNode(edge.P.Pos);
+                        newP = edge.P.Clone() as T;
                         dictionary.Add(edge.P, newP);
                     }
                     
                     if (!dictionary.TryGetValue(edge.Q, out var newQ))
                     {
-                        newQ = new GraphNode(edge.Q.Pos);
+                        newQ = edge.Q.Clone() as T;
                         dictionary.Add(edge.Q, newQ);
                     }
                     newP.ConnectedNodes.Add(newQ);
@@ -59,14 +60,14 @@ namespace Terrain.PathGraph.Graphs
                 }
             }
 
-            nodes = new HashSet<GraphNode>();
+            nodes = new HashSet<T>();
             foreach (var n in dictionary.Values)
             {
                 nodes.Add(n);
             }
         }
 
-        public void Add(GraphNode item)
+        public void Add(T item)
         {
             nodes.Add(item);
         }
@@ -76,17 +77,17 @@ namespace Terrain.PathGraph.Graphs
             nodes.Clear();
         }
 
-        public bool Contains(GraphNode item)
+        public bool Contains(T item)
         {
             return nodes.Contains(item);
         }
 
-        public void CopyTo(GraphNode[] array, int arrayIndex)
+        public void CopyTo(T[] array, int arrayIndex)
         {
             nodes.CopyTo(array, arrayIndex);
         }
 
-        public bool Remove(GraphNode node)
+        public bool Remove(T node)
         {
             foreach (var childNode in node.ConnectedNodes)
             {
@@ -95,7 +96,7 @@ namespace Terrain.PathGraph.Graphs
             return nodes.Remove(node);
         }
 
-        public bool Remove(GraphEdge graphEdge)
+        public bool Remove(GraphEdge<T> graphEdge)
         {
             //TODO check always two
             if (!nodes.TryGetValue(graphEdge.P, out var nodeP) || 
@@ -113,36 +114,36 @@ namespace Terrain.PathGraph.Graphs
         public int Count => nodes.Count;
         public bool IsReadOnly => false;
 
-        public int RemoveWhere([NotNull]Predicate<GraphNode> predicate)
+        public int RemoveWhere([NotNull]Predicate<T> predicate)
         {
-            List<GraphNode> toRemove = nodes.Where(node => predicate(node)).ToList();
+            List<T> toRemove = nodes.Where(node => predicate(node)).ToList();
             return toRemove.Sum(node => Remove(node) ? 1 : 0);
         }
         
-        public int RemoveWhere([NotNull]Predicate<GraphEdge> predicate)
+        public int RemoveWhere([NotNull]Predicate<GraphEdge<T>> predicate)
         {
-            List<GraphEdge> toRemove = GetEdges().Where(edge => predicate(edge)).ToList();
+            List<GraphEdge<T>> toRemove = GetEdges().Where(edge => predicate(edge)).ToList();
             return toRemove.Sum(edge => Remove(edge) ? 1 : 0);
         }
 
-        public IEnumerable<GraphEdge> GetEdges()
+        public IEnumerable<GraphEdge<T>> GetEdges()
         {
-            HashSet<GraphNode> ready = new();
-            Queue<GraphNode> toCheck = new();
-            List<GraphEdge> edges = new();
-            using IEnumerator<GraphNode> a = this.GetEnumerator();
+            HashSet<T> ready = new();
+            Queue<T> toCheck = new();
+            List<GraphEdge<T>> edges = new();
+            using IEnumerator<T> a = this.GetEnumerator();
             a.MoveNext();
             toCheck.Enqueue(a.Current);
             while (toCheck.Count != 0)
             {
-                List<GraphNode> _toCheck = new();
+                List<T> _toCheck = new();
                 while (toCheck.Count > 0)
                 {
                     var current = toCheck.Dequeue();
                     foreach (var currentChild in current.ConnectedNodes.Where(currentChild => !ready.Contains(currentChild)))
                     {
                         _toCheck.Add(currentChild);
-                        edges.Add(new GraphEdge(current, currentChild));
+                        edges.Add(new GraphEdge<T>(current, currentChild));
                     }
                     ready.Add(current);
                 }
@@ -153,12 +154,12 @@ namespace Terrain.PathGraph.Graphs
             return edges;
         }
 
-        public IEnumerable<GraphNode> GetVertices()
+        public IEnumerable<T> GetVertices()
         {
             return this;
         }
 
-        public IEnumerator<GraphNode> GetEnumerator()
+        public IEnumerator<T> GetEnumerator()
         {
             return nodes.GetEnumerator();
         }
@@ -169,57 +170,41 @@ namespace Terrain.PathGraph.Graphs
         }
     }
 
-    public class GraphEdge
+    public class GraphEdge<T> where T : GraphNode<T>
     {
-        private GraphNode p;
-        private GraphNode q;
+        private T p;
+        private T q;
 
-        public GraphEdge(GraphNode p, GraphNode q)
+        public GraphEdge(T p, T q)
         {
             this.p = p;
             this.q = q;
         }
 
-        public GraphNode P => p;
+        public T P => p;
 
-        public GraphNode Q => q;
+        public T Q => q;
         
     }
-    
-    public class GraphNode
+
+    public class GraphNode<T> : ICloneable where T : GraphNode<T>
     {
-        //positions right now are always integer so it could be changed to Vector2Int
-        private Vector2 pos;
-        private int cost = 0;
-        private HashSet<GraphNode> connectedNodes = new HashSet<GraphNode>();
+        private HashSet<T> connectedNodes = new HashSet<T>();
 
-        public GraphNode(Vector2 pos)
-        {
-            this.pos = pos;
-        }
-
-        public bool AddConnection(GraphNode graphNode)
+        public bool AddConnection(T graphNode)
         {
             return connectedNodes.Add(graphNode);
         }
 
-        public Vector2 Pos => pos;
-
-        public int Cost
-        {
-            get => cost;
-            set => cost = value;
-        }
-
-        public HashSet<GraphNode> ConnectedNodes
+        public HashSet<T> ConnectedNodes
         {
             get => connectedNodes;
             set => connectedNodes = value;
         }
 
-        public override string ToString()
+        public object Clone()
         {
-            return $"GraphNode(pos={pos.ToString()},cost={cost},connectedNodesCount={connectedNodes.Count})";
+            return this.MemberwiseClone();
         }
     }
 }

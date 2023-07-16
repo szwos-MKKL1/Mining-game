@@ -7,38 +7,38 @@ namespace Terrain.PathGraph.Graphs
     /**
      * Linear directed graph
      */
-    public class Path : IEnumerable<GraphNode>
+    public class Path<T> : IEnumerable<T> where T : GraphNode<T>
     {
-        private readonly LinkedList<GraphNode> path;
-        public Path(LinkedList<GraphNode> path)
+        private readonly LinkedList<T> path;
+        public Path(LinkedList<T> path)
         {
             this.path = path;
         }
 
-        public IEnumerable<GraphEdge> GetEdges()
+        public IEnumerable<GraphEdge<T>> GetEdges()
         {
-            if (path.Count < 2) return Enumerable.Empty<GraphEdge>();
-            List<GraphEdge> edges = new();
-            using IEnumerator<GraphNode> pathEnumerator = path.GetEnumerator();
+            if (path.Count < 2) return Enumerable.Empty<GraphEdge<T>>();
+            List<GraphEdge<T>> edges = new();
+            using IEnumerator<T> pathEnumerator = path.GetEnumerator();
             pathEnumerator.MoveNext();
-            GraphNode p = pathEnumerator.Current;
+            T p = pathEnumerator.Current;
             while (pathEnumerator.MoveNext())
             {
-                GraphNode q = pathEnumerator.Current;
-                edges.Add(new GraphEdge(p,q));
+                T q = pathEnumerator.Current;
+                edges.Add(new GraphEdge<T>(p,q));
                 p = q;
             }
 
             return edges;
         }
 
-        public Graph AsGraph()
+        public Graph<T> AsGraph()
         {
             //TODO
             throw new System.NotImplementedException();
         }
 
-        public IEnumerator<GraphNode> GetEnumerator()
+        public IEnumerator<T> GetEnumerator()
         {
             return path.GetEnumerator();
         }
