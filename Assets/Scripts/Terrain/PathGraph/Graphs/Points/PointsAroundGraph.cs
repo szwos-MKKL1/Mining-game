@@ -4,15 +4,15 @@ using UnityEngine;
 namespace Terrain.PathGraph.Graphs.Points
 {
     //Created in class so that it is easier to add more settings later
-    public class PointsAroundGraph : IPointGenerator
+    public class PointsAroundGraph<T> : IPointGenerator where T : PosGraphNode
     {
-        private Graph graph;
+        private Graph<T> graph;
         private int edgeCountMin;
         private int edgeCountMax;
         private float maxOffset;
         private System.Random mRandom;
 
-        public PointsAroundGraph(Graph graph, RangeInt randomOnEdgeCount, float maxOffset, int seed = 0)
+        public PointsAroundGraph(Graph<T> graph, RangeInt randomOnEdgeCount, float maxOffset, int seed = 0) 
         {
             this.graph = graph;
             edgeCountMin = randomOnEdgeCount.start;

@@ -11,7 +11,7 @@ namespace Terrain.PathGraph.Graphs.Points
         private Random random;
         private Vector2Int mapSize;
         private List<Vector2> points = new();
-        
+
 
         public BestCandidatePoints(Vector2Int mapSize, int numberOfCandidates = 10, int seed = 0)
         {
@@ -19,23 +19,30 @@ namespace Terrain.PathGraph.Graphs.Points
             this.mapSize = mapSize;
             random = new Random(seed);
         }
-        
+
+        public int SampleCount { get; set; } = 200;
+
         public IEnumerable<Vector2> GetSamples()
         {
-            return GetSamples(200);
+            return GetNextSamples(SampleCount);
         }
 
-        public IEnumerable<Vector2> GetSamples(int sampleCount)
+        public void Reset()
+        {
+            points = new();
+        }
+
+        public IEnumerable<Vector2> GetNextSamples(int sampleCount)
         {
             for (int i = 0; i < sampleCount; i++)
             {
-                points.Add(GetSample());
+                points.Add(GetNextSample());
             }
 
             return points;
         }
 
-        public Vector2 GetSample()
+        public Vector2 GetNextSample()
         {
             Vector2 bestCandidate = Vector2.zero;
             float bestDist = 0;

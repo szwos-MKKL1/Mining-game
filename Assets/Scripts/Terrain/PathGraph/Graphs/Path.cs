@@ -7,7 +7,7 @@ namespace Terrain.PathGraph.Graphs
     /**
      * Linear directed graph
      */
-    public class Path<T> : IEnumerable<T> where T : GraphNode<T>
+    public class Path<T> : IEnumerable<T> where T : GraphNode
     {
         private readonly LinkedList<T> path;
         public Path(LinkedList<T> path)

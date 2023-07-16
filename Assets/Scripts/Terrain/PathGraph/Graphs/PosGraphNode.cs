@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Terrain.PathGraph.Graphs
 {
     //TODO better, mathematical name
-    public class PosGraphNode : GraphNode<PosGraphNode>
+    public class PosGraphNode : GraphNode
     {
         private Vector2 pos;
 

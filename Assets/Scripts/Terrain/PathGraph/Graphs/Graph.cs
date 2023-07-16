@@ -11,7 +11,7 @@ namespace Terrain.PathGraph.Graphs
     /**
      * Class implementing planar graph "using half-edge data structure (vertices are doubly connected)"//TODO
      */
-    public class Graph<T> : ICollection<T> where T : GraphNode<T>
+    public class Graph<T> : IEnumerable<T> where T : GraphNode
     {
         private HashSet<T> nodes;
 
@@ -140,8 +140,9 @@ namespace Terrain.PathGraph.Graphs
                 while (toCheck.Count > 0)
                 {
                     var current = toCheck.Dequeue();
-                    foreach (var currentChild in current.ConnectedNodes.Where(currentChild => !ready.Contains(currentChild)))
+                    foreach (var graphNode in current.ConnectedNodes.Where(currentChild => !ready.Contains(currentChild)))
                     {
+                        var currentChild = (T)graphNode;
                         _toCheck.Add(currentChild);
                         edges.Add(new GraphEdge<T>(current, currentChild));
                     }
@@ -153,11 +154,7 @@ namespace Terrain.PathGraph.Graphs
 
             return edges;
         }
-
-        public IEnumerable<T> GetVertices()
-        {
-            return this;
-        }
+        
 
         public IEnumerator<T> GetEnumerator()
         {
@@ -170,7 +167,7 @@ namespace Terrain.PathGraph.Graphs
         }
     }
 
-    public class GraphEdge<T> where T : GraphNode<T>
+    public class GraphEdge<T> where T : GraphNode
     {
         private T p;
         private T q;
@@ -187,16 +184,16 @@ namespace Terrain.PathGraph.Graphs
         
     }
 
-    public class GraphNode<T> : ICloneable where T : GraphNode<T>
+    public class GraphNode : ICloneable
     {
-        private HashSet<T> connectedNodes = new HashSet<T>();
+        private HashSet<GraphNode> connectedNodes = new HashSet<GraphNode>();
 
-        public bool AddConnection(T graphNode)
+        public bool AddConnection(GraphNode graphNode)
         {
             return connectedNodes.Add(graphNode);
         }
 
-        public HashSet<T> ConnectedNodes
+        public HashSet<GraphNode> ConnectedNodes
         {
             get => connectedNodes;
             set => connectedNodes = value;

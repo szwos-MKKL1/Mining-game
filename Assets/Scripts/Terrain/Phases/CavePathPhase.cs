@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using DelaunatorSharp;
 using InternalDebug;
@@ -11,6 +12,7 @@ using Terrain.PathGraph.Graphs;
 using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Profiling;
+using Vector2 = System.Numerics.Vector2;
 
 namespace Terrain.Phases
 {
@@ -18,9 +20,9 @@ namespace Terrain.Phases
     public class CavePathPhase : IGenerationPhase
     {
         private readonly GenerationData generationData;
-        private List<Path> pathList = new();
+        private List<Path<WeightedGraphNode>> pathList = new();
 
-        public CavePathPhase(GenerationData generationData, out IEnumerable<Path> paths)
+        public CavePathPhase(GenerationData generationData, out IEnumerable<Path<WeightedGraphNode>> paths)
         {
             this.generationData = generationData;
             paths = pathList;
@@ -32,9 +34,9 @@ namespace Terrain.Phases
 
             Vector2Int startPoint = new Vector2Int(100, 100);
             Vector2Int destinationPoint = new Vector2Int(1000, 1000);
-            
-            RandomGraph randomGraph = new RandomGraph(terrainData.RealSize, 300, 68);
-            Graph graph = randomGraph.GetGraph();
+
+            RandomGraph<WeightedGraphNode> randomGraph = RandomGraph<WeightedGraphNode>.CreateFromPoints(v => new WeightedGraphNode(v),terrainData.RealSize, 300, 68);
+            Graph<WeightedGraphNode> graph = randomGraph.GetGraph();
             //GraphDebug.DrawGraph(graph, Color.red, 200);
             graph.RemoveWhere(s => !terrainData.GetBuildPermission(new Vector2Int((int)s.Pos.x, (int)s.Pos.y)));
             //GraphDebug.DrawGraph(graph, Color.white, 200);
@@ -43,14 +45,14 @@ namespace Terrain.Phases
             
             for (int i = 0; i < 5; i++)
             {
-                Path p = pathFinder.NextRandomPath();
+                Path<WeightedGraphNode> p = pathFinder.NextRandomPath();
                 //GraphDebug.DrawPath(p, Color.blue, 200);
                 pathList.Add(p);
             }
 
-            Graph combinedGraph = new Graph(pathList);
+            Graph<WeightedGraphNode> combinedGraph = new Graph<WeightedGraphNode>(pathList);
             GraphDebug.DrawGraph(combinedGraph, Color.green, 10);
-            Graph cavernConnectionGraph = new RandomGraph(combinedGraph).GetGraph();
+            Graph<PosGraphNode> cavernConnectionGraph = RandomGraph<PosGraphNode>.CreateAroundGraph(combinedGraph, pos => new PosGraphNode(pos)).GetGraph();
             GraphDebug.DrawGraph(cavernConnectionGraph, Color.blue, 300);
 
             //Remove edges that are too long
@@ -67,6 +69,8 @@ namespace Terrain.Phases
                 };
                 genNodes.Add(new GeneratorNode(node.Pos.ToVectorInt(), genSettings));
             }
+            
+            //TODO maze
             
             InitialMapGenerator initialMapGenerator = new InitialMapGenerator(terrainData.RealSize, layers, new []
             {

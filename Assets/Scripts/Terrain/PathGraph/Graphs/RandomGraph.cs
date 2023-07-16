@@ -6,51 +6,56 @@ using UnityEngine;
 
 namespace Terrain.PathGraph.Graphs
 {
+    public delegate T Create<T>(Vector2 pos) where T : GraphNode;
     /**
      * Builds graph by placing vertices(nodes) randomly(approximation of poisson distribution) in given area
      * and then connecting them using Delaunay triangulation
      */
-    public class RandomGraph
+    public class RandomGraph<T> where T : GraphNode
     {
-        private List<GraphNode> nodes = new List<GraphNode>();
-        private readonly Delaunator delaunator;
-        public RandomGraph(Vector2Int size, int nodeCount, int seed)
+        private List<T> nodes = new List<T>();
+        private Create<T> constructor;
+        private Delaunator delaunator;
+
+        private RandomGraph()
         {
-            var realtimeSinceStartup = Time.realtimeSinceStartup;
+            
+        }
+        public static RandomGraph<T> CreateFromPoints(Create<T> constructor, Vector2Int size, int nodeCount, int seed = 0)
+        {
+            RandomGraph<T> randomGraph = new();
+            randomGraph.constructor = constructor;
             
             var pointDistribution = new BestCandidatePoints(size, 6, seed);
+            pointDistribution.SampleCount = nodeCount;
             
-            Debug.Log($"pointDistribution in {Time.realtimeSinceStartup-realtimeSinceStartup}s");
-            realtimeSinceStartup = Time.realtimeSinceStartup;
-            
-            delaunator = new Delaunator(pointDistribution.GetSamples(nodeCount).Select(vec => new Point(vec.x, vec.y)).Cast<IPoint>().ToArray());
-            
-            Debug.Log($"delaunator in {Time.realtimeSinceStartup-realtimeSinceStartup}s");
+            randomGraph.delaunator = new Delaunator(pointDistribution.GetSamples().Select(vec => new Point(vec.x, vec.y)).Cast<IPoint>().ToArray());
+            return randomGraph;
         }
-
+        
+        public static RandomGraph<T> CreateFromPoints(Create<T> constructor, IPointGenerator pointGenerator)
+        {
+            return new RandomGraph<T>
+            {
+                constructor = constructor,
+                delaunator = new Delaunator(pointGenerator.GetSamples().Select(vec => new Point(vec.x, vec.y)).Cast<IPoint>().ToArray())
+            };
+        }
+        
         //TODO point distribution as parameter
-        public RandomGraph(Graph graph)
+        public static RandomGraph<T> CreateAroundGraph<V>(Graph<V> graph, Create<T> constructor, int seed = 0) where V : PosGraphNode
         {
-            var realtimeSinceStartup = Time.realtimeSinceStartup;
-
-            var pointDistribution = new PointsAroundGraph(graph, new RangeInt(1, 4), 10);
-            
-            Debug.Log($"pointDistribution in {Time.realtimeSinceStartup-realtimeSinceStartup}s");
-            realtimeSinceStartup = Time.realtimeSinceStartup;
-            
-            delaunator = new Delaunator(pointDistribution.GetSamples().Select(vec => new Point(vec.x, vec.y)).Cast<IPoint>().ToArray());
-            
-            Debug.Log($"delaunator2 in {Time.realtimeSinceStartup-realtimeSinceStartup}s");
+            return CreateFromPoints(constructor,new PointsAroundGraph<V>(graph, new RangeInt(1, 4), 10f, seed));
         }
 
-        public Graph GetGraph()
+        public Graph<T> GetGraph()
         {
-            return new Graph(GetNodesSet());
+            return new Graph<T>(GetNodesSet());
         }
 
-        public HashSet<GraphNode> GetNodesSet()
+        public HashSet<T> GetNodesSet()
         {
-            HashSet<GraphNode> hashSet = new HashSet<GraphNode>();
+            HashSet<T> hashSet = new HashSet<T>();
             foreach (var node in GetNodes())
             {
                 hashSet.Add(node);
@@ -59,17 +64,17 @@ namespace Terrain.PathGraph.Graphs
             return hashSet;
         }
 
-        public IEnumerable<GraphNode> GetNodes()
+        public IEnumerable<T> GetNodes()
         {
-            Dictionary<IPoint, GraphNode> pointDictionary = new Dictionary<IPoint, GraphNode>();
+            Dictionary<IPoint, T> pointDictionary = new Dictionary<IPoint, T>();
             foreach (var edge in delaunator.GetEdges())
             {
                 IPoint p = edge.P;
                 IPoint q = edge.Q;
 
 
-                GraphNode pnode = GetOrAddNode(pointDictionary, p);
-                GraphNode qnode = GetOrAddNode(pointDictionary, q);
+                T pnode = GetOrAddNode(pointDictionary, p);
+                T qnode = GetOrAddNode(pointDictionary, q);
 
                 pnode.AddConnection(qnode);
                 qnode.AddConnection(pnode);
@@ -84,12 +89,12 @@ namespace Terrain.PathGraph.Graphs
             return delaunator.GetEdges();
         }
 
-        private static GraphNode GetOrAddNode(IDictionary<IPoint, GraphNode> dict, IPoint point)
+        private T GetOrAddNode(IDictionary<IPoint, T> dict, IPoint point)
         {
-            GraphNode node;
+            T node;
             if (!dict.ContainsKey(point))
             {
-                node = new GraphNode(new Vector2((float)point.X, (float)point.Y));
+                node = constructor(new Vector2((float)point.X, (float)point.Y));
                 dict.Add(point, node);
             }
             else node = dict[point];
