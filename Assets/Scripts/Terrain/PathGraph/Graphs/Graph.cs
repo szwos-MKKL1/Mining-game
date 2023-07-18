@@ -8,27 +8,28 @@ using UnityEngine;
 
 namespace Terrain.PathGraph.Graphs
 {
-    /**
-     * Class implementing planar graph "using half-edge data structure (vertices are doubly connected)"//TODO
-     */
-    public class Graph<T> : IEnumerable<T> where T : GraphNode
+    public class Graph<T> : IEnumerable<GraphNode<T>>
     {
-        private HashSet<T> nodes;
+        private HashSet<GraphNode<T>> nodes;
 
-        public Graph(HashSet<T> nodes)
+        public Graph(HashSet<GraphNode<T>> nodes)
         {
             this.nodes = nodes;
         }
 
         public Graph(Path<T> path)
         {
-            nodes = new HashSet<T>();
-            foreach (var n in path)
+            nodes = new HashSet<GraphNode<T>>();
+            foreach (GraphNode<T> n in path)
             {
                 nodes.Add(n);
             }
         }
 
+        //TODO path normally should be derived from graph, but in this case both are stored in completely different ways
+        //      instead path could simply be graph that doesn't branch, and this method would be replaced with something
+        //      like Graph#Optimize(), which would remove repeating connections between nodes
+        //      we would also require operation which would allow for combining multiple graphs into one
         /**
          * Combines multiple paths into one undirected graph
          * @param paths paths created from the same graph
@@ -37,7 +38,7 @@ namespace Terrain.PathGraph.Graphs
         {
             //key Old node, value new node
             IEnumerable<Path<T>> enumerable = paths as Path<T>[] ?? paths.ToArray();
-            Dictionary<T, T> dictionary = new();
+            Dictionary<GraphNode<T>, GraphNode<T>> dictionary = new();
 
             //Get all edges and add them
             foreach (var path in enumerable)
@@ -46,13 +47,13 @@ namespace Terrain.PathGraph.Graphs
                 {
                     if (!dictionary.TryGetValue(edge.P, out var newP))
                     {
-                        newP = edge.P.Clone() as T;
+                        newP = edge.P.Clone() as GraphNode<T>;
                         dictionary.Add(edge.P, newP);
                     }
                     
                     if (!dictionary.TryGetValue(edge.Q, out var newQ))
                     {
-                        newQ = edge.Q.Clone() as T;
+                        newQ = edge.Q.Clone() as GraphNode<T>;
                         dictionary.Add(edge.Q, newQ);
                     }
                     newP.ConnectedNodes.Add(newQ);
@@ -60,34 +61,19 @@ namespace Terrain.PathGraph.Graphs
                 }
             }
 
-            nodes = new HashSet<T>();
+            nodes = new HashSet<GraphNode<T>>();
             foreach (var n in dictionary.Values)
             {
                 nodes.Add(n);
             }
         }
 
-        public void Add(T item)
-        {
-            nodes.Add(item);
-        }
-
-        public void Clear()
-        {
-            nodes.Clear();
-        }
-
-        public bool Contains(T item)
+        public bool Contains(GraphNode<T> item)
         {
             return nodes.Contains(item);
         }
 
-        public void CopyTo(T[] array, int arrayIndex)
-        {
-            nodes.CopyTo(array, arrayIndex);
-        }
-
-        public bool Remove(T node)
+        public bool Remove(GraphNode<T> node)
         {
             foreach (var childNode in node.ConnectedNodes)
             {
@@ -114,13 +100,13 @@ namespace Terrain.PathGraph.Graphs
         public int Count => nodes.Count;
         public bool IsReadOnly => false;
 
-        public int RemoveWhere([NotNull]Predicate<T> predicate)
+        public int RemoveWhereNode([NotNull]Predicate<GraphNode<T>> predicate)
         {
-            List<T> toRemove = nodes.Where(node => predicate(node)).ToList();
+            List<GraphNode<T>> toRemove = nodes.Where(node => predicate(node)).ToList();
             return toRemove.Sum(node => Remove(node) ? 1 : 0);
         }
         
-        public int RemoveWhere([NotNull]Predicate<GraphEdge<T>> predicate)
+        public int RemoveWhereEdge([NotNull]Predicate<GraphEdge<T>> predicate)
         {
             List<GraphEdge<T>> toRemove = GetEdges().Where(edge => predicate(edge)).ToList();
             return toRemove.Sum(edge => Remove(edge) ? 1 : 0);
@@ -128,23 +114,22 @@ namespace Terrain.PathGraph.Graphs
 
         public IEnumerable<GraphEdge<T>> GetEdges()
         {
-            HashSet<T> ready = new();
-            Queue<T> toCheck = new();
+            HashSet<GraphNode<T>> ready = new();
+            Queue<GraphNode<T>> toCheck = new();
             List<GraphEdge<T>> edges = new();
-            using IEnumerator<T> a = this.GetEnumerator();
+            using IEnumerator<GraphNode<T>> a = GetNodes();
             a.MoveNext();
             toCheck.Enqueue(a.Current);
             while (toCheck.Count != 0)
             {
-                List<T> _toCheck = new();
+                List<GraphNode<T>> _toCheck = new();
                 while (toCheck.Count > 0)
                 {
                     var current = toCheck.Dequeue();
                     foreach (var graphNode in current.ConnectedNodes.Where(currentChild => !ready.Contains(currentChild)))
                     {
-                        var currentChild = (T)graphNode;
-                        _toCheck.Add(currentChild);
-                        edges.Add(new GraphEdge<T>(current, currentChild));
+                        _toCheck.Add(graphNode);
+                        edges.Add(new GraphEdge<T>(current, graphNode));
                     }
                     ready.Add(current);
                 }
@@ -154,11 +139,16 @@ namespace Terrain.PathGraph.Graphs
 
             return edges;
         }
-        
 
-        public IEnumerator<T> GetEnumerator()
+        public IEnumerator<GraphNode<T>> GetNodes()
         {
             return nodes.GetEnumerator();
+        }
+
+
+        public IEnumerator<GraphNode<T>> GetEnumerator()
+        {
+            return GetNodes();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -167,37 +157,32 @@ namespace Terrain.PathGraph.Graphs
         }
     }
 
-    public class GraphEdge<T> where T : GraphNode
+    public class GraphEdge<T>
     {
-        private T p;
-        private T q;
-
-        public GraphEdge(T p, T q)
+        public GraphEdge(GraphNode<T> p, GraphNode<T> q)
         {
-            this.p = p;
-            this.q = q;
+            P = p;
+            Q = q;
         }
 
-        public T P => p;
-
-        public T Q => q;
-        
+        public GraphNode<T> P { get; }
+        public GraphNode<T> Q { get; }
     }
 
-    public class GraphNode : ICloneable
+    public class GraphNode<T> : ICloneable
     {
-        private HashSet<GraphNode> connectedNodes = new HashSet<GraphNode>();
-
-        public bool AddConnection(GraphNode graphNode)
+        public GraphNode(T value)
         {
-            return connectedNodes.Add(graphNode);
+            Value = value;
         }
 
-        public HashSet<GraphNode> ConnectedNodes
+        public bool AddConnection(GraphNode<T> graphNode)
         {
-            get => connectedNodes;
-            set => connectedNodes = value;
+            return ConnectedNodes.Add(graphNode);
         }
+
+        public T Value { get; }
+        public HashSet<GraphNode<T>> ConnectedNodes { get; } = new();
 
         public object Clone()
         {

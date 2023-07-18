@@ -19,7 +19,7 @@ namespace Terrain
         public Tilemap tilemap;
         public GenerationData generationData;
 
-        private IEnumerable<Path> paths;
+        private IEnumerable<Path<PosGraphNode>> paths;
         void Start()
         {
             //StartGeneration();
@@ -107,7 +107,7 @@ namespace Terrain
             if (paths == null) return;
             foreach (var path in paths)
             {
-                using IEnumerator<GraphNode> enumerator = path.GetEnumerator();
+                using IEnumerator<PosGraphNode> enumerator = path.GetEnumerator();
                 enumerator.MoveNext();
                 Vector2 p1 = enumerator.Current.Pos;
                 Vector2 p2;

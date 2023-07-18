@@ -7,24 +7,26 @@ namespace Terrain.PathGraph.Graphs
     /**
      * Linear directed graph
      */
-    public class Path<T> : IEnumerable<T> where T : GraphNode
+    public class Path<T> : IEnumerable<GraphNode<T>>
     {
-        private readonly LinkedList<T> path;
-        public Path(LinkedList<T> path)
+        private readonly LinkedList<GraphNode<T>> path;
+
+        public Path(IEnumerable<GraphNode<T>> path)
         {
-            this.path = path;
+            this.path = new LinkedList<GraphNode<T>>(path);
         }
+
 
         public IEnumerable<GraphEdge<T>> GetEdges()
         {
             if (path.Count < 2) return Enumerable.Empty<GraphEdge<T>>();
             List<GraphEdge<T>> edges = new();
-            using IEnumerator<T> pathEnumerator = path.GetEnumerator();
+            using IEnumerator<GraphNode<T>> pathEnumerator = path.GetEnumerator();
             pathEnumerator.MoveNext();
-            T p = pathEnumerator.Current;
+            GraphNode<T> p = pathEnumerator.Current;
             while (pathEnumerator.MoveNext())
             {
-                T q = pathEnumerator.Current;
+                GraphNode<T> q = pathEnumerator.Current;
                 edges.Add(new GraphEdge<T>(p,q));
                 p = q;
             }
@@ -38,7 +40,7 @@ namespace Terrain.PathGraph.Graphs
             throw new System.NotImplementedException();
         }
 
-        public IEnumerator<T> GetEnumerator()
+        public IEnumerator<GraphNode<T>> GetEnumerator()
         {
             return path.GetEnumerator();
         }

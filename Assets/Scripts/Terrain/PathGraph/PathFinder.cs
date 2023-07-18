@@ -9,14 +9,14 @@ namespace Terrain.PathGraph
 {
     public class PathFinder
     {
-        private readonly Graph<WeightedGraphNode> mGraph;
-        private readonly WeightedGraphNode startNode;
-        private readonly WeightedGraphNode destinationNode;
+        private readonly Graph<PathFinderNode> mGraph;
+        private readonly GraphNode<PathFinderNode> startNode;
+        private readonly GraphNode<PathFinderNode> destinationNode;
         private readonly Random mRandom;
         private readonly float reversedSizeSquared; // 1/przekątna prostokąta świata
         private readonly PathFindingSettings pathFindingSettings;
 
-        public PathFinder(Graph<WeightedGraphNode> graph, Vector2Int startPos, Vector2Int destinationPos, Vector2Int size, PathFindingSettings pathFindingSettings, int seed = 0)
+        public PathFinder(Graph<PathFinderNode> graph, Vector2Int startPos, Vector2Int destinationPos, Vector2Int size, PathFindingSettings pathFindingSettings, int seed = 0)
         {
             mGraph = graph;
             startNode = FindClosestNode(startPos);
@@ -27,19 +27,19 @@ namespace Terrain.PathGraph
             this.pathFindingSettings = pathFindingSettings;
         }
 
-        private WeightedGraphNode FindClosestNode(Vector2Int pos)
+        private GraphNode<PathFinderNode> FindClosestNode(Vector2Int pos)
         {
-            using IEnumerator<WeightedGraphNode> enumerator = mGraph.GetEnumerator();
+            using IEnumerator<GraphNode<PathFinderNode>> enumerator = mGraph.GetNodes();
             enumerator.MoveNext();
-            WeightedGraphNode closestNode = enumerator.Current;
+            GraphNode<PathFinderNode> closestNode = enumerator.Current;
             if (closestNode == null) return null;
             
-            float closestDist = DistanceMethods.SqEuclidianDistance(closestNode.Pos, pos);
+            float closestDist = DistanceMethods.SqEuclidianDistance(closestNode.Value.Pos, pos);
             while (enumerator.MoveNext())
             {
-                WeightedGraphNode node = enumerator.Current;
+                GraphNode<PathFinderNode> node = enumerator.Current;
                 if (node == null) continue;
-                float distance = DistanceMethods.SqEuclidianDistance(node.Pos, pos);
+                float distance = DistanceMethods.SqEuclidianDistance(node.Value.Pos, pos);
                 if (!(distance < closestDist)) continue;
                 closestNode = node;
                 closestDist = distance;
@@ -48,9 +48,9 @@ namespace Terrain.PathGraph
             return closestNode;
         }
         
-        public Path<WeightedGraphNode> NextRandomPath()
+        public IEnumerable<GraphNode<PathFinderNode>> NextRandomPath()
         {
-            HashSet<WeightedGraphNode> visited = new();
+            HashSet<GraphNode<PathFinderNode>> visited = new();
             C5.IntervalHeap<PathNode> heap = new();
             
             heap.Add(new PathNode(startNode));
@@ -61,14 +61,13 @@ namespace Terrain.PathGraph
             {
                 current = heap.FindMin();
                 heap.DeleteMin();
-                foreach (var graphNode in current.currentNode.ConnectedNodes)
+                foreach (var neighbour in current.currentNode.ConnectedNodes)
                 {
-                    var neighbour = (WeightedGraphNode)graphNode;//Should always cast, could do some check though
                     if (visited.Contains(neighbour)) continue;
                     if (neighbour == destinationNode)
                     {
                         //Reconstruct path
-                        LinkedList<WeightedGraphNode> pathList = new();
+                        LinkedList<GraphNode<PathFinderNode>> pathList = new();
                         pathList.AddFirst(destinationNode);
                         PathNode next = current;
                         while (next.currentNode != startNode)
@@ -78,13 +77,13 @@ namespace Terrain.PathGraph
                         }
 
                         pathList.AddFirst(startNode);
-                        return new Path<WeightedGraphNode>(pathList);
+                        return pathList;
                     }
 
                     visited.Add(neighbour);
                     
                     int randVal = mRandom.Next(pathFindingSettings.RandomCostMin, pathFindingSettings.RandomCostMax);
-                    float randomh = calcH(neighbour, destinationNode);
+                    float randomh = calcH(neighbour.Value, destinationNode.Value);
                     
                     PathNode neighbourPathNode = new PathNode(neighbour, current.CostSoFar + randVal, (int)(randomh*100*pathFindingSettings.DistanceMultiplier));
                     neighbourPathNode.cameFrom = current;
@@ -95,7 +94,7 @@ namespace Terrain.PathGraph
             return null;
         }
 
-        private float calcH(WeightedGraphNode currentNode, WeightedGraphNode destNode)
+        private float calcH(PathFinderNode currentNode, PathFinderNode destNode)
         {
             return DistanceMethods.SqrtEuclidianDistance(currentNode.Pos.ToVectorInt(), destNode.Pos.ToVectorInt())*reversedSizeSquared;
         }
@@ -110,16 +109,16 @@ namespace Terrain.PathGraph
     {
         private int costSoFar;
         private int h;
-        public WeightedGraphNode currentNode;
+        public GraphNode<PathFinderNode> currentNode;
         public PathNode cameFrom;
-        public PathNode(WeightedGraphNode currentNode, int costSoFar=0, int h=0)
+        public PathNode(GraphNode<PathFinderNode> currentNode, int costSoFar=0, int h=0)
         {
             this.currentNode = currentNode;
             this.costSoFar = costSoFar;
             this.h = h;
         }
 
-        public int GraphCost => currentNode.Cost;
+        public int GraphCost => currentNode.Value.Weight;
         public int CostSoFar => costSoFar;
         public int H => h;
         public int Fcost => CostSoFar + GraphCost + h;

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Terrain.PathGraph.Graphs.Points
 {
     //Created in class so that it is easier to add more settings later
-    public class PointsAroundGraph<T> : IPointGenerator where T : PosGraphNode
+    public class PointsAroundGraph<T> : IPointGenerator where T : IPosNode
     {
         private Graph<T> graph;
         private int edgeCountMin;
@@ -27,8 +27,8 @@ namespace Terrain.PathGraph.Graphs.Points
             List<Vector2> sample = new();
             foreach (var edge in graph.GetEdges())
             {
-                Vector2 a = edge.Q.Pos;
-                Vector2 b = edge.P.Pos;
+                Vector2 a = edge.Q.Value.Pos;
+                Vector2 b = edge.P.Value.Pos;
                 int count = mRandom.Next(edgeCountMin, edgeCountMax);
                 for (int i = 0; i < count; i++)
                 {
