@@ -1,7 +1,11 @@
 
 
 
+using System.Threading.Tasks;
+using static CollectibleItem;
+
+
 public interface ICollectible 
 {
-    public void Collect();
+    public ItemData GetItemData();
 }

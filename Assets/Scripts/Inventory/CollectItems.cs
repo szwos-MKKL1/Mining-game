@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class CollectItems : MonoBehaviour
@@ -8,9 +9,18 @@ public class CollectItems : MonoBehaviour
     {
         ICollectible collectible = collision.GetComponent<ICollectible>();
 
-        if(collectible != null)
+        InventoryController.Instance.CollectItem(collectible.GetItemData());
+
+
+        //bool itemCollected = InventoryController.Instance.CollectItem?.Invoke(collectible.GetItemData());
+        //InventoryController.Instance.InvokeCollectItem(collectible.GetItemData());
+
+
+
+
+        /*if(collectible != null)
         {
-            collectible.Collect();
-        }
+            Task.Run(() => { collectible.Collect(); } );
+        }*/
     }
 }

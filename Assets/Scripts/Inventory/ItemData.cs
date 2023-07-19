@@ -6,7 +6,8 @@ using UnityEngine;
 [CreateAssetMenu]
 public class ItemData : ScriptableObject
 {
-    public string ID = Guid.NewGuid().ToString();
+    //TODO: getters, setters
+    public Guid ID = Guid.NewGuid();
     public string displayName;
     public string description;
     public int sellPrice;
