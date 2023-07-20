@@ -6,6 +6,7 @@ namespace Terrain
 {
     public delegate bool IsNeighbor(Vector2Int pos);
     
+    //TODO this is just flood fill with limited amount of steps, also could change this algorithm to use burst
     public class DistanceMap
     {
         private Dictionary<Vector2Int, byte> activeCells = new();

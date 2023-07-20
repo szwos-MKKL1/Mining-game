@@ -22,9 +22,9 @@ namespace Terrain
             GetChunk(realPos).SetBlock(GetLocalPos(realPos), block);
         }
 
-        public bool GetBuildPermission(Vector2Int realPos)
+        public bool IsBuildable(Vector2Int realPos)
         {
-            return GetChunk(realPos).GetBuildPermission(GetLocalPos(realPos));
+            return GetChunk(realPos).IsBuildable(GetLocalPos(realPos));
         }
     }
 }

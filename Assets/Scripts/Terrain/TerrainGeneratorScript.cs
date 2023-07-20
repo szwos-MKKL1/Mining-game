@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using InternalDebug;
+using QuikGraph;
 using Terrain.Blocks;
 using Terrain.DecorateGenerators;
 using Terrain.DecorateGenerators.BlockProvider;
@@ -19,7 +20,7 @@ namespace Terrain
         public Tilemap tilemap;
         public GenerationData generationData;
 
-        private IEnumerable<Path<PosGraphNode>> paths;
+        private IEdgeSet<Vector2, IEdge<Vector2>> paths;
         void Start()
         {
             //StartGeneration();
@@ -105,18 +106,9 @@ namespace Terrain
         private void OnDrawGizmosSelected()
         {
             if (paths == null) return;
-            foreach (var path in paths)
+            foreach (IEdge<Vector2> path in paths.Edges)
             {
-                using IEnumerator<PosGraphNode> enumerator = path.GetEnumerator();
-                enumerator.MoveNext();
-                Vector2 p1 = enumerator.Current.Pos;
-                Vector2 p2;
-                while (enumerator.MoveNext())
-                {
-                    p2 = enumerator.Current.Pos;
-                    Gizmos.DrawLine(p1*0.16f,p2*0.16f);
-                    p1 = p2;
-                }
+                Gizmos.DrawLine(path.Source*0.16f,path.Target*0.16f);
             }
             
         }

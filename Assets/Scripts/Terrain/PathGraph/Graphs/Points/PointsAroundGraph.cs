@@ -1,20 +1,21 @@
 ﻿using System.Collections.Generic;
+using QuikGraph;
 using UnityEngine;
 
 namespace Terrain.PathGraph.Graphs.Points
 {
     //Created in class so that it is easier to add more settings later
-    public class PointsAroundGraph<T> : IPointGenerator where T : IPosNode
+    public class PointsAroundGraph : IPointGenerator
     {
-        private Graph<T> graph;
+        private IEnumerable<IEdge<Vector2>> edges;
         private int edgeCountMin;
         private int edgeCountMax;
         private float maxOffset;
         private System.Random mRandom;
 
-        public PointsAroundGraph(Graph<T> graph, RangeInt randomOnEdgeCount, float maxOffset, int seed = 0) 
+        public PointsAroundGraph(IEnumerable<IEdge<Vector2>> edges, RangeInt randomOnEdgeCount, float maxOffset, int seed = 0) 
         {
-            this.graph = graph;
+            this.edges = edges;
             edgeCountMin = randomOnEdgeCount.start;
             edgeCountMax = randomOnEdgeCount.end;
             this.maxOffset = maxOffset;
@@ -25,10 +26,10 @@ namespace Terrain.PathGraph.Graphs.Points
         public IEnumerable<Vector2> GetSamples()
         {
             List<Vector2> sample = new();
-            foreach (var edge in graph.GetEdges())
+            foreach (IEdge<Vector2> edge in edges)
             {
-                Vector2 a = edge.Q.Value.Pos;
-                Vector2 b = edge.P.Value.Pos;
+                Vector2 a = edge.Source;
+                Vector2 b = edge.Target;
                 int count = mRandom.Next(edgeCountMin, edgeCountMax);
                 for (int i = 0; i < count; i++)
                 {

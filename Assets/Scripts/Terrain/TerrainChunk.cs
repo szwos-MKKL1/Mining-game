@@ -16,7 +16,7 @@ namespace Terrain
 
         public BlockBase GetBlock(Vector2Int localPos) => blocks[localPos.x*ChunkSizeX+localPos.y];
         public void SetBlock(Vector2Int localPos, BlockBase block) => blocks[localPos.x*ChunkSizeX+localPos.y] = block;
-        public bool GetBuildPermission(Vector2Int localPos) => canBuild[localPos.x*ChunkSizeX+localPos.y];
+        public bool IsBuildable(Vector2Int localPos) => canBuild[localPos.x*ChunkSizeX+localPos.y];
         
         public bool[] CanBuild
         {
