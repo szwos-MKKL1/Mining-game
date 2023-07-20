@@ -53,12 +53,23 @@ namespace Terrain.PathGraph.Graphs
         //Exposes IEdge from DelaunatorSharp
         public IEnumerable<IEdge<Vector2>> GetEdges()
         {
+            Dictionary<IPoint, Vector2> pointToVector = new();
             List<IEdge<Vector2>> edges = new();
             foreach (var edge in delaunator.GetEdges())
             {
                 IPoint p = edge.P;
                 IPoint q = edge.Q;
-                edges.Add(new Edge<Vector2>(new Vector2((float)p.X, (float)p.Y), new Vector2((float)q.X, (float)q.Y)));
+                if (!pointToVector.TryGetValue(p, out Vector2 vp))
+                {
+                    vp = new Vector2((float)p.X, (float)p.Y);
+                    pointToVector.Add(p, vp);
+                }
+                if (!pointToVector.TryGetValue(q, out Vector2 vq))
+                {
+                    vq = new Vector2((float)q.X, (float)q.Y);
+                    pointToVector.Add(q, vq);
+                }
+                edges.Add(new Edge<Vector2>(vp, vq));
             }
 
             return edges;

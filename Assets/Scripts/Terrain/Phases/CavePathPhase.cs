@@ -37,27 +37,28 @@ namespace Terrain.Phases
             Vector2Int destinationPoint = new Vector2Int(1000, 1000);
 
             //Generating random graph on entire map by using poisson-disc distribution approximation and point-set triangulation
-            RandomGraph randomGraph = RandomGraph.CreateFromPoints(terrainData.RealSize, 300, 68);
+            RandomGraph randomGraph = RandomGraph.CreateFromPoints(terrainData.RealSize, 200, 68);
             BidirectionalGraph<Vector2, IEdge<Vector2>> pathFinderGraph = randomGraph.GetGraph();
             
+            pathFinderGraph.UnityDraw(Color.red, 300);
             //Removing vertices that are outside of buildable area
-            pathFinderGraph.RemoveVertexIf(pos => !terrainData.IsBuildable(pos.ToVectorInt()));
-            
+            // pathFinderGraph.RemoveVertexIf(pos => !terrainData.IsBuildable(pos.ToVectorInt()));
+            // pathFinderGraph.UnityDraw(Color.blue, 300);
             //Creating weight map for path finding
-            Dictionary<Vector2, float> weight = DistanceMapUtils.DistanceMapNotBuildable(terrainData, generationData.borderWeight)
-                .ToDictionary(x => x.Key.ToVector(), x=> (float)x.Value);
+            Dictionary<Vector2, int> weight = DistanceMapUtils.DistanceMapNotBuildable(terrainData, generationData.borderWeight)
+                .ToDictionary(x => x.Key.ToVector(), x=> (int)x.Value);
             
             //Searching for 5 random paths in graph
-            PathFinder pathFinder = new PathFinder(pathFinderGraph, weight, startPoint, destinationPoint,
+            PathFinder pathFinder = new PathFinder(pathFinderGraph, pos => weight.TryGetValue(pos, out int value) ? value : 0, startPoint, destinationPoint,
                 terrainData.RealSize, generationData.pathFindingSettings);
             List<IEnumerable<IEdge<Vector2>>> pathList = new();
             for (int i = 0; i < 5; i++)
             {
                 IEnumerable<IEdge<Vector2>> path = pathFinder.NextRandomPath();
-                //GraphDebug.DrawPath(p, Color.blue, 200);
+                path.UnityDraw(Color.green, 200);
                 pathList.Add(path);
             }
-
+            
             //Combine all edges into one collection
             HashSet<IEdge<Vector2>> allEdges = new();
             foreach (IEnumerable<IEdge<Vector2>> path in pathList)
@@ -70,11 +71,11 @@ namespace Terrain.Phases
             //Create points around found paths and connect them to new graph that will be used in cavern generation
             BidirectionalGraph<Vector2, IEdge<Vector2>> cavernConnectionGraph = RandomGraph.CreateAroundEdges(combinedGraph.Edges).GetGraph();
             cavernConnectionGraph.UnityDraw(Color.blue, 300);
-
+            
             //Remove edges that are too long
             cavernConnectionGraph.RemoveEdgeIf(edge => DistanceMethods.ManhattanDistance(edge.Target, edge.Source) > 150);
             cavernConnectionGraph.UnityDraw(Color.cyan, 300);
-
+            
             
             
             
@@ -121,7 +122,7 @@ namespace Terrain.Phases
                     
             }
             Profiler.EndSample();
-
+            
             Vector2Int realsize = terrainData.RealSize;
             int index = 0;
             foreach (var alive in sim.CellMap)
@@ -130,7 +131,7 @@ namespace Terrain.Phases
                 {
                     terrainData.SetBlock(new Vector2Int(index % realsize.x, index / realsize.y), BlockRegistry.AIR);
                 }
-
+            
                 index++;
             }
             sim.Dispose();
