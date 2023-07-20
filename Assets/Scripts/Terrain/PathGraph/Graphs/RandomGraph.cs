@@ -75,8 +75,8 @@ namespace Terrain.PathGraph.Graphs
                 GraphNode<T> pnode = GetOrAddNode(pointDictionary, p);
                 GraphNode<T> qnode = GetOrAddNode(pointDictionary, q);
 
-                pnode.AddConnection(qnode);
-                qnode.AddConnection(pnode);
+                pnode.ConnectedNodes.Add(qnode);
+                qnode.ConnectedNodes.Add(pnode);
             }
 
             return pointDictionary.Values;

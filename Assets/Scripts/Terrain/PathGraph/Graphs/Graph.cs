@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Terrain.PathGraph.Graphs
 {
-    public class Graph<T> : IEnumerable<GraphNode<T>>
+    public class Graph<T> : IReadOnlyCollection<IGraphNode<T>>
     {
         private HashSet<GraphNode<T>> nodes;
 
@@ -68,6 +68,13 @@ namespace Terrain.PathGraph.Graphs
             }
         }
 
+        public bool AddConnection(IGraphNode<T> target, IGraphNode<T> value)
+        {
+            if (target is not GraphNode<T> ntarget || value is not GraphNode<T> nvalue) 
+                throw new InvalidCastException("target or value are not instance of GraphNode");
+            return ntarget.ConnectedNodesSet.Add(nvalue);
+        }
+
         public bool Contains(GraphNode<T> item)
         {
             return nodes.Contains(item);
@@ -114,10 +121,10 @@ namespace Terrain.PathGraph.Graphs
 
         public IEnumerable<GraphEdge<T>> GetEdges()
         {
-            HashSet<GraphNode<T>> ready = new();
-            Queue<GraphNode<T>> toCheck = new();
+            HashSet<IGraphNode<T>> ready = new();
+            Queue<IGraphNode<T>> toCheck = new();
             List<GraphEdge<T>> edges = new();
-            using IEnumerator<GraphNode<T>> a = GetNodes();
+            using IEnumerator<IGraphNode<T>> a = GetNodes();
             a.MoveNext();
             toCheck.Enqueue(a.Current);
             while (toCheck.Count != 0)
@@ -140,13 +147,13 @@ namespace Terrain.PathGraph.Graphs
             return edges;
         }
 
-        public IEnumerator<GraphNode<T>> GetNodes()
+        public IEnumerator<IGraphNode<T>> GetNodes()
         {
             return nodes.GetEnumerator();
         }
 
 
-        public IEnumerator<GraphNode<T>> GetEnumerator()
+        public IEnumerator<IGraphNode<T>> GetEnumerator()
         {
             return GetNodes();
         }
@@ -157,36 +164,46 @@ namespace Terrain.PathGraph.Graphs
         }
     }
 
-    public class GraphEdge<T>
+    public class GraphEdge<T> : IGraphEdge<T>
     {
+        private readonly GraphNode<T> p;
+        private readonly GraphNode<T> q;
         public GraphEdge(GraphNode<T> p, GraphNode<T> q)
         {
-            P = p;
-            Q = q;
+            this.p = p;
+            this.q = q;
         }
 
-        public GraphNode<T> P { get; }
-        public GraphNode<T> Q { get; }
+        public IGraphNode<T> P => p;
+        public IGraphNode<T> Q => q;
+    }
+    
+    public interface IGraphEdge<out T>
+    {
+        public IGraphNode<T> P { get; }
+        public IGraphNode<T> Q { get; }
     }
 
-    public class GraphNode<T> : ICloneable
+    public sealed class GraphNode<T> : ICloneable, IGraphNode<T>
     {
+        private readonly HashSet<GraphNode<T>> connectedNodes = new();
         public GraphNode(T value)
         {
             Value = value;
         }
-
-        public bool AddConnection(GraphNode<T> graphNode)
-        {
-            return ConnectedNodes.Add(graphNode);
-        }
-
         public T Value { get; }
-        public HashSet<GraphNode<T>> ConnectedNodes { get; } = new();
-
+        public IReadOnlyCollection<IGraphNode<T>> ConnectedNodes => connectedNodes;
+        public HashSet<GraphNode<T>> ConnectedNodesSet => connectedNodes;
         public object Clone()
         {
             return this.MemberwiseClone();
         }
     }
+
+    public interface IGraphNode<out T>
+    {
+        public T Value { get; }
+        public IReadOnlyCollection<IGraphNode<T>> ConnectedNodes { get; }
+    }
+
 }
