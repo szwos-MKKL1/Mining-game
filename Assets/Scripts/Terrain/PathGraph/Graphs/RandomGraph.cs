@@ -43,9 +43,9 @@ namespace Terrain.PathGraph.Graphs
             return CreateFromPoints(new PointsAroundGraph(edges, new RangeInt(1, 4), 10f, seed));
         }
 
-        public BidirectionalGraph<Vector2, IEdge<Vector2>> GetGraph()
+        public UndirectedGraph<Vector2, IEdge<Vector2>> GetGraph()
         {
-            BidirectionalGraph<Vector2, IEdge<Vector2>> graph = new();
+            UndirectedGraph<Vector2, IEdge<Vector2>> graph = new();
             graph.AddVerticesAndEdgeRange(GetEdges());
             return graph;
         }

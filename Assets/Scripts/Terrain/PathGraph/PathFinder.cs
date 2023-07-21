@@ -14,7 +14,7 @@ namespace Terrain.PathGraph
 {
     public class PathFinder
     {
-        private readonly BidirectionalGraph<Vector2, IEdge<Vector2>> graph;
+        private readonly UndirectedGraph<Vector2, IEdge<Vector2>> graph;
         private readonly Func<Vector2, int> weightFunc;
         private readonly Vector2 startNode;
         private readonly Vector2 destinationNode;
@@ -23,7 +23,7 @@ namespace Terrain.PathGraph
         private readonly PathFindingSettings pathFindingSettings;
 
         public PathFinder(
-            BidirectionalGraph<Vector2, IEdge<Vector2>> graph, 
+            UndirectedGraph<Vector2, IEdge<Vector2>> graph, 
             Func<Vector2, int> weightFunc, 
             Vector2Int startPos, 
             Vector2Int destinationPos, 
@@ -36,12 +36,13 @@ namespace Terrain.PathGraph
             startNode = FindClosestNode(startPos);
             destinationNode = FindClosestNode(destinationPos);
             if(startNode == null || destinationNode == null) throw new ArgumentException("One of the pathing nodes was null!");
-            
             if(!this.graph.ContainsVertex(startNode)) throw new ArgumentException("Graph doesn't contain start node");
             if(!this.graph.ContainsVertex(destinationNode)) throw new ArgumentException("Graph doesn't contain destination node");
             
-            if(!this.graph.OutEdges(startNode).Any()) throw new ArgumentException("Start node has no out edges");
-            if(!this.graph.OutEdges(destinationNode).Any()) throw new ArgumentException("Destination node has no out edges");
+            //TODO not sure if it should throw exception,
+            //if startNode is disconnected from main graph then there is not path, but if I don't throw exception then there is no way to know that
+            if(!this.graph.AdjacentVertices(startNode).Any()) throw new ArgumentException("Start node has no out edges");
+            if(!this.graph.AdjacentVertices(destinationNode).Any()) throw new ArgumentException("Destination node has no out edges");
             
             reversedSizeSquared = 1f / math.sqrt(size.x * size.x + size.y * size.y);
             mRandom = new Random(seed);
@@ -95,14 +96,9 @@ namespace Terrain.PathGraph
             while (!openSet.IsEmpty)
             {
                 currentNode = openSet.DeleteMin();
-                Debug.Log($"Current node {currentNode}");
                 visited[currentNode.Current] = currentNode;
-                Debug.Log($"Current node out edges {currentNode}");
-                foreach (IEdge<Vector2> neighbourEdge in graph.OutEdges(currentNode.Current))
+                foreach (Vector2 neighbour in graph.AdjacentVertices(currentNode.Current))
                 {
-                    Vector2 neighbour = neighbourEdge.Target;
-                    Debug.Log($"Neighbour edge {neighbourEdge}");
-                    Debug.Log($"Neighbour pos {neighbour}");
                     if (visited.ContainsKey(neighbour)) continue;
                     if (neighbour == destinationNode)
                     {
