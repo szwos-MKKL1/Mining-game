@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using QuikGraph;
 using QuikGraph.Algorithms;
 using QuikGraph.Algorithms.Observers;
@@ -34,7 +35,14 @@ namespace Terrain.PathGraph
             this.weightFunc = weightFunc;
             startNode = FindClosestNode(startPos);
             destinationNode = FindClosestNode(destinationPos);
-            if (startNode == null || destinationNode == null) throw new Exception("One of the pathing nodes was null!");
+            if(startNode == null || destinationNode == null) throw new ArgumentException("One of the pathing nodes was null!");
+            
+            if(!this.graph.ContainsVertex(startNode)) throw new ArgumentException("Graph doesn't contain start node");
+            if(!this.graph.ContainsVertex(destinationNode)) throw new ArgumentException("Graph doesn't contain destination node");
+            
+            if(!this.graph.OutEdges(startNode).Any()) throw new ArgumentException("Start node has no out edges");
+            if(!this.graph.OutEdges(destinationNode).Any()) throw new ArgumentException("Destination node has no out edges");
+            
             reversedSizeSquared = 1f / math.sqrt(size.x * size.x + size.y * size.y);
             mRandom = new Random(seed);
             this.pathFindingSettings = pathFindingSettings;
@@ -87,10 +95,14 @@ namespace Terrain.PathGraph
             while (!openSet.IsEmpty)
             {
                 currentNode = openSet.DeleteMin();
-                visited.Add(currentNode.Current, currentNode);
+                Debug.Log($"Current node {currentNode}");
+                visited[currentNode.Current] = currentNode;
+                Debug.Log($"Current node out edges {currentNode}");
                 foreach (IEdge<Vector2> neighbourEdge in graph.OutEdges(currentNode.Current))
                 {
                     Vector2 neighbour = neighbourEdge.Target;
+                    Debug.Log($"Neighbour edge {neighbourEdge}");
+                    Debug.Log($"Neighbour pos {neighbour}");
                     if (visited.ContainsKey(neighbour)) continue;
                     if (neighbour == destinationNode)
                     {
@@ -108,13 +120,14 @@ namespace Terrain.PathGraph
                     }
                     int randVal = mRandom.Next(pathFindingSettings.RandomCostMin, pathFindingSettings.RandomCostMax);
                     float randomH = calcH(neighbour, destinationNode);
+
                     openSet.Add(new PathNode(
                         (int)(
-                            currentNode.CostSoFar + 
-                            randVal + 
-                            randomH * 100 * pathFindingSettings.DistanceMultiplier + 
+                            currentNode.CostSoFar +
+                            randVal +
+                            randomH * 100 * pathFindingSettings.DistanceMultiplier +
                             weightFunc(neighbour) * pathFindingSettings.weightMultiplier),
-                        neighbour, 
+                        neighbour,
                         currentNode));
                 }
             }
@@ -127,7 +140,7 @@ namespace Terrain.PathGraph
         }
     }
 
-    internal class PathNode : IComparable<int>
+    internal class PathNode : IComparable<PathNode>
     {
         public PathNode(int costSoFar, Vector2 current, PathNode cameFrom)
         {
@@ -139,9 +152,14 @@ namespace Terrain.PathGraph
         public int CostSoFar { get; }
         public Vector2 Current { get; }
         public PathNode CameFrom { get; }
-        public int CompareTo(int other)
+        public int CompareTo(PathNode other)
         {
-            return CostSoFar.CompareTo(other);
+            return CostSoFar.CompareTo(other.CostSoFar);
+        }
+
+        public override string ToString()
+        {
+            return $"PathNode CostSoFar:{CostSoFar} Current:{Current} CameFrom:{CameFrom}";
         }
     }
 
