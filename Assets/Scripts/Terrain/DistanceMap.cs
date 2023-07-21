@@ -22,7 +22,7 @@ namespace Terrain
             initialMap = new NativeArray<ushort>(this.size.x * this.size.y, Allocator.Persistent);
             foreach (var point in startPoints)
             {
-                initialMap[point.x + point.y * this.size.x] = 0;
+                initialMap[point.x + point.y * this.size.x] = 1;
             }
         }
 
@@ -34,7 +34,7 @@ namespace Terrain
                 {
                     Map = initialMap,
                     Size = size,
-                    FillStepFrom = (ushort)i
+                    FillStepFrom = (ushort)(i+1)
                 };
                 floodFillJob.Schedule(size.x * size.y, 1024).Complete();
             }
