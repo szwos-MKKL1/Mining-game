@@ -31,7 +31,7 @@ namespace Terrain.Phases
             this.generationData = generationData;
             paths = combinedGraph;
         }
-
+        
         public void Generate(TerrainData terrainData)
         {
             //Dictionary<Vector2Int, byte> dict = DistanceMapUtils.DistanceMapNotBuildable(terrainData, generationData.borderWeight);
@@ -43,27 +43,29 @@ namespace Terrain.Phases
             RandomGraph randomGraph = RandomGraph.CreateFromPoints(terrainData.RealSize, 300, 68);
             UndirectedGraph<Vector2, IEdge<Vector2>> pathFinderGraph = randomGraph.GetGraph();
             
+            
             pathFinderGraph.UnityDraw(Color.red, 300);
             //Removing vertices that are outside of buildable area
-            pathFinderGraph.RemoveVertexIf(pos => !terrainData.IsBuildable(pos.ToVectorInt()));
+            pathFinderGraph.RemoveVertexIf(pos => !terrainData.IsBuildable(pos.AsVectorInt()));
             pathFinderGraph.UnityDraw(Color.blue, 300);
-            
-            // using (var xmlWriter = XmlWriter.Create("pathFinderGraph.xml"))
-            // {
-            //     pathFinderGraph.SerializeToGraphML<Vector2, IEdge<Vector2>, BidirectionalGraph<Vector2, IEdge<Vector2>>>(
-            //         xmlWriter, 
-            //         vertex => $"vertex({vertex.x},{vertex.y})", 
-            //         pathFinderGraph.GetEdgeIdentity());
-            // }
-            
+
             //Creating weight map for path finding
-            Dictionary<Vector2, int> weight = DistanceMapUtils.DistanceMapNotBuildable(terrainData, generationData.borderWeight)
-                .ToDictionary(x => x.Key.ToVector(), x=> (int)x.Value);
-            
+            // Dictionary<Vector2, int> weight = DistanceMapUtils.DistanceMapNotBuildable(terrainData, generationData.borderWeight)
+            //     .ToDictionary(x => x.Key.AsVector(), x=> (int)x.Value);
+
+            DistanceMap distanceMap =
+                new DistanceMap(DistanceMapUtils.FindBorderingBlocks(terrainData), terrainData.RealSize);
+            distanceMap.Generate(generationData.borderWeight);
+
             //TODO add points of interest and path to them
             
             //Searching for 5 random paths in graph
-            PathFinder pathFinder = new PathFinder(pathFinderGraph, pos => weight.TryGetValue(pos, out int value) ? (generationData.borderWeight-value) : 0, startPoint, destinationPoint,
+            PathFinder pathFinder = new PathFinder(pathFinderGraph, pos =>
+                {
+                    Vector2Int posInt = pos.AsVectorInt();
+                    return terrainData.IsBuildable(posInt) ? generationData.borderWeight-distanceMap.Distance(pos.AsVectorInt()) : ushort.MaxValue;
+                    //return 1;
+                }, startPoint, destinationPoint,
                 terrainData.RealSize, generationData.pathFindingSettings);
             List<IEnumerable<IEdge<Vector2>>> pathList = new();
             for (int i = 0; i < 5; i++)
@@ -81,7 +83,6 @@ namespace Terrain.Phases
             combinedGraph = allEdges.ToUndirectedGraph<Vector2, IEdge<Vector2>>();
             combinedGraph.UnityDraw(Color.green, 100);
             
-            
             //Create points around found paths and connect them to new graph that will be used in cavern generation
             UndirectedGraph<Vector2, IEdge<Vector2>> cavernConnectionGraph = RandomGraph.CreateAroundEdges(combinedGraph.Edges).GetGraph();
             //cavernConnectionGraph.UnityDraw(Color.blue, 300);
@@ -89,8 +90,6 @@ namespace Terrain.Phases
             //Remove edges that are too long
             cavernConnectionGraph.RemoveEdgeIf(edge => DistanceMethods.ManhattanDistance(edge.Target, edge.Source) > 150);
             //cavernConnectionGraph.UnityDraw(Color.cyan, 300);
-            
-            
             
             
             Layer[] layers = { new(100), new(45) };
@@ -101,9 +100,8 @@ namespace Terrain.Phases
                     new(10, 0),
                     new(25, 1)
                 };
-                genNodes.Add(new GeneratorNode(node.ToVectorInt(), genSettings));
+                genNodes.Add(new GeneratorNode(node.AsVectorInt(), genSettings));
             }
-            
             //TODO maze
             
             InitialMapGenerator initialMapGenerator = new InitialMapGenerator(terrainData.RealSize, layers, new []
@@ -117,7 +115,6 @@ namespace Terrain.Phases
                 initial[i] = true;
             }
             //ImageDebug.SaveImg(initial, terrainData.RealSize, "initial.png");
-            
             var sim = CellularAutomataSimulator.CreateFromMap(terrainData.RealSize, initial);
             //var sim = CellularAutomataSimulator.CreateRandom(new Vector2Int(100, 100), 0.4f, 0);
             sim.AliveThreshold = 5;
@@ -136,7 +133,6 @@ namespace Terrain.Phases
                     
             }
             Profiler.EndSample();
-            
             Vector2Int realsize = terrainData.RealSize;
             int index = 0;
             foreach (var alive in sim.CellMap)

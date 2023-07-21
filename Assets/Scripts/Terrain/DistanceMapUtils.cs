@@ -6,14 +6,6 @@ namespace Terrain
 {
     public class DistanceMapUtils
     {
-        public static Dictionary<Vector2Int, byte> DistanceMapNotBuildable(TerrainData terrainData, byte distance)
-        {
-            Vector2Int realSize = terrainData.RealSize;
-            DistanceMap distanceMap = new DistanceMap(FindBorderingBlocks(terrainData), 
-                pos => pos.x >= 0 && pos.x < realSize.x && pos.y >= 0 && pos.y < realSize.y &&
-                terrainData.IsBuildable(pos));
-            return distanceMap.Generate(distance);
-        }
 
         private static readonly Vector2Int[] neighbors = { new(-1, 0), new(1, 0), new(0, -1), new(0, 1) };
         

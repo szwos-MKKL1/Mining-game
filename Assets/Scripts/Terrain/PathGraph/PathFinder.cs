@@ -132,7 +132,7 @@ namespace Terrain.PathGraph
 
         private float calcH(Vector2 currentNode, Vector2 destNode)
         {
-            return DistanceMethods.SqrtEuclidianDistance(currentNode.ToVectorInt(), destNode.ToVectorInt())*reversedSizeSquared;
+            return DistanceMethods.SqrtEuclidianDistance(currentNode.AsVectorInt(), destNode.AsVectorInt())*reversedSizeSquared;
         }
     }
 
