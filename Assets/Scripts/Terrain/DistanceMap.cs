@@ -13,74 +13,109 @@ namespace Terrain
     public class DistanceMap : IDisposable
     {
         
-        private NativeArray<ushort> initialMap;
+        private NativeArray<ushort> map;
         private readonly int2 size;
 
-        public DistanceMap(IEnumerable<Vector2Int> startPoints, Vector2Int size)
+        public DistanceMap(bool[] startMap, Vector2Int size)
         {
             this.size = size.AsInt2();
-            initialMap = new NativeArray<ushort>(this.size.x * this.size.y, Allocator.Persistent);
-            foreach (var point in startPoints)
+            int sizexy = size.x * size.y;
+            map = new NativeArray<ushort>(sizexy, Allocator.Persistent);
+            for (int i = 0; i < sizexy; i++)
             {
-                initialMap[point.x + point.y * this.size.x] = 1;
+                map[i] = startMap[i] ? (ushort)0 : ushort.MaxValue;
             }
         }
-
-        public void Generate(ushort steps)
+        
+        public DistanceMap(Func<Vector2Int, bool> startFunc, Vector2Int size)
         {
-            for (int i = 0; i < steps; i++)
+            this.size = size.AsInt2();
+            int sizexy = size.x * size.y;
+            map = new NativeArray<ushort>(sizexy, Allocator.Persistent);
+            for (int x = 0; x < size.x; x++)
             {
-                FloodFillJob floodFillJob = new FloodFillJob
+                for (int y = 0; y < size.y; y++)
                 {
-                    Map = initialMap,
-                    Size = size,
-                    FillStepFrom = (ushort)(i+1)
-                };
-                floodFillJob.Schedule(size.x * size.y, 1024).Complete();
+                    map[x + y * size.x] = startFunc(new Vector2Int(x, y)) ? (ushort)0 : ushort.MaxValue;
+                }
             }
         }
 
-        public ushort Distance(Vector2Int pos) => initialMap[pos.x + pos.y * size.x];
+        public void Generate()
+        {
+            new LeftRightPropagation
+            {
+                DistanceMap = map,
+                Columns = size.y
+            }.Schedule(size.x, 128).Complete();
+            
+            new TopBottomPropagation
+            {
+                DistanceMap = map,
+                Rows = size.x
+            }.Schedule(size.y, 128).Complete();
+        }
+
+        public ushort GetDistance(Vector2Int pos) => map[pos.x + pos.y * size.x];
+        public ushort[] GetDistanceMap => map.ToArray();
 
         public void Dispose()
         {
-            initialMap.Dispose();
+            map.Dispose();
         }
     }
 
     [BurstCompile]
-    internal struct FloodFillJob : IJobParallelFor
+    internal struct MathFunc
     {
-        [ReadOnly] private static readonly int2 Up = new int2(0, 1);
-        [ReadOnly] private static readonly int2 Down = new int2(0, -1);
-        [ReadOnly] private static readonly int2 Left = new int2(-1, 0);
-        [ReadOnly] private static readonly int2 Right = new int2(1, 0);
-        
-        [NativeDisableParallelForRestriction] public NativeArray<ushort> Map;
-        [ReadOnly] public int2 Size;
-        [ReadOnly] public ushort FillStepFrom;
         [BurstCompile]
+        public static ushort Min(ushort p1, ushort p2)
+        {
+            return p1 > p2 ? p2 : p1;
+        }
+    }
+
+    [BurstCompile]
+    internal struct LeftRightPropagation : IJobParallelFor
+    {
+        [NativeDisableParallelForRestriction]
+        public NativeArray<ushort> DistanceMap;
+        [ReadOnly] public int Columns;
+        //Index is row
         public void Execute(int index)
         {
-            if (Map[index] != FillStepFrom) return;
-            ProcessNeighbour(IntToPos(index, Size) + Up);
-            ProcessNeighbour(IntToPos(index, Size) + Down);
-            ProcessNeighbour(IntToPos(index, Size) + Left);
-            ProcessNeighbour(IntToPos(index, Size) + Right);
+            int start = Columns * index;
+            for (int x = 1; x < Columns; x++)
+            {
+                int j = start + x;
+                ushort p1 = DistanceMap[j];
+                ushort p2 = DistanceMap[j - 1];
+                p2 = p2 == ushort.MaxValue ? p2 : (ushort)(p2 + 1); //Ensuring that p2 never overflows
+                DistanceMap[j] = MathFunc.Min(p1, p2);//min of dis[j] and dis[j-1]+1
+            }
         }
-        
-        [BurstCompile]
-        private void ProcessNeighbour(int2 neighbourPos)
-        {
-            if (neighbourPos.x < 0 || neighbourPos.x >= Size.x || neighbourPos.y < 0 ||
-                neighbourPos.y >= Size.y) return;
-            int neighbourIndex = PosToInt(neighbourPos, Size.x);
-            if (Map[neighbourIndex] != 0) return;
-            Map[neighbourIndex] = (ushort)(FillStepFrom + 1);
-        }
-        [BurstCompile]
-        private int2 IntToPos(int index, int2 size) => new int2(index % size.x, index / size.y);
-        [BurstCompile]
-        private int PosToInt(int2 pos, int sizex) => pos.x + pos.y * sizex;
     }
+    
+    [BurstCompile]
+    internal struct TopBottomPropagation : IJobParallelFor
+    {
+        [NativeDisableParallelForRestriction]
+        public NativeArray<ushort> DistanceMap;
+        [ReadOnly] public int Rows;
+        //Index is column
+        public void Execute(int index)
+        {
+            int start = Rows * index;
+            for (int y = 1; y < Rows; y++)
+            {
+                int j = start + y;
+                //TODO remove repeating code
+                ushort p1 = DistanceMap[j];
+                ushort p2 = DistanceMap[j - 1];
+                p2 = p2 == ushort.MaxValue ? p2 : (ushort)(p2 + 1); //Ensuring that p2 never overflows
+                DistanceMap[j] = MathFunc.Min(p1, p2);//min of dis[j] and dis[j-1]+1
+            }
+        }
+    }
+
 }
