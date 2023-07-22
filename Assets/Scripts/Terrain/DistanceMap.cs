@@ -46,14 +46,26 @@ namespace Terrain
             new LeftRightPropagation
             {
                 DistanceMap = map,
-                Columns = size.y
-            }.Schedule(size.x, 128).Complete();
+                Size = size
+            }.Schedule(size.x, 32).Complete();
             
             new TopBottomPropagation
             {
                 DistanceMap = map,
-                Rows = size.x
-            }.Schedule(size.y, 128).Complete();
+                Size = size
+            }.Schedule(size.y, 32).Complete();
+            
+            new RightLeftPropagation()
+            {
+                DistanceMap = map,
+                Size = size
+            }.Schedule(size.x, 32).Complete();
+            
+            new BottomTopPropagation()
+            {
+                DistanceMap = map,
+                Size = size
+            }.Schedule(size.y, 32).Complete();
         }
 
         public ushort GetDistance(Vector2Int pos) => map[pos.x + pos.y * size.x];
@@ -80,12 +92,12 @@ namespace Terrain
     {
         [NativeDisableParallelForRestriction]
         public NativeArray<ushort> DistanceMap;
-        [ReadOnly] public int Columns;
+        [ReadOnly] public int2 Size;
         //Index is row
         public void Execute(int index)
         {
-            int start = Columns * index;
-            for (int x = 1; x < Columns; x++)
+            int start = Size.y * index;
+            for (int x = 1; x < Size.y; x++)
             {
                 int j = start + x;
                 ushort p1 = DistanceMap[j];
@@ -101,19 +113,64 @@ namespace Terrain
     {
         [NativeDisableParallelForRestriction]
         public NativeArray<ushort> DistanceMap;
-        [ReadOnly] public int Rows;
+        [ReadOnly] public int2 Size;
         //Index is column
         public void Execute(int index)
         {
-            int start = Rows * index;
-            for (int y = 1; y < Rows; y++)
+            int lastj = index;
+            for (int y = 1; y < Size.y; y++)
             {
-                int j = start + y;
+                int j = index + Size.x*y;//theoretically we could add size.x to j instead of multiplying it with y
                 //TODO remove repeating code
                 ushort p1 = DistanceMap[j];
-                ushort p2 = DistanceMap[j - 1];
+                ushort p2 = DistanceMap[lastj];
+                lastj = j;
                 p2 = p2 == ushort.MaxValue ? p2 : (ushort)(p2 + 1); //Ensuring that p2 never overflows
                 DistanceMap[j] = MathFunc.Min(p1, p2);//min of dis[j] and dis[j-1]+1
+            }
+        }
+    }
+    
+    [BurstCompile]
+    internal struct RightLeftPropagation : IJobParallelFor
+    {
+        [NativeDisableParallelForRestriction]
+        public NativeArray<ushort> DistanceMap;
+        [ReadOnly] public int2 Size;
+        //Index is row
+        public void Execute(int index)
+        {
+            int end = index * Size.x;
+            for (int j = (index+1) * Size.x-2; j >= end; j--)
+            {
+                //TODO remove repeating code
+                ushort p1 = DistanceMap[j];
+                ushort p2 = DistanceMap[j + 1];
+                p2 = p2 == ushort.MaxValue ? p2 : (ushort)(p2 + 1); //Ensuring that p2 never overflows
+                DistanceMap[j] = MathFunc.Min(p1, p2);//min of dis[j] and dis[j+1]+1
+            }
+        }
+    }
+    
+    [BurstCompile]
+    internal struct BottomTopPropagation : IJobParallelFor
+    {
+        [NativeDisableParallelForRestriction]
+        public NativeArray<ushort> DistanceMap;
+        [ReadOnly] public int2 Size;
+        //Index is column
+        public void Execute(int index)
+        {
+            int lastj = (Size.y-1) * Size.x + index;
+            for (int y = Size.y-2; y >= 0; y--)
+            {
+                int j = y * Size.x + index;
+                //TODO remove repeating code
+                ushort p1 = DistanceMap[j];
+                ushort p2 = DistanceMap[lastj];
+                lastj = j;
+                p2 = p2 == ushort.MaxValue ? p2 : (ushort)(p2 + 1); //Ensuring that p2 never overflows
+                DistanceMap[j] = MathFunc.Min(p1, p2);//min of dis[j] and dis[j+1]+1
             }
         }
     }
