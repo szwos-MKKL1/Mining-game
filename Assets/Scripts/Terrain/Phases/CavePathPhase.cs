@@ -53,11 +53,13 @@ namespace Terrain.Phases
             // Dictionary<Vector2, int> weight = DistanceMapUtils.DistanceMapNotBuildable(terrainData, generationData.borderWeight)
             //     .ToDictionary(x => x.Key.AsVector(), x=> (int)x.Value);
 
+            
             DistanceMap distanceMap =
                 new DistanceMap(pos => !terrainData.IsBuildable(pos), terrainData.RealSize);
+            var time = Time.realtimeSinceStartup;
             distanceMap.Generate();
-            ImageDebug.SaveImg(distanceMap.GetDistanceMap, terrainData.RealSize, "distancemap.png");
-
+            //ImageDebug.SaveImg(distanceMap.GetDistanceMap, terrainData.RealSize, "distancemap.png");
+            Debug.Log($"distance map time {Time.realtimeSinceStartup-time}");
             //TODO add points of interest and path to them
             
             //Searching for 5 random paths in graph

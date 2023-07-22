@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Terrain.Blocks;
 using UnityEngine;
 
@@ -22,14 +23,13 @@ namespace Terrain.Phases
             {
                 for (int chunky = 0; chunky < generationData.chunkSize.y; chunky++)
                 {
-                    terrainData.Chunks[chunkx, chunky] = GenerateChunk(chunkx, chunky);
+                    terrainData.SetChunk(new Vector2Int(chunkx, chunky), GenerateChunk(chunkx, chunky));
                 }
             }
         }
 
         private TerrainChunk GenerateChunk(int chunkx, int chunky)
         {
-
             TerrainChunk terrainChunk = new TerrainChunk(new Vector2Int(chunkx, chunky));
             BlockBase[] blocks = terrainChunk.Blocks;
             bool[] canBuild = terrainChunk.CanBuild;

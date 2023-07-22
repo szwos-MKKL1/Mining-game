@@ -70,7 +70,7 @@ namespace Terrain
              {
                  for (int chunky = 0; chunky < generationData.chunkSize.y; chunky++)
                  {
-                     TerrainChunk chunk = terrainData.Chunks[chunkx, chunky];
+                     TerrainChunk chunk = terrainData.GetChunk(new Vector2Int(chunkx, chunky));
                      int i = 0;
                      TileBase[] tiles = new TileBase[128*128];
                      Vector3Int[] positions = new Vector3Int[128 * 128];

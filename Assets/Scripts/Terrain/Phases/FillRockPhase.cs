@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Terrain.Blocks;
 using Terrain.DecorateGenerators.BlockProvider;
 using Terrain.Generators;
+using UnityEngine;
 
 namespace Terrain.Phases
 {
@@ -20,12 +22,9 @@ namespace Terrain.Phases
 
         public void Generate(TerrainData terrainData)
         {
-            for (int chunkx = 0; chunkx < generationData.chunkSize.x; chunkx++)
+            foreach (KeyValuePair<Vector2Int, TerrainChunk> chunkPair in terrainData)
             {
-                for (int chunky = 0; chunky < generationData.chunkSize.y; chunky++)
-                {
-                    PopulateChunk(terrainData.Chunks[chunkx, chunky]);
-                }
+                PopulateChunk(chunkPair.Value);
             }
         }
 

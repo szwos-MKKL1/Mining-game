@@ -4,13 +4,11 @@ namespace Terrain
 {
     public abstract class DataChunk
     {
-        protected Vector2Int worldPos;
-
-        public DataChunk(Vector2Int worldPos)
+        protected DataChunk(Vector2Int chunkId)
         {
-            this.worldPos = worldPos;
+            ChunkId = chunkId;
         }
 
-        public Vector2Int WorldPos => worldPos;
+        public Vector2Int ChunkId { get; }
     }
 }
