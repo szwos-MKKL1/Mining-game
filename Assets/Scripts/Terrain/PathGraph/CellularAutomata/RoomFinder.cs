@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -20,14 +22,22 @@ namespace Terrain.PathGraph.CellularAutomata
         }
 
         //TODO can be async
-        public NativeRoomList GetRoomList()
+        public List<Room> GetRoomList()
         {
             RoomFinderJob roomFinderJob = new RoomFinderJob(aliveMap, size);
-            roomFinderJob.Schedule().Complete();
+            roomFinderJob.Execute();
+            List<Room> safeRoomList = new();
+            NativeArray<UnsafeList<int>> roomList = roomFinderJob.Rooms;
+            foreach (UnsafeList<int> unsafePosList in roomList)
+            {
+                safeRoomList.Add(new Room(unsafePosList));
+                unsafePosList.Dispose();
+            }
+
+            roomList.Dispose();
             roomFinderJob.Dispose();
-            return roomFinderJob.NativeRooms; //TODO return as managed
+            return safeRoomList;
         }
-        
 
         //TODO a lot of unsafe
         private struct RoomFinderJob : IJob, IDisposable
@@ -42,7 +52,7 @@ namespace Terrain.PathGraph.CellularAutomata
             [ReadOnly]
             private int2 size;
 
-            private NativeList<NativeRoom> rooms;
+            private NativeList<UnsafeList<int>> rooms;
 
             private int arrayCount;
             private NativeArray<bool> visitedMap;
@@ -57,7 +67,7 @@ namespace Terrain.PathGraph.CellularAutomata
                 arrayCount = size.x * size.y;
                 visitedMap = new NativeArray<bool>(arrayCount, Allocator.TempJob);
                 activeNodes = new NativeQueue<int>(Allocator.TempJob);
-                rooms = new NativeList<NativeRoom>(Allocator.Persistent);
+                rooms = new NativeList<UnsafeList<int>>(Allocator.Persistent);
                 activeCount = 0;
             }
 
@@ -80,16 +90,16 @@ namespace Terrain.PathGraph.CellularAutomata
                         activeCount--;
                         int2 pos = new int2(nodePosInt % size.x, nodePosInt / size.y);
                         //Get and process 4 neighbours
-                        ProcessNeighbour(pos + UP, roomPositions);
-                        ProcessNeighbour(pos + DOWN, roomPositions);
-                        ProcessNeighbour(pos + LEFT, roomPositions);
-                        ProcessNeighbour(pos + RIGHT, roomPositions);
+                        ProcessNeighbour(pos + UP, ref roomPositions);
+                        ProcessNeighbour(pos + DOWN, ref roomPositions);
+                        ProcessNeighbour(pos + LEFT, ref roomPositions);
+                        ProcessNeighbour(pos + RIGHT, ref roomPositions);
                     }
-                    rooms.Add(new NativeRoom(roomPositions));
+                    rooms.Add(roomPositions);
                 }
             }
 
-            private void ProcessNeighbour(int2 neighbourPos, UnsafeList<int> roomPositions)
+            private void ProcessNeighbour(int2 neighbourPos, ref UnsafeList<int> roomPositions)
             {
                 int intPos = neighbourPos.x + neighbourPos.y * size.x;
                 if (intPos < 0 || intPos >= arrayCount) return;
@@ -100,7 +110,7 @@ namespace Terrain.PathGraph.CellularAutomata
                 roomPositions.Add(intPos);
             }
 
-            public NativeRoomList NativeRooms => new(rooms);
+            public NativeList<UnsafeList<int>> Rooms => rooms;
 
 
             public void Dispose()
@@ -111,63 +121,30 @@ namespace Terrain.PathGraph.CellularAutomata
         }
     }
 
-    public struct NativeRoomList : IEnumerable<NativeRoom>, IDisposable
+    public class Room : IEnumerable<int>
     {
-        private NativeArray<NativeRoom> rooms;
-
-        public NativeRoomList(NativeArray<NativeRoom> rooms)
+        private List<int> posList;
+        public Room(UnsafeList<int> posUnsafeList)
         {
-            this.rooms = rooms;
-        }
-
-        public IEnumerator<NativeRoom> GetEnumerator()
-        {
-            return rooms.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-        
-        //TODO copy to managed
-
-        public void Dispose()
-        {
-            foreach (var room in rooms)
+            int[] arr = new int[posUnsafeList.Length];
+            for (int i = 0; i < posUnsafeList.Length; i++)
             {
-                room.Dispose();
+                arr[i] = posUnsafeList[i];
             }
 
-            rooms.Dispose();
-        }
-    }
-    
-    public struct NativeRoom : IEnumerable<int>, IDisposable
-    {
-        private UnsafeList<int> roomPos;
-
-        public NativeRoom(UnsafeList<int> roomPos)
-        {
-            this.roomPos = roomPos;
-            Size = this.roomPos.Length;
+            posList = new List<int>(arr);
         }
 
-        public int Size { get; }
+        public int Size => posList.Count;
 
         public IEnumerator<int> GetEnumerator()
         {
-            return roomPos.GetEnumerator();
+            return posList.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
-        }
-
-        public void Dispose()
-        {
-            roomPos.Dispose();
         }
     }
 }
