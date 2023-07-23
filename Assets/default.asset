@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   chunkSize: {x: 10, y: 10}
   borderShapeType: 0
-  borderWeight: 64
+  borderWeight: 100
   pathFindingSettings:
     randomCostMin: 0
-    randomCostMax: 50
-    distanceMultiplier: 0.1
+    randomCostMax: 100
+    distanceMultiplier: 0.3
+    weightMultiplier: 1.5

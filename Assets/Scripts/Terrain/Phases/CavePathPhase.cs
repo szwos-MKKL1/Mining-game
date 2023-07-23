@@ -18,6 +18,7 @@ using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Profiling;
+using Random = System.Random;
 
 namespace Terrain.Phases
 {
@@ -63,10 +64,13 @@ namespace Terrain.Phases
                 }, startPoint, destinationPoint,
                 terrainData.RealSize, generationData.pathFindingSettings);
             List<IEnumerable<IEdge<Vector2>>> pathList = new();
+            float g = 0.0f;
             for (int i = 0; i < 5; i++)
             {
                 IEnumerable<IEdge<Vector2>> path = pathFinder.NextRandomPath();
                 Debug.Assert(path!=null, "No path was found");
+                path.UnityDraw(new Color(0, g, 0), 100);
+                g += 0.2f;
                 pathList.Add(path);
             }
             
@@ -76,7 +80,7 @@ namespace Terrain.Phases
                 allEdges.AddRange(path);
             
             combinedGraph = allEdges.ToUndirectedGraph<Vector2, IEdge<Vector2>>();
-            combinedGraph.UnityDraw(Color.green, 100);
+            //combinedGraph.UnityDraw(Color.green, 100);
             
             //Create points around found paths and connect them to new graph that will be used in cavern generation
             UndirectedGraph<Vector2, IEdge<Vector2>> cavernConnectionGraph = RandomGraph.CreateAroundEdges(combinedGraph.Edges).GetGraph();
@@ -89,11 +93,12 @@ namespace Terrain.Phases
             
             Layer[] layers = { new(100), new(45) };
             List<GeneratorNode> genNodes = new();
+            Random random = new Random(0);
             foreach (Vector2 node in cavernConnectionGraph.Vertices)
             {
                 LayerGenerationSettings[] genSettings = {
-                    new(10, 0),
-                    new(25, 1)
+                    new((short)random.Next(8, 15), 0),
+                    new((short)random.Next(18, 30), 1)
                 };
                 genNodes.Add(new GeneratorNode(node.AsVectorInt(), genSettings));
             }
@@ -109,38 +114,34 @@ namespace Terrain.Phases
             {
                 initial[i] = true;
             }
-            //ImageDebug.SaveImg(initial, terrainData.RealSize, "initial.png");
             var sim = CellularAutomataSimulator.CreateFromMap(terrainData.RealSize, initial);
-            //var sim = CellularAutomataSimulator.CreateRandom(new Vector2Int(100, 100), 0.4f, 0);
             sim.AliveThreshold = 5;
-            //ImageDebug.SaveImg(sim.CellMap.ToArray(), terrainData.RealSize, "step0.png");
-            var realtimeSinceStartup = Time.realtimeSinceStartup;
-            Profiler.BeginSample("CellularAutomataSimulator");
             int j = 1;
             for (int i = 0; i < 11; i++)
             {
                 sim.ExecuteStep();
                 if (i % 2 == 0)
                 {
-                    //ImageDebug.SaveImg(sim.CellMap.ToArray(), terrainData.RealSize, "step"+j+".png");
+                    ImageDebug.SaveImg(sim.CellMap.ToArray(), terrainData.RealSize, "step"+j+".png");
                     j++;
                 }
-                    
             }
-            Profiler.EndSample();
+
+            RoomFinder roomFinder = new RoomFinder(sim.CellMap, terrainData.RealSize);
+            NativeRoomList roomList = roomFinder.GetRoomList();
             Vector2Int realsize = terrainData.RealSize;
-            int index = 0;
-            foreach (var alive in sim.CellMap)
+            foreach (var nativeRoom in roomList)
             {
-                if (alive)
+                if (nativeRoom.Size > 40)
                 {
-                    terrainData.SetBlock(new Vector2Int(index % realsize.x, index / realsize.y), BlockRegistry.AIR);
+                    foreach (var alivePos in nativeRoom)
+                    {
+                        terrainData.SetBlock(new Vector2Int(alivePos % realsize.x, alivePos / realsize.y), BlockRegistry.AIR);
+                    }
                 }
-            
-                index++;
             }
             sim.Dispose();
-            Debug.Log($"Pathing took {Time.realtimeSinceStartup-realtimeSinceStartup}s");
+            roomList.Dispose();
         }
     }
 }

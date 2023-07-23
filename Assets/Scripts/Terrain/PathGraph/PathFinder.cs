@@ -85,6 +85,7 @@ namespace Terrain.PathGraph
             return edges;
         }
         
+        //TODO save found paths to add cost based on them
         public IEnumerable<Vector2> NextRandomNodesPath()
         {
             Dictionary<Vector2, PathNode> visited = new();

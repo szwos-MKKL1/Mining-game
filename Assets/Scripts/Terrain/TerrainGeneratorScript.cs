@@ -41,8 +41,6 @@ namespace Terrain
                     break;
                 case BorderType.Rectangle:
                     throw new NotImplementedException("Rectangle not implemented");
-                
-                
             }
             
             //generationData.borderWeight = 64;
@@ -79,7 +77,7 @@ namespace Terrain
                     {
                         int xInWorld = chunkPos.x * 128 + x;
                         int yInWorld = chunkPos.y * 128 + y;
-
+            
                         var block = chunk.Blocks[x * 128 + y];
                         if (!block.GetType().IsInstanceOfType(typeof(AirBlock)))
                         {
