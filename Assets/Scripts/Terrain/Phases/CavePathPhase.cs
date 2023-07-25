@@ -132,12 +132,10 @@ namespace Terrain.Phases
             Vector2Int realsize = terrainData.RealSize;
             foreach (var nativeRoom in roomList)
             {
-                Debug.Log(nativeRoom.Size);
                 if (nativeRoom.Size > 40)
                 {
                     foreach (var alivePos in nativeRoom)
                     {
-                        Debug.Log("a " + alivePos);
                         terrainData.SetBlock(new Vector2Int(alivePos % realsize.x, alivePos / realsize.y), BlockRegistry.AIR);
                     }
                 }
