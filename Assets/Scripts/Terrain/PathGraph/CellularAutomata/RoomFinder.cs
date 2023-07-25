@@ -22,24 +22,23 @@ namespace Terrain.PathGraph.CellularAutomata
         }
 
         //TODO can be async
-        public List<Room> GetRoomList()
+        public unsafe List<Room> GetRoomList()
         {
             RoomFinderJob roomFinderJob = new RoomFinderJob(aliveMap, size);
-            roomFinderJob.Execute();
+            roomFinderJob.Schedule().Complete();
+            
             List<Room> safeRoomList = new();
             NativeArray<UnsafeList<int>> roomList = roomFinderJob.Rooms;
-            foreach (UnsafeList<int> unsafePosList in roomList)
+            for (int i = 0; i < roomList.Length; i++)
             {
-                safeRoomList.Add(new Room(unsafePosList));
-                unsafePosList.Dispose();
+                ref UnsafeList<int> room = ref UnsafeUtility.ArrayElementAsRef<UnsafeList<int>>(roomList.GetUnsafePtr(), i);
+                safeRoomList.Add(new Room(ref room));
             }
-
-            roomList.Dispose();
             roomFinderJob.Dispose();
             return safeRoomList;
         }
-
-        //TODO a lot of unsafe
+        
+        [BurstCompile]
         private struct RoomFinderJob : IJob, IDisposable
         {
             private static readonly int2 UP = new int2(0, 1);
@@ -51,7 +50,7 @@ namespace Terrain.PathGraph.CellularAutomata
             private NativeArray<bool> aliveMap;
             [ReadOnly]
             private int2 size;
-
+            
             private NativeList<UnsafeList<int>> rooms;
 
             private int arrayCount;
@@ -110,13 +109,20 @@ namespace Terrain.PathGraph.CellularAutomata
                 roomPositions.Add(intPos);
             }
 
-            public NativeList<UnsafeList<int>> Rooms => rooms;
+            public NativeArray<UnsafeList<int>> Rooms => rooms;
 
-
-            public void Dispose()
+            public unsafe void Dispose()
             {
                 visitedMap.Dispose();
                 activeNodes.Dispose();
+                for (int i = 0; i < rooms.Length; i++)
+                {
+                    ref UnsafeList<int> room = ref UnsafeUtility.ArrayElementAsRef<UnsafeList<int>>(rooms.GetUnsafePtr(), i);
+                    if(room.IsCreated)
+                        room.Dispose();
+                }
+
+                rooms.Dispose();
             }
         }
     }
@@ -124,8 +130,9 @@ namespace Terrain.PathGraph.CellularAutomata
     public class Room : IEnumerable<int>
     {
         private List<int> posList;
-        public Room(UnsafeList<int> posUnsafeList)
+        public Room(ref UnsafeList<int> posUnsafeList)
         {
+            //Converting unsafe pointer to managed array TODO could be done with some cast
             int[] arr = new int[posUnsafeList.Length];
             for (int i = 0; i < posUnsafeList.Length; i++)
             {
