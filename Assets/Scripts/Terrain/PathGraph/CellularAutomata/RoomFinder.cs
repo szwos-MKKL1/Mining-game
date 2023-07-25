@@ -24,7 +24,7 @@ namespace Terrain.PathGraph.CellularAutomata
         //TODO can be async
         public unsafe List<Room> GetRoomList()
         {
-            RoomFinderJob roomFinderJob = new RoomFinderJob(aliveMap, size);
+            RoomFinderJob roomFinderJob = new RoomFinderJob(aliveMap, size); //TODO takes ~80ms just to initialize
             roomFinderJob.Schedule().Complete();
             
             List<Room> safeRoomList = new();
@@ -66,7 +66,7 @@ namespace Terrain.PathGraph.CellularAutomata
                 arrayCount = size.x * size.y;
                 visitedMap = new NativeArray<bool>(arrayCount, Allocator.TempJob);
                 activeNodes = new NativeQueue<int>(Allocator.TempJob);
-                rooms = new NativeList<UnsafeList<int>>(Allocator.Persistent);
+                rooms = new NativeList<UnsafeList<int>>(Allocator.TempJob);
                 activeCount = 0;
             }
 
