@@ -122,7 +122,7 @@ namespace Terrain.PathGraph
                         (int)(
                             currentNode.CostSoFar +
                             randVal +
-                            randomH * 100 * pathFindingSettings.DistanceMultiplier +
+                            math.pow(randomH,2) * 100 * pathFindingSettings.DistanceMultiplier +
                             weightFunc(neighbour) * pathFindingSettings.weightMultiplier),
                         neighbour,
                         currentNode));

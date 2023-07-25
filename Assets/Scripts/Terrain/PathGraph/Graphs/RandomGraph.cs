@@ -40,7 +40,7 @@ namespace Terrain.PathGraph.Graphs
         //TODO point distribution as parameter
         public static RandomGraph CreateAroundEdges(IEnumerable<IEdge<Vector2>> edges, int seed = 0)
         {
-            return CreateFromPoints(new PointsAroundGraph(edges, new RangeInt(1, 4), 10f, seed));
+            return CreateFromPoints(new PointsAroundGraph(edges, new RangeInt(1, 4), 1f, seed));
         }
 
         public UndirectedGraph<Vector2, IEdge<Vector2>> GetGraph()

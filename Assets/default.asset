@@ -16,7 +16,7 @@ MonoBehaviour:
   borderShapeType: 0
   borderWeight: 100
   pathFindingSettings:
-    randomCostMin: 0
-    randomCostMax: 100
-    distanceMultiplier: 0.3
+    randomCostMin: -20
+    randomCostMax: 150
+    distanceMultiplier: 0.1
     weightMultiplier: 1.5
