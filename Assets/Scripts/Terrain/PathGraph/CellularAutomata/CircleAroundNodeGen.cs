@@ -103,7 +103,7 @@ namespace Terrain.PathGraph.CellularAutomata
     }
 
     [BurstCompile]
-    public struct FillLayerMapJob : IJobParallelFor
+    internal struct FillLayerMapJob : IJobParallelFor
     {
         [NativeDisableParallelForRestriction]
         public NativeArray<byte> layerIdMap; // values 0 = no layer, 1 = layer with id 0, 2 = layer 1...

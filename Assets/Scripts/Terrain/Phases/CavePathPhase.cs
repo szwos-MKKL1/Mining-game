@@ -18,6 +18,7 @@ using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Profiling;
+using Edge = DelaunatorSharp.Edge;
 using Random = System.Random;
 
 namespace Terrain.Phases
@@ -45,10 +46,10 @@ namespace Terrain.Phases
             UndirectedGraph<Vector2, IEdge<Vector2>> pathFinderGraph = randomGraph.GetGraph();
             
             
-            pathFinderGraph.UnityDraw(Color.red, 300);
+            //pathFinderGraph.UnityDraw(Color.red, 300);
             //Removing vertices that are outside of buildable area
             pathFinderGraph.RemoveVertexIf(pos => !terrainData.IsBuildable(pos.AsVectorInt()));
-            pathFinderGraph.UnityDraw(Color.blue, 300);
+            //pathFinderGraph.UnityDraw(Color.blue, 300);
 
             //Creating weight map for path finding
             DistanceMap distanceMap = new DistanceMap(terrainData.GetNotBuildableMap(), terrainData.RealSize);
@@ -64,13 +65,12 @@ namespace Terrain.Phases
                 }, startPoint, destinationPoint,
                 terrainData.RealSize, generationData.pathFindingSettings);
             List<IEnumerable<IEdge<Vector2>>> pathList = new();
-            float g = 0.0f;
+            //float g = 0.0f;
             for (int i = 0; i < 5; i++)
             {
                 IEnumerable<IEdge<Vector2>> path = pathFinder.NextRandomPath();
                 Debug.Assert(path!=null, "No path was found");
-                path.UnityDraw(new Color(0, g, 0), 100);
-                g += 0.2f;
+                path.UnityDraw(new Color(0, 255, 0), 100);
                 pathList.Add(path);
             }
             
@@ -87,7 +87,7 @@ namespace Terrain.Phases
             //cavernConnectionGraph.UnityDraw(Color.blue, 300);
             
             //Remove edges that are too long
-            cavernConnectionGraph.RemoveEdgeIf(edge => DistanceMethods.ManhattanDistance(edge.Target, edge.Source) > 150);
+            cavernConnectionGraph.RemoveEdgeIf(edge => DistanceMethods.ManhattanDistance(edge.Target, edge.Source) > 100);
             //cavernConnectionGraph.UnityDraw(Color.cyan, 300);
             
             
@@ -102,19 +102,25 @@ namespace Terrain.Phases
                 };
                 genNodes.Add(new GeneratorNode(node.AsVectorInt(), genSettings));
             }
+            
             //TODO maze
             
-            InitialMapGenerator initialMapGenerator = new InitialMapGenerator(terrainData.RealSize, layers, new []
+            Line[] lines = cavernConnectionGraph.Edges.Select(edge => 
+                new Line { SourcePos = new int2(edge.Source), 
+                    TargetPos = new int2(edge.Target), 
+                    Width = 4, 
+                    layerID = 0 }).ToArray();
+            LinePathGen linePathGen = new LinePathGen(lines);
+            InitialMapGenerator initialMapGenerator = new InitialMapGenerator(terrainData.RealSize, layers, new ILayerGenerator[]
             {
-                new CircleAroundNodeGen(genNodes)
+                new CircleAroundNodeGen(genNodes),
+                linePathGen
             });
-            
             bool[] initial = initialMapGenerator.GetInitialMap();
-            for (int i = 0; i < 100; i++)
-            {
-                initial[i] = true;
-            }
+            linePathGen.Dispose();
+            
             var sim = CellularAutomataSimulator.CreateFromMap(terrainData.RealSize, initial);
+            ImageDebug.SaveImg(sim.CellMap.ToArray(), terrainData.RealSize, "step"+0+".png");
             sim.AliveThreshold = 5;
             int j = 1;
             for (int i = 0; i < 11; i++)
