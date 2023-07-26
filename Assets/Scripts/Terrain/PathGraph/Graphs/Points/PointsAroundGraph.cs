@@ -33,10 +33,11 @@ namespace Terrain.PathGraph.Graphs.Points
                 int count = mRandom.Next(edgeCountMin, edgeCountMax);
                 for (int i = 0; i < count; i++)
                 {
-                    float randXCenter = (float)(mRandom.NextDouble() * (a.x - b.x)) + b.x;
-                    float randYCenter = (float)(mRandom.NextDouble() * (a.y - b.y)) + b.y;
-                    float randX = (float)(mRandom.NextDouble() * 2 * maxOffset) + randXCenter;
-                    float randY = (float)(mRandom.NextDouble() * 2 * maxOffset) + randYCenter;
+                    
+                    float randomD = (float)mRandom.NextDouble();
+                    Vector2 randCenter = (1f - randomD) * a + randomD * b;
+                    float randX = (float)(mRandom.NextDouble() * 2 * maxOffset) + randCenter.x;
+                    float randY = (float)(mRandom.NextDouble() * 2 * maxOffset) + randCenter.y;
                     sample.Add(new Vector2(randX, randY));
                 }
             }

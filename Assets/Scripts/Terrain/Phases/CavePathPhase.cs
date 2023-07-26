@@ -87,34 +87,46 @@ namespace Terrain.Phases
             //cavernConnectionGraph.UnityDraw(Color.blue, 300);
             
             //Remove edges that are too long
-            cavernConnectionGraph.RemoveEdgeIf(edge => DistanceMethods.ManhattanDistance(edge.Target, edge.Source) > 100);
+            cavernConnectionGraph.RemoveEdgeIf(edge => DistanceMethods.ManhattanDistance(edge.Target, edge.Source) > 50);
             //cavernConnectionGraph.UnityDraw(Color.cyan, 300);
             
-            
-            Layer[] layers = { new(100), new(45) };
+            #region cellular_automata
+            Layer[] layers = { new(100), new(70), new(45) };
             List<GeneratorNode> genNodes = new();
             Random random = new Random(0);
             foreach (Vector2 node in cavernConnectionGraph.Vertices)
             {
                 LayerGenerationSettings[] genSettings = {
-                    new((short)random.Next(8, 15), 0),
-                    new((short)random.Next(18, 30), 1)
+                    new((short)random.Next(4, 10), 0),
+                    new((short)random.Next(14, 20), 2)
                 };
                 genNodes.Add(new GeneratorNode(node.AsVectorInt(), genSettings));
             }
             
             //TODO maze
-            
-            Line[] lines = cavernConnectionGraph.Edges.Select(edge => 
-                new Line { SourcePos = new int2(edge.Source), 
-                    TargetPos = new int2(edge.Target), 
-                    Width = 4, 
-                    layerID = 0 }).ToArray();
-            LinePathGen linePathGen = new LinePathGen(lines);
+            List<Line> lines = new List<Line>();
+            foreach (IEdge<Vector2> edge in cavernConnectionGraph.Edges)
+            {
+                // lines.Add(new Line
+                // {
+                //     SourcePos = new int2(edge.Source),
+                //     TargetPos = new int2(edge.Target),
+                //     Width = 2,
+                //     LayerID = 0
+                // });
+                lines.Add(new Line
+                {
+                    SourcePos = new int2(edge.Source),
+                    TargetPos = new int2(edge.Target),
+                    Width = 4,
+                    LayerID = 1
+                });
+            }
+            LinePathGen linePathGen = new LinePathGen(lines.ToArray());
             InitialMapGenerator initialMapGenerator = new InitialMapGenerator(terrainData.RealSize, layers, new ILayerGenerator[]
             {
-                new CircleAroundNodeGen(genNodes),
-                linePathGen
+                linePathGen,
+                new CircleAroundNodeGen(genNodes)
             });
             bool[] initial = initialMapGenerator.GetInitialMap();
             linePathGen.Dispose();
@@ -132,6 +144,7 @@ namespace Terrain.Phases
                     j++;
                 }
             }
+            #endregion
 
             RoomFinder roomFinder = new RoomFinder(sim.CellMap, terrainData.RealSize);
             List<Room> roomList = roomFinder.GetRoomList();
