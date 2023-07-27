@@ -1,8 +1,11 @@
-﻿using Terrain.Blocks;
-using Terrain.Generators;
+﻿using System.Collections.Generic;
+using Terrain.Blocks;
+using Terrain.DecorateGenerators;
+using UnityEngine;
 
 namespace Terrain.Phases
 {
+    [PhaseDependency(typeof(RawPhase), DependencyOrder.Before)]
     public class DecoratorPhase : IGenerationPhase
     {
         private readonly GenerationData generationData;
@@ -16,40 +19,37 @@ namespace Terrain.Phases
 
         public void Generate(TerrainData terrainData)
         {
-            for (int chunkx = 0; chunkx < generationData.chunkSize.x; chunkx++)
+            foreach (KeyValuePair<Vector2Int, TerrainChunk> chunkPair in terrainData)
             {
-                for (int chunky = 0; chunky < generationData.chunkSize.y; chunky++)
-                {
-                    PopulateChunk(terrainData.terrainChunks[chunkx, chunky]);
-                }
+                PopulateChunk(chunkPair.Value);
             }
         }
         
         private void PopulateChunk(TerrainChunk terrainChunk)
         {
-            BlockBase[,] blocks = terrainChunk.Blocks;
-            bool[,] canBuild = terrainChunk.CanBuild;
-            int chunkx = terrainChunk.InWorldPosition.x;
-            int chunky = terrainChunk.InWorldPosition.y;
+            BlockBase[] blocks = terrainChunk.Blocks;
+            bool[] canBuild = terrainChunk.CanBuild;
+            
+            int chunkx = terrainChunk.ChunkId.x;
+            int chunky = terrainChunk.ChunkId.y;
+
             for (int xInChunk = 0; xInChunk < TerrainChunk.ChunkSizeX; xInChunk++)
             {
+                int xInWorld = chunkx * TerrainChunk.ChunkSizeX + xInChunk;
                 for (int yInChunk = 0; yInChunk < TerrainChunk.ChunkSizeY; yInChunk++)
                 {
-                    int xInWorld = chunkx * TerrainChunk.ChunkSizeX + xInChunk;
                     int yInWorld = chunky * TerrainChunk.ChunkSizeY + yInChunk;
-
-                    if (!canBuild[xInChunk, yInChunk]) continue;
+                    int loc = xInChunk * TerrainChunk.ChunkSizeX + yInChunk;
+                    
+                    if (!canBuild[loc]) continue;
 
                     foreach (var generator in mDecorateGenerators)
                     {
                         BlockBase blockBase = generator.GetBlock(xInWorld, yInWorld);
-                        if (blockBase != null) blocks[xInChunk, yInChunk] = blockBase;
+                        if (blockBase != null) blocks[loc] = blockBase;
                     }
                 }
             }
-
-            terrainChunk.Blocks = blocks;
-            terrainChunk.CanBuild = canBuild;
         }
     }
 }

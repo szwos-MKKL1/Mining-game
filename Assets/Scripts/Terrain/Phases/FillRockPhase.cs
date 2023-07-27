@@ -1,8 +1,14 @@
-﻿using Terrain.Blocks;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using Terrain.Blocks;
+using Terrain.DecorateGenerators.BlockProvider;
 using Terrain.Generators;
+using UnityEngine;
 
 namespace Terrain.Phases
 {
+    [PhaseDependency(typeof(RawPhase), DependencyOrder.Before)]
     public class FillRockPhase : IGenerationPhase
     {
         private readonly GenerationData generationData;
@@ -16,33 +22,26 @@ namespace Terrain.Phases
 
         public void Generate(TerrainData terrainData)
         {
-            for (int chunkx = 0; chunkx < generationData.chunkSize.x; chunkx++)
+            foreach (KeyValuePair<Vector2Int, TerrainChunk> chunkPair in terrainData)
             {
-                for (int chunky = 0; chunky < generationData.chunkSize.y; chunky++)
-                {
-                    PopulateChunk(terrainData.terrainChunks[chunkx, chunky]);
-                }
+                PopulateChunk(chunkPair.Value);
             }
         }
 
         private void PopulateChunk(TerrainChunk terrainChunk)
         {
-            BlockBase[,] blocks = terrainChunk.Blocks;
-            bool[,] canBuild = terrainChunk.CanBuild;
+
+            BlockBase[] blocks = terrainChunk.Blocks;
+            bool[] canBuild = terrainChunk.CanBuild;
             for (int xInChunk = 0; xInChunk < TerrainChunk.ChunkSizeX; xInChunk++)
             {
                 for (int yInChunk = 0; yInChunk < TerrainChunk.ChunkSizeY; yInChunk++)
                 {
-                    // int xInWorld = chunkx * TerrainChunk.ChunkSizeX + xInChunk;
-                    // int yInWorld = chunky * TerrainChunk.ChunkSizeY + yInChunk;
-
-                    if (canBuild[xInChunk, yInChunk])
-                        blocks[xInChunk, yInChunk] = blockProvider.GetNextBlock();
+                    int loc = xInChunk * TerrainChunk.ChunkSizeX + yInChunk;
+                    if (canBuild[loc])
+                        blocks[loc] = blockProvider.GetNextBlock();
                 }
             }
-
-            terrainChunk.Blocks = blocks;
-            terrainChunk.CanBuild = canBuild;
         }
     }
 }
