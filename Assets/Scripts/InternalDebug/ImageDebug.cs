@@ -1,5 +1,5 @@
 ﻿using System;
-using Terrain.Noise;
+using Terrain.Generator.Noise;
 using UnityEngine;
 
 namespace InternalDebug

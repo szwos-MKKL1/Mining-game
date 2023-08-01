@@ -1,9 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Terrain.Generators
+namespace Terrain
 {
     public class RandomFromList<T> where T:class
     {

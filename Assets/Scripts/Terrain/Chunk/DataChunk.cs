@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Terrain
+namespace Terrain.Chunk
 {
     public abstract class DataChunk
     {
