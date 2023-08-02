@@ -9,11 +9,11 @@ namespace Terrain.Generator.Structure.Dungeon
     
     public class RandomPointCircle : IRandomPointGenShape
     {
-        private readonly Random random;
+        private readonly System.Random random;
         private readonly float radius;
         private readonly float2 center;
 
-        public RandomPointCircle(Random random, float2 center, float radius)
+        public RandomPointCircle(System.Random random, float2 center, float radius)
         {
             this.random = random;
             this.radius = radius;
@@ -34,7 +34,7 @@ namespace Terrain.Generator.Structure.Dungeon
     {
         private readonly float a2;
         private readonly float b2;
-        public RandomPointEllipse(Random random, float2 center, float width, float height) : base(random, center, 1)
+        public RandomPointEllipse(System.Random random, float2 center, float width, float height) : base(random, center, 1)
         {
             a2 = width/2;
             b2 = height/2;

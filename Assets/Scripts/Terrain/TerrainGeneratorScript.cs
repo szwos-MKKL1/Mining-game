@@ -46,12 +46,13 @@ namespace Terrain
             generationData.generationPhases = new List<IGenerationPhase>()
             {
                 new RawPhase(generationData),
-                 new FillRockPhase(generationData, new StandardProvider(BlockRegistry.ROCK)),
-                 new DecoratorPhase(generationData,
-                     new VeinGenerator(new StandardProvider(BlockRegistry.ORE), 0, 0.05f),
-                     new WormGenerator(new StandardProvider(BlockRegistry.AIR), 0, 0.005f, -0.9f)
-                 ),
-                new CavePathPhase(generationData, out paths)
+                //  new FillRockPhase(generationData, new StandardProvider(BlockRegistry.ROCK)),
+                //  new DecoratorPhase(generationData,
+                //      new VeinGenerator(new StandardProvider(BlockRegistry.ORE), 0, 0.05f),
+                //      new WormGenerator(new StandardProvider(BlockRegistry.AIR), 0, 0.005f, -0.9f)
+                //  ),
+                // new CavePathPhase(generationData, out paths),
+                new StructurePhase(generationData)
             };
             
             //Generate terrain
