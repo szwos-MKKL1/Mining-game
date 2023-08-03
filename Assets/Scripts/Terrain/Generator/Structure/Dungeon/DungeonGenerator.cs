@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using QuikGraph;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -42,10 +43,9 @@ namespace Terrain.Generator.Structure.Dungeon
         }
         
         //TODO tmp
-        private static int2 Normalize(int2 vec)
+        private static float2 Normalize(float2 vec)
         {
-            float mag = math.sqrt(vec.x * vec.x + vec.y * vec.y);
-            return new int2((int)(vec.x / mag), (int)(vec.y / mag));
+            return vec / math.sqrt(vec.x * vec.x + vec.y * vec.y);
         }
 
         public IEnumerable<DungeonRoom> Rooms()
@@ -58,42 +58,29 @@ namespace Terrain.Generator.Structure.Dungeon
         {
             bool regionsOk = false;
             int separationTicks = 0;
-            while (!regionsOk && separationTicks < 2 * locrooms.Count)
+            int separationLimit = 2 * locrooms.Count;
+            while (!regionsOk && separationTicks < separationLimit)
             {
                 regionsOk = true;
                 foreach (DungeonRoom room in locrooms)
                 {
-
-                    int2 movement = int2.zero;
-                    int separationCount = 0;
-
                     foreach (DungeonRoom other in locrooms)
                     {
                         if (room == other)
                             continue;
-
+                        
                         if (!room.Intersects(other))
                             continue;
-
-                        movement += other.Center - room.Center;
-                        ++separationCount;
-                    }
-
-                    if (separationCount > 0)
-                    {
-                        movement *= -1;
-                        movement = Normalize(movement);
-                        int2 newPos = room.Pos;
-                        newPos += movement;
-
-                        if (!newPos.Equals(room.Pos))
-                        {
-                            room.Pos = newPos;
-                            regionsOk = false;
-                        }
+                        regionsOk = false;
+                        int2 roomOtherCenterDiff = room.Center - other.Center;
+                        float2 direction = new float2(1,1);
+                        if(!roomOtherCenterDiff.Equals(int2.zero))
+                            direction = Normalize(roomOtherCenterDiff);
+                        int2 directionint = new int2(math.floor(direction + 0.5f));
+                        room.Pos += directionint;
+                        other.Pos -= directionint;
                     }
                 }
-
                 ++separationTicks;
             }
         }

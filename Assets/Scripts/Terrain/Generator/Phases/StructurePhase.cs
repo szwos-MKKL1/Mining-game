@@ -28,7 +28,7 @@ namespace Terrain.Generator.Phases
             Random random = new Random();
             DungeonGenerator.Config config = new DungeonGenerator.Config(200, 
                 new BaseRandomRoomSize(random, 5, 15, 5, 15), 
-                new RandomPointCircle(random, new float2(500f, 500f), 15f));
+                new RandomPointCircle(random, new float2(500f, 500f), 25f));
             DungeonGenerator dungeonGenerator = new DungeonGenerator(config);
             foreach (var room in dungeonGenerator.Rooms())
             {
