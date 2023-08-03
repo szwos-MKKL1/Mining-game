@@ -154,14 +154,31 @@ namespace Terrain.Generator.Structure.Dungeon
                 ok = true;
                 for (int i = 0; i < count; i++)
                 {
+                    JobDungeonRoom current = rooms[i];
+
+                    float2 movement = float2.zero;
+                    int separationCount = 0;
                     for (int j = 0; j < count; j++)
                     {
                         if (i == j) continue;
-                        if (!rooms[i].Intersects(rooms[j])) continue;
-                        ok = false;
-                        float2 direction = math.normalizesafe(rooms[j].Center - rooms[i].Center, new float2(1, 0));
-                        (roomArrayPtr + i)->Pos -= direction;
-                        (roomArrayPtr + j)->Pos += direction;
+                        JobDungeonRoom other = rooms[j];
+                        if (!current.Intersects(other)) continue;
+                        
+                        movement += other.Center - current.Center;
+                        ++separationCount;
+                    }
+                    
+                    if (separationCount > 0)
+                    {
+                        movement *= -1;
+                        movement = math.normalizesafe(movement, new float2(0.5f, 0.5f));
+                        float2 newPos = current.Pos;
+                        newPos += movement;
+                        if (!newPos.Equals(current.Pos))
+                        {
+                            (roomArrayPtr + i)->Pos = newPos;
+                            ok = false;
+                        }
                     }
                 }
 
