@@ -55,7 +55,7 @@ namespace Terrain.Generator.Structure.Dungeon
         private void SeparateRooms(List<DungeonRoom> locrooms)
         {
             SeparateRoomsJob separateRoomsJob = new SeparateRoomsJob(locrooms);
-            separateRoomsJob.Execute();
+            separateRoomsJob.Schedule().Complete();
             separateRoomsJob.ApplyResult(locrooms);
             separateRoomsJob.Dispose();
         }
@@ -125,7 +125,7 @@ namespace Terrain.Generator.Structure.Dungeon
         }
     }
 
-
+    //[BurstCompile] //TODO breaks in burst...
     internal struct SeparateRoomsJob : IJob, IDisposable
     {
         private readonly NativeArray<JobDungeonRoom> rooms;
@@ -171,7 +171,7 @@ namespace Terrain.Generator.Structure.Dungeon
                     if (separationCount > 0)
                     {
                         movement *= -1;
-                        movement = math.normalizesafe(movement, new float2(0.5f, 0.5f));
+                        movement = math.normalize(movement);
                         float2 newPos = current.Pos;
                         newPos += movement;
                         if (!newPos.Equals(current.Pos))
@@ -181,8 +181,18 @@ namespace Terrain.Generator.Structure.Dungeon
                         }
                     }
                 }
-
                 separationTicks++;
+            }
+            
+            for (int i = 0; i < count; i++)
+            {
+                JobDungeonRoom room = rooms[i];
+                Vector3 pos0 = new Vector3(room.Pos.x, room.Pos.y);
+                Vector3 size = new Vector3(room.Size.x, room.Size.y);
+                DrawLineScaled(pos0, pos0 + new Vector3(size.x, 0));
+                DrawLineScaled(pos0, pos0 + new Vector3(0, size.y));
+                DrawLineScaled(pos0 + new Vector3(0, size.y), pos0 + new Vector3(size.x, size.y));
+                DrawLineScaled(pos0 + new Vector3(size.x, 0), pos0 + new Vector3(size.x, size.y));
             }
 
             executed = true;
@@ -198,6 +208,11 @@ namespace Terrain.Generator.Structure.Dungeon
             }
             
             return true;
+        }
+        
+        private static void DrawLineScaled(Vector3 a, Vector3 b)
+        {
+            Debug.DrawLine(a * 0.16f, b * 0.16f, Color.magenta, 60f, false);
         }
 
         //TODO remove repeating code
@@ -217,11 +232,10 @@ namespace Terrain.Generator.Structure.Dungeon
             
             public bool Intersects(JobDungeonRoom other)
             {
-                return Pos.x < other.Pos.x + other.Size.x &&
-                       Pos.x + other.Size.x > other.Pos.x &&
-                       Pos.y < other.Pos.y + other.Size.y &&
-                       Pos.y + other.Size.y > other.Pos.y;
+                return Pos.x + Size.x >= other.Pos.x && other.Pos.x + other.Size.x >= Pos.x &&
+                       Pos.y + Size.y >= other.Pos.y && other.Pos.y + other.Size.y >= Pos.y;
             }
+            
         }
 
         public void Dispose()

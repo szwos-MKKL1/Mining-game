@@ -26,9 +26,9 @@ namespace Terrain.Generator.Phases
         public void Generate(TerrainData terrainData)
         {
             Random random = new Random();
-            DungeonGenerator.Config config = new DungeonGenerator.Config(200, 
-                new BaseRandomRoomSize(random, 5, 15, 5, 15), 
-                new RandomPointCircle(random, new float2(500f, 500f), 25f));
+            DungeonGenerator.Config config = new DungeonGenerator.Config(200,
+                new BaseRandomRoomSize(random, 5, 30, 5, 30), 
+                new RandomPointCircle(random, new float2(500f, 500f), 100f));
             DungeonGenerator dungeonGenerator = new DungeonGenerator(config);
             foreach (var room in dungeonGenerator.Rooms())
             {
@@ -43,7 +43,7 @@ namespace Terrain.Generator.Phases
 
         private static void DrawLineScaled(Vector3 a, Vector3 b)
         {
-            Debug.DrawLine(a * 0.16f, b * 0.16f, Color.magenta, 60f, false);
+            Debug.DrawLine(a * 0.16f, b * 0.16f, Color.blue, 60f, false);
         }
     }
 }
