@@ -1,6 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using QuikGraph;
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
@@ -43,46 +47,17 @@ namespace Terrain.Generator.Structure.Dungeon
         }
         
         //TODO tmp
-        private static float2 Normalize(float2 vec)
-        {
-            return vec / math.sqrt(vec.x * vec.x + vec.y * vec.y);
-        }
-
         public IEnumerable<DungeonRoom> Rooms()
         {
             return rooms;
         }
-        //end of tmp
 
-        private void SeparateRooms(ICollection<DungeonRoom> locrooms)
+        private void SeparateRooms(List<DungeonRoom> locrooms)
         {
-            bool regionsOk = false;
-            int separationTicks = 0;
-            int separationLimit = 2 * locrooms.Count;
-            while (!regionsOk && separationTicks < separationLimit)
-            {
-                regionsOk = true;
-                foreach (DungeonRoom room in locrooms)
-                {
-                    foreach (DungeonRoom other in locrooms)
-                    {
-                        if (room == other)
-                            continue;
-                        
-                        if (!room.Intersects(other))
-                            continue;
-                        regionsOk = false;
-                        int2 roomOtherCenterDiff = room.Center - other.Center;
-                        float2 direction = new float2(1,1);
-                        if(!roomOtherCenterDiff.Equals(int2.zero))
-                            direction = Normalize(roomOtherCenterDiff);
-                        int2 directionint = new int2(math.floor(direction + 0.5f));
-                        room.Pos += directionint;
-                        other.Pos -= directionint;
-                    }
-                }
-                ++separationTicks;
-            }
+            SeparateRoomsJob separateRoomsJob = new SeparateRoomsJob(locrooms);
+            separateRoomsJob.Execute();
+            separateRoomsJob.ApplyResult(locrooms);
+            separateRoomsJob.Dispose();
         }
 
         private IEnumerable<DungeonRoom> GetMainRooms(IEnumerable<DungeonRoom> separatedRooms)
@@ -151,11 +126,90 @@ namespace Terrain.Generator.Structure.Dungeon
     }
 
 
-    internal struct SeparateRoomsJob : IJob
+    internal struct SeparateRoomsJob : IJob, IDisposable
     {
-        public void Execute()
+        private readonly NativeArray<JobDungeonRoom> rooms;
+        [ReadOnly]
+        private int count;
+        private bool executed;
+        public SeparateRoomsJob(IReadOnlyList<DungeonGenerator.DungeonRoom> generatorRooms)
         {
-            throw new System.NotImplementedException();
+            executed = false;
+            count = generatorRooms.Count;
+            rooms = new NativeArray<JobDungeonRoom>(count, Allocator.TempJob);
+            for (int i = 0; i < count; i++)
+            {
+                DungeonGenerator.DungeonRoom dungeonRoom = generatorRooms[i];
+                rooms[i] = new JobDungeonRoom(new float2(dungeonRoom.Pos), dungeonRoom.Size);
+            }
+        }
+        
+        public unsafe void Execute()
+        {
+            JobDungeonRoom* roomArrayPtr = (JobDungeonRoom*)rooms.GetUnsafePtr();
+            bool ok = false;
+            int separationTicks = 0;
+            while (!ok && separationTicks < 2 * count)
+            {
+                ok = true;
+                for (int i = 0; i < count; i++)
+                {
+                    for (int j = 0; j < count; j++)
+                    {
+                        if (i == j) continue;
+                        if (!rooms[i].Intersects(rooms[j])) continue;
+                        ok = false;
+                        float2 direction = math.normalizesafe(rooms[j].Center - rooms[i].Center, new float2(1, 0));
+                        (roomArrayPtr + i)->Pos -= direction;
+                        (roomArrayPtr + j)->Pos += direction;
+                    }
+                }
+
+                separationTicks++;
+            }
+
+            executed = true;
+        }
+
+        public bool ApplyResult(List<DungeonGenerator.DungeonRoom> dungeonRooms)
+        {
+            if (!executed) return false;
+
+            for (int i = 0; i < rooms.Length; i++)
+            {
+                dungeonRooms[i].Pos = new int2(rooms[i].Pos);
+            }
+            
+            return true;
+        }
+
+        //TODO remove repeating code
+        //copied DungeonRoom but Pos is float2, 
+        private struct JobDungeonRoom
+        {
+            public float2 Pos;
+            public int2 Size { get; }
+
+            public JobDungeonRoom(float2 pos, int2 size)
+            {
+                Pos = pos;
+                Size = size;
+            }
+            
+            public float2 Center => Pos + Size / 2;
+            
+            public bool Intersects(JobDungeonRoom other)
+            {
+                return Pos.x < other.Pos.x + other.Size.x &&
+                       Pos.x + other.Size.x > other.Pos.x &&
+                       Pos.y < other.Pos.y + other.Size.y &&
+                       Pos.y + other.Size.y > other.Pos.y;
+            }
+        }
+
+        public void Dispose()
+        {
+            rooms.Dispose();
         }
     }
 }
