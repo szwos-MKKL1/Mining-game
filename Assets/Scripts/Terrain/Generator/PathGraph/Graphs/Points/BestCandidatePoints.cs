@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Random;
 using UnityEngine;
 using Random = System.Random;
 
@@ -8,7 +9,7 @@ namespace Terrain.Generator.PathGraph.Graphs.Points
     public class BestCandidatePoints : IPointGenerator
     {
         private int numberOfCandidates;
-        private Random random;
+        private IRandom random;
         private Vector2Int mapSize;
         private List<Vector2> points = new();
 
@@ -17,7 +18,7 @@ namespace Terrain.Generator.PathGraph.Graphs.Points
         {
             this.numberOfCandidates = numberOfCandidates;
             this.mapSize = mapSize;
-            random = new Random(seed);
+            random = new SystemRandom(seed);
         }
 
         public int SampleCount { get; set; } = 200;
@@ -62,7 +63,7 @@ namespace Terrain.Generator.PathGraph.Graphs.Points
 
         private Vector2 RandomVector2()
         {
-            return new Vector2(random.Next(0, mapSize.x), random.Next(0, mapSize.y));
+            return new Vector2(random.NextInt(0, mapSize.x), random.NextInt(0, mapSize.y));
         }
 
         //TODO for now using bruteforce method of iterating all points and returning closest, but quad tree can be used instead

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using InternalDebug;
 using QuikGraph;
+using Random;
 using Terrain.Blocks;
 using Terrain.Generator.PathGraph;
 using Terrain.Generator.PathGraph.CellularAutomata;
@@ -82,12 +83,12 @@ namespace Terrain.Generator.Phases
             #region cellular_automata
             Layer[] layers = { new(100), new(70), new(45) };
             List<GeneratorNode> genNodes = new();
-            Random random = new Random(0);
+            IRandom random = new SystemRandom(0);//TODO replace with random from terrain generator
             foreach (Vector2 node in cavernConnectionGraph.Vertices)
             {
                 LayerGenerationSettings[] genSettings = {
-                    new((short)random.Next(4, 10), 0),
-                    new((short)random.Next(14, 20), 2)
+                    new((short)random.NextInt(4, 10), 0),
+                    new((short)random.NextInt(14, 20), 2)
                 };
                 genNodes.Add(new GeneratorNode(node.AsVectorInt(), genSettings));
             }

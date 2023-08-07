@@ -29,8 +29,12 @@ namespace Terrain.Generator.Structure.Dungeon
 
         private void Start()
         {
+            var time = Time.realtimeSinceStartup;
             rooms = GetInitialDungeonRooms();
+            Debug.Log($"time {Time.realtimeSinceStartup-time}");
+            time = Time.realtimeSinceStartup;
             SeparateRooms(rooms);
+            Debug.Log($"time {Time.realtimeSinceStartup-time}");
         }
         
         private List<DungeonRoom> GetInitialDungeonRooms()
@@ -125,16 +129,14 @@ namespace Terrain.Generator.Structure.Dungeon
         }
     }
 
-    //[BurstCompile] //TODO breaks in burst...
+    [BurstCompile]
     internal struct SeparateRoomsJob : IJob, IDisposable
     {
-        private readonly NativeArray<JobDungeonRoom> rooms;
+        private NativeArray<JobDungeonRoom> rooms;
         [ReadOnly]
         private int count;
-        private bool executed;
         public SeparateRoomsJob(IReadOnlyList<DungeonGenerator.DungeonRoom> generatorRooms)
         {
-            executed = false;
             count = generatorRooms.Count;
             rooms = new NativeArray<JobDungeonRoom>(count, Allocator.TempJob);
             for (int i = 0; i < count; i++)
@@ -143,7 +145,7 @@ namespace Terrain.Generator.Structure.Dungeon
                 rooms[i] = new JobDungeonRoom(new float2(dungeonRoom.Pos), dungeonRoom.Size);
             }
         }
-        
+        //TODO this algorithm uses n^2 checks each tick. Replace it with quad tree or something similar
         public unsafe void Execute()
         {
             JobDungeonRoom* roomArrayPtr = (JobDungeonRoom*)rooms.GetUnsafePtr();
@@ -183,25 +185,10 @@ namespace Terrain.Generator.Structure.Dungeon
                 }
                 separationTicks++;
             }
-            
-            for (int i = 0; i < count; i++)
-            {
-                JobDungeonRoom room = rooms[i];
-                Vector3 pos0 = new Vector3(room.Pos.x, room.Pos.y);
-                Vector3 size = new Vector3(room.Size.x, room.Size.y);
-                DrawLineScaled(pos0, pos0 + new Vector3(size.x, 0));
-                DrawLineScaled(pos0, pos0 + new Vector3(0, size.y));
-                DrawLineScaled(pos0 + new Vector3(0, size.y), pos0 + new Vector3(size.x, size.y));
-                DrawLineScaled(pos0 + new Vector3(size.x, 0), pos0 + new Vector3(size.x, size.y));
-            }
-
-            executed = true;
         }
 
         public bool ApplyResult(List<DungeonGenerator.DungeonRoom> dungeonRooms)
         {
-            if (!executed) return false;
-
             for (int i = 0; i < rooms.Length; i++)
             {
                 dungeonRooms[i].Pos = new int2(rooms[i].Pos);

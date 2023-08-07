@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using QuikGraph;
+using Random;
 using Unity.Mathematics;
 using UnityEngine;
 using Random = System.Random;
@@ -14,7 +15,7 @@ namespace Terrain.Generator.PathGraph
         private readonly Func<Vector2, int> weightFunc;
         private readonly Vector2 startNode;
         private readonly Vector2 destinationNode;
-        private readonly Random mRandom;
+        private readonly IRandom mRandom;
         private readonly float reversedSizeSquared; // 1/przekątna prostokąta świata
         private readonly PathFindingSettings pathFindingSettings;
 
@@ -41,7 +42,7 @@ namespace Terrain.Generator.PathGraph
             if(!this.graph.AdjacentVertices(destinationNode).Any()) throw new ArgumentException("Destination node has no out edges");
             
             reversedSizeSquared = 1f / math.sqrt(size.x * size.x + size.y * size.y);
-            mRandom = new Random(seed);
+            mRandom = new SystemRandom(seed);//TODO replace with random from terrain generator
             this.pathFindingSettings = pathFindingSettings;
         }
 
@@ -111,7 +112,7 @@ namespace Terrain.Generator.PathGraph
                         pathList.AddFirst(startNode);
                         return pathList;
                     }
-                    int randVal = mRandom.Next(pathFindingSettings.RandomCostMin, pathFindingSettings.RandomCostMax);
+                    int randVal = mRandom.NextInt(pathFindingSettings.RandomCostMin, pathFindingSettings.RandomCostMax);
                     float randomH = calcH(neighbour, destinationNode);
 
                     openSet.Add(new PathNode(

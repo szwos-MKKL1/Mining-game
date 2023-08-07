@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
 namespace Terrain
 {
@@ -47,7 +46,7 @@ namespace Terrain
          */
         public T GetRandom()
         {
-            return Random.value <= chance ? result : null;
+            return UnityEngine.Random.value <= chance ? result : null;
         }
 
         public T Result => result;

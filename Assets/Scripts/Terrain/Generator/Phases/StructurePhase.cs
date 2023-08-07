@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using InternalDebug;
 using QuikGraph;
+using Random;
 using Terrain.Blocks;
 using Terrain.Generator.PathGraph;
 using Terrain.Generator.PathGraph.CellularAutomata;
@@ -25,10 +26,10 @@ namespace Terrain.Generator.Phases
         
         public void Generate(TerrainData terrainData)
         {
-            Random random = new Random();
-            DungeonGenerator.Config config = new DungeonGenerator.Config(200,
+            IRandom random = new SystemRandom();//TODO replace with random from terrain generator
+            DungeonGenerator.Config config = new DungeonGenerator.Config(50,
                 new BaseRandomRoomSize(random, 5, 30, 5, 30), 
-                new RandomPointCircle(random, new float2(500f, 500f), 100f));
+                new RandomPointCircle(random, new float2(500f, 500f), 50f));
             DungeonGenerator dungeonGenerator = new DungeonGenerator(config);
             foreach (var room in dungeonGenerator.Rooms())
             {

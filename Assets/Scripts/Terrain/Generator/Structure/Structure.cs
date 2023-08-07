@@ -8,12 +8,12 @@ namespace Terrain.Generator.Structure
 
         public class Context
         {
-            public Context(Random random)
+            public Context(System.Random random)
             {
                 Random = random;
             }
 
-            public Random Random { get; }
+            public System.Random Random { get; }
         }
     }
 }

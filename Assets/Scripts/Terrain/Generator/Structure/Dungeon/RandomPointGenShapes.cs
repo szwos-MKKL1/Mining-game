@@ -1,4 +1,5 @@
-﻿using Unity.Mathematics;
+﻿using Random;
+using Unity.Mathematics;
 
 namespace Terrain.Generator.Structure.Dungeon
 {
@@ -9,11 +10,11 @@ namespace Terrain.Generator.Structure.Dungeon
     
     public class RandomPointCircle : IRandomPointGenShape
     {
-        private readonly System.Random random;
+        private readonly IRandom random;
         private readonly float radius;
         private readonly float2 center;
 
-        public RandomPointCircle(System.Random random, float2 center, float radius)
+        public RandomPointCircle(IRandom random, float2 center, float radius)
         {
             this.random = random;
             this.radius = radius;
@@ -22,8 +23,8 @@ namespace Terrain.Generator.Structure.Dungeon
 
         public float2 NextPoint()
         {
-            float r = (float)(radius * math.sqrt(random.NextDouble()));
-            float theta = (float)(random.NextDouble() * 2 * math.PI);
+            float r = radius * math.sqrt(random.NextFloat());
+            float theta = random.NextFloat() * 2 * math.PI;
             float x = center.x + r * math.cos(theta);
             float y = center.y + r * math.sin(theta);
             return new float2(x, y);
@@ -34,7 +35,7 @@ namespace Terrain.Generator.Structure.Dungeon
     {
         private readonly float a2;
         private readonly float b2;
-        public RandomPointEllipse(System.Random random, float2 center, float width, float height) : base(random, center, 1)
+        public RandomPointEllipse(IRandom random, float2 center, float width, float height) : base(random, center, 1)
         {
             a2 = width/2;
             b2 = height/2;
