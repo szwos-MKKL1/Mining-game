@@ -9,11 +9,11 @@ namespace Random
         private readonly float _mean;
         private readonly float _std;
         
-        public GaussianRandom(IRandom baseRandom, float mean = 0f, float std = 1f)
+        public GaussianRandom(IRandom baseRandom, float mean = 0.5f, float std = 0.5f/3f)//0.5/3 gives 99.7% certainty that value will be in [0, 1] range
         {
             this.baseRandom = baseRandom;
-            this._mean = mean;
-            this._std = std;
+            _mean = mean;
+            _std = std;
         }
 
         public int NextInt(int min, int max)
@@ -21,22 +21,24 @@ namespace Random
             return (int)NextFloat(min, max);
         }
 
+        //TODO clamping values that are out of range, this is kinda bad, this will make more numbers to generate exactly on edges
         public float NextFloat()
         {
-            return NextGaussianFloat(_mean, _std);
+            return math.clamp(NextGaussianFloat(_mean, _std), float.Epsilon, 1f);
         }
 
         public float NextFloat(float min, float max)
         {
-            return NextGaussianFloat(_mean + (min+max)/2f, _std * (max-min));
+            return math.clamp(NextGaussianFloat(_mean, _std)*(max-min)+min, min, max);
         }
 
+        //https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform#Basic_form
         public float NextGaussianFloat(float mean, float std)
         {
             float result;
             if (next == 0f)
             {
-                float u1 = 1.0f - baseRandom.NextFloat(); // [0, 1) -> (0, 1]
+                float u1 = 1.0f - baseRandom.NextFloat(); //cannot be 0
                 float u2 = baseRandom.NextFloat();
                 float radius = math.sqrt(-2 * math.log(u1));
                 float theta = math.PI * 2 * u2;
