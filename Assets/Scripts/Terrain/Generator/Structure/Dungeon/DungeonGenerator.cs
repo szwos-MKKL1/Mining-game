@@ -7,6 +7,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.VisualScripting;
 using UnityEngine;
 using Random = System.Random;
 
@@ -29,12 +30,11 @@ namespace Terrain.Generator.Structure.Dungeon
 
         private void Start()
         {
-            var time = Time.realtimeSinceStartup;
             rooms = GetInitialDungeonRooms();
-            Debug.Log($"time {Time.realtimeSinceStartup-time}");
-            time = Time.realtimeSinceStartup;
             SeparateRooms(rooms);
-            Debug.Log($"time {Time.realtimeSinceStartup-time}");
+            rooms.Draw(Color.blue);
+            List<DungeonRoom> mainRooms = GetMainRooms(rooms).ToList();
+            mainRooms.Draw(Color.red);
         }
         
         private List<DungeonRoom> GetInitialDungeonRooms()
@@ -64,9 +64,12 @@ namespace Terrain.Generator.Structure.Dungeon
             separateRoomsJob.Dispose();
         }
 
-        private IEnumerable<DungeonRoom> GetMainRooms(IEnumerable<DungeonRoom> separatedRooms)
+        private IEnumerable<DungeonRoom> GetMainRooms(IReadOnlyCollection<DungeonRoom> separatedRooms)
         {
-            return null;
+            List<DungeonRoom> sorted = new(separatedRooms);
+            sorted.Sort((a,b) => a.Area.CompareTo(b.Area));
+            int mainRoomCount = 10;//TODO move to dungeon generator config
+            return sorted.Skip(sorted.Count - mainRoomCount);
         }
         
         private UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> GetConnectionGraph(IEnumerable<DungeonRoom> mainRooms)
