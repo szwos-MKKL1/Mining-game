@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using InternalDebug;
 using QuikGraph;
+using QuikGraph.Algorithms;
+using Terrain.Generator.PathGraph.Graphs;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -35,6 +38,8 @@ namespace Terrain.Generator.Structure.Dungeon
             rooms.Draw(Color.blue);
             List<DungeonRoom> mainRooms = GetMainRooms(rooms).ToList();
             mainRooms.Draw(Color.red);
+            List<IEdge<Vector2>> connections = GetConnectionGraph(mainRooms).ToList();
+            connections.UnityDraw(Color.cyan, 10f);
         }
         
         private List<DungeonRoom> GetInitialDungeonRooms()
@@ -64,7 +69,7 @@ namespace Terrain.Generator.Structure.Dungeon
             separateRoomsJob.Dispose();
         }
 
-        private IEnumerable<DungeonRoom> GetMainRooms(IReadOnlyCollection<DungeonRoom> separatedRooms)
+        private IEnumerable<DungeonRoom> GetMainRooms(IEnumerable<DungeonRoom> separatedRooms)
         {
             List<DungeonRoom> sorted = new(separatedRooms);
             sorted.Sort((a,b) => a.Area.CompareTo(b.Area));
@@ -72,10 +77,15 @@ namespace Terrain.Generator.Structure.Dungeon
             return sorted.Skip(sorted.Count - mainRoomCount);
         }
         
-        private UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> GetConnectionGraph(IEnumerable<DungeonRoom> mainRooms)
+        private IEnumerable<IEdge<Vector2>> GetConnectionGraph(IEnumerable<DungeonRoom> mainRooms)
         {
             //This method could be implemented with many different graph such as minimum spanning tree, gabriel graph
-            return null;
+            UndirectedGraph<Vector2, IEdge<Vector2>> graph = 
+                new DelaunatorGraph(mainRooms.Select(room => new float2(room.Center)))
+                    .GetEdges()
+                .ToUndirectedGraph<Vector2, IEdge<Vector2>>();
+            
+            return graph.MinimumSpanningTreePrim(edge => DistanceMethods.SqEuclidianDistance(edge.Source, edge.Target));;
         }
         
         private IEnumerable<DungeonRoom> FindConnectionRooms(IEnumerable<DungeonRoom> separatedRooms, UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> connectionGraph)
@@ -83,7 +93,7 @@ namespace Terrain.Generator.Structure.Dungeon
             return null;
         }
         
-        private void FindConnectionRooms(IEnumerable<DungeonRoom> separatedRooms, IEnumerable<DungeonRoom> connectionRooms)
+        private void MakeCorridors(IEnumerable<DungeonRoom> separatedRooms, IEnumerable<DungeonRoom> connectionRooms)
         {
             return;
         }
