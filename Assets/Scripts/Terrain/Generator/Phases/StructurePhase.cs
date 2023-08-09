@@ -28,7 +28,7 @@ namespace Terrain.Generator.Phases
         {
             IRandom random = new SystemRandom();//TODO replace with random from terrain generator
             DungeonGenerator.Config config = new DungeonGenerator.Config(120,
-                new BaseRandomRoomSize(new GaussianRandom(random, 0.2f, 0.7f), 15, 35, 15, 35), 
+                new BaseRandomRoomSize(new GaussianRandom(random, 0.5f, 0.3f), 5, 40, 5, 40), 
                 new RandomPointCircle(random, new float2(500f, 500f), 50f));
             DungeonGenerator dungeonGenerator = new DungeonGenerator(config);
             

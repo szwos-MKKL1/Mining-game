@@ -38,8 +38,10 @@ namespace Terrain.Generator.Structure.Dungeon
             rooms.Draw(Color.blue);
             List<DungeonRoom> mainRooms = GetMainRooms(rooms).ToList();
             mainRooms.Draw(Color.red);
-            List<IEdge<Vector2>> connections = GetConnectionGraph(mainRooms).ToList();
+            UndirectedGraph<Vector2, IEdge<Vector2>> connections = GetConnectionGraph(mainRooms);
             connections.UnityDraw(Color.cyan, 10f);
+            List<DungeonRoom> connectionRooms = FindConnectionRooms(rooms, connections);
+            connectionRooms.Draw(Color.green, 10f);
         }
         
         private List<DungeonRoom> GetInitialDungeonRooms()
@@ -77,7 +79,8 @@ namespace Terrain.Generator.Structure.Dungeon
             return sorted.Skip(sorted.Count - mainRoomCount);
         }
         
-        private IEnumerable<IEdge<Vector2>> GetConnectionGraph(IEnumerable<DungeonRoom> mainRooms)
+        //TODO should return UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>>
+        private UndirectedGraph<Vector2, IEdge<Vector2>> GetConnectionGraph(IEnumerable<DungeonRoom> mainRooms)
         {
             //This method could be implemented with many different graph such as minimum spanning tree, gabriel graph
             UndirectedGraph<Vector2, IEdge<Vector2>> graph = 
@@ -85,12 +88,28 @@ namespace Terrain.Generator.Structure.Dungeon
                     .GetEdges()
                 .ToUndirectedGraph<Vector2, IEdge<Vector2>>();
             
-            return graph.MinimumSpanningTreePrim(edge => DistanceMethods.SqEuclidianDistance(edge.Source, edge.Target));;
+            return graph.MinimumSpanningTreePrim(edge => DistanceMethods.SqEuclidianDistance(edge.Source, edge.Target))
+                .ToUndirectedGraph<Vector2, IEdge<Vector2>>();
         }
         
-        private IEnumerable<DungeonRoom> FindConnectionRooms(IEnumerable<DungeonRoom> separatedRooms, UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> connectionGraph)
+        private List<DungeonRoom> FindConnectionRooms(IEnumerable<DungeonRoom> separatedRooms, IEdgeSet<Vector2, IEdge<Vector2>> connectionGraph)
         {
-            return null;
+            HashSet<DungeonRoom> connectionRooms = new();
+            List<DungeonRoom> toProcess = new(separatedRooms);
+            foreach (IEdge<Vector2> edge in connectionGraph.Edges)
+            {
+                //Iterating every room in room list to find which rooms intersect with line
+                //TODO this could be made faster by using quad tree collection
+                HashSet<DungeonRoom> toRemove = new();
+                foreach (var room in toProcess.Where(room => room.Intersects(new int2(edge.Source), new int2(edge.Target))))
+                {
+                    connectionRooms.Add(room);
+                    toRemove.Add(room);
+                }
+
+                toProcess.RemoveAll(room => toRemove.Contains(room));
+            }
+            return connectionRooms.ToList();
         }
         
         private void MakeCorridors(IEnumerable<DungeonRoom> separatedRooms, IEnumerable<DungeonRoom> connectionRooms)
@@ -138,6 +157,49 @@ namespace Terrain.Generator.Structure.Dungeon
                        Pos.x + other.Size.x > other.Pos.x &&
                        Pos.y < other.Pos.y + other.Size.y &&
                        Pos.y + other.Size.y > other.Pos.y;
+            }
+            
+            public bool Intersects(int2 lineStart, int2 lineEnd) //TODO there is a bug that causes wrong rooms to be selected
+            {
+                return WallLines.Any(line => LineIntersects(line.Start, line.End, lineStart, lineEnd));
+            }
+
+            /// <summary>
+            /// A and B are points that define line 0, C and D define line 1
+            /// </summary>
+            private static bool LineIntersects(int2 a, int2 b, int2 c, int2 d)
+            {
+                //a x00 y00
+                //b x01 y01
+                //c x10 y10
+                //d x11 y11
+                float rdet = 1f/(d.x * b.y - b.x * d.y);
+                //int det = x11 * y01 - x01 * y11;
+                float s = rdet * ((a.x - c.x) * b.y - (a.y - c.y) * b.x);
+                //s = (1/d)  ((x00 - x10) y01 - (y00 - y10) x01)
+                float t = rdet * ((a.x - c.x) * d.y + (a.y - c.y) * d.x);
+                //t = (1/d) -(-(x00 - x10) y11 + (y00 - y10) x11)
+                return s is >= 0 and <= 1 && t is >= 0 and <= 1;
+            }
+
+            public DungeonWallLine[] WallLines => new DungeonWallLine[]
+            {
+                new(Pos, Pos + new int2(Size.x, 0)),
+                new(Pos, Pos + new int2(0, Size.y)),
+                new(Pos + new int2(0, Size.y), Pos + Size),
+                new(Pos + new int2(Size.x, 0), Pos + Size)
+            };
+
+            public struct DungeonWallLine
+            {
+                public readonly int2 Start;
+                public readonly int2 End;
+
+                public DungeonWallLine(int2 start, int2 end)
+                {
+                    Start = start;
+                    End = end;
+                }
             }
         }
     }
