@@ -40,7 +40,7 @@ namespace Terrain.Generator.Structure.Dungeon
             mainRooms.Draw(Color.red);
             UndirectedGraph<Vector2, IEdge<Vector2>> connections = GetConnectionGraph(mainRooms);
             connections.UnityDraw(Color.cyan, 10f);
-            List<DungeonRoom> connectionRooms = FindConnectionRooms(rooms, connections);
+            List<DungeonRoom> connectionRooms = FindConnectionRooms(rooms, mainRooms, connections);
             connectionRooms.Draw(Color.green, 10f);
         }
         
@@ -92,7 +92,10 @@ namespace Terrain.Generator.Structure.Dungeon
                 .ToUndirectedGraph<Vector2, IEdge<Vector2>>();
         }
         
-        private List<DungeonRoom> FindConnectionRooms(IEnumerable<DungeonRoom> separatedRooms, IEdgeSet<Vector2, IEdge<Vector2>> connectionGraph)
+        private List<DungeonRoom> FindConnectionRooms(
+            IEnumerable<DungeonRoom> separatedRooms, 
+            IEnumerable<DungeonRoom> mainRooms, //TODO could be replaced with vertices of connectionGraph but it's easier for now to do this
+            IEdgeSet<Vector2, IEdge<Vector2>> connectionGraph)
         {
             HashSet<DungeonRoom> connectionRooms = new();
             List<DungeonRoom> toProcess = new(separatedRooms);
@@ -109,6 +112,8 @@ namespace Terrain.Generator.Structure.Dungeon
 
                 toProcess.RemoveAll(room => toRemove.Contains(room));
             }
+
+            connectionRooms.RemoveWhere(mainRooms.Contains); //Removes main rooms from list of connection rooms
             return connectionRooms.ToList();
         }
         
@@ -177,7 +182,7 @@ namespace Terrain.Generator.Structure.Dungeon
                 //int det = x11 * y01 - x01 * y11;
                 float s = rdet * ((a.x - c.x) * b.y - (a.y - c.y) * b.x);
                 //s = (1/d)  ((x00 - x10) y01 - (y00 - y10) x01)
-                float t = rdet * ((a.x - c.x) * d.y + (a.y - c.y) * d.x);
+                float t = rdet * -(-(a.x - c.x) * d.y + (a.y - c.y) * d.x);
                 //t = (1/d) -(-(x00 - x10) y11 + (y00 - y10) x11)
                 return s is >= 0 and <= 1 && t is >= 0 and <= 1;
             }
