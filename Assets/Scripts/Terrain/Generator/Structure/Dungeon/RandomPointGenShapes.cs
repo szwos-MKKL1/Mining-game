@@ -6,6 +6,7 @@ namespace Terrain.Generator.Structure.Dungeon
     public interface IRandomPointGenShape
     {
         float2 NextPoint();
+        float2x2 Bounds();
     }
     
     public class RandomPointCircle : IRandomPointGenShape
@@ -29,6 +30,11 @@ namespace Terrain.Generator.Structure.Dungeon
             float y = center.y + r * math.sin(theta);
             return new float2(x, y);
         }
+
+        public float2x2 Bounds()
+        {
+            return new float2x2(center - radius, center + radius);
+        }
     }
     
     public class RandomPointEllipse : RandomPointCircle
@@ -46,5 +52,11 @@ namespace Terrain.Generator.Structure.Dungeon
             float2 randomInCircle = base.NextPoint();
             return new float2(randomInCircle.x * a2, randomInCircle.y * b2);
         }
+
+        //TODO
+        // public float2x2 Bounds()
+        // {
+        //     return new float2x2(center + radius, center - radius);
+        // }
     }
 }

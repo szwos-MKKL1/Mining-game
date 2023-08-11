@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using InternalDebug;
+using NativeTrees;
 using QuikGraph;
 using QuikGraph.Algorithms;
 using Terrain.Generator.PathGraph.Graphs;
@@ -34,7 +35,7 @@ namespace Terrain.Generator.Structure.Dungeon
         private void Start()
         {
             rooms = GetInitialDungeonRooms();
-            SeparateRooms(rooms);
+            SeparateRooms(rooms, config.RandomPointGenShapes.Bounds());
             rooms.Draw(Color.blue);
             List<DungeonRoom> mainRooms = GetMainRooms(rooms).ToList();
             mainRooms.Draw(Color.red);
@@ -63,11 +64,27 @@ namespace Terrain.Generator.Structure.Dungeon
             return rooms;
         }
 
-        private void SeparateRooms(List<DungeonRoom> locrooms)
+        private void SeparateRooms(List<DungeonRoom> locrooms, float2x2 roomBounds)
         {
-            SeparateRoomsJob separateRoomsJob = new SeparateRoomsJob(locrooms);
-            separateRoomsJob.Schedule().Complete();
-            separateRoomsJob.ApplyResult(locrooms);
+            float2 center = math.abs(roomBounds.c0-roomBounds.c1)/2f;
+            //TODO tmp
+            float2 min = roomBounds.c0 - center * 5;
+            float2 max = roomBounds.c1 + center * 5;
+            AABB2D bounds = new AABB2D(min, max);
+            NativeArray<AABB2D> rects = new(locrooms.Count, Allocator.TempJob);
+            for (int i = 0; i < locrooms.Count; i++)
+            {
+                DungeonRoom room = locrooms[i];
+                rects[i] = new AABB2D(room.Pos, room.Pos + room.Size);
+            }
+            AABBSeparatorJob separateRoomsJob = new AABBSeparatorJob(rects, bounds);
+            separateRoomsJob.Execute();
+            for (int i = 0; i < locrooms.Count; i++)
+            {
+                AABB2D rect = rects[i];
+                locrooms[i].Pos = (int2)rect.min;
+                //Size doesn't change
+            }
             separateRoomsJob.Dispose();
         }
 
@@ -209,105 +226,5 @@ namespace Terrain.Generator.Structure.Dungeon
         }
     }
 
-    [BurstCompile]
-    internal struct SeparateRoomsJob : IJob, IDisposable
-    {
-        private NativeArray<JobDungeonRoom> rooms;
-        [ReadOnly]
-        private int count;
-        public SeparateRoomsJob(IReadOnlyList<DungeonGenerator.DungeonRoom> generatorRooms)
-        {
-            count = generatorRooms.Count;
-            rooms = new NativeArray<JobDungeonRoom>(count, Allocator.TempJob);
-            for (int i = 0; i < count; i++)
-            {
-                DungeonGenerator.DungeonRoom dungeonRoom = generatorRooms[i];
-                rooms[i] = new JobDungeonRoom(new float2(dungeonRoom.Pos), dungeonRoom.Size);
-            }
-        }
-        //TODO this algorithm uses n^2 checks each tick. Replace it with quad tree or something similar
-        public unsafe void Execute()
-        {
-            JobDungeonRoom* roomArrayPtr = (JobDungeonRoom*)rooms.GetUnsafePtr();
-            bool ok = false;
-            int separationTicks = 0;
-            while (!ok && separationTicks < 2 * count)
-            {
-                ok = true;
-                for (int i = 0; i < count; i++)
-                {
-                    JobDungeonRoom current = rooms[i];
-
-                    float2 movement = float2.zero;
-                    int separationCount = 0;
-                    for (int j = 0; j < count; j++)
-                    {
-                        if (i == j) continue;
-                        JobDungeonRoom other = rooms[j];
-                        if (!current.Intersects(other)) continue;
-                        
-                        movement += other.Center - current.Center;
-                        ++separationCount;
-                    }
-                    
-                    if (separationCount > 0)
-                    {
-                        movement *= -1;
-                        movement = math.normalize(movement);
-                        float2 newPos = current.Pos;
-                        newPos += movement;
-                        if (!newPos.Equals(current.Pos))
-                        {
-                            (roomArrayPtr + i)->Pos = newPos;
-                            ok = false;
-                        }
-                    }
-                }
-                separationTicks++;
-            }
-        }
-
-        public bool ApplyResult(List<DungeonGenerator.DungeonRoom> dungeonRooms)
-        {
-            for (int i = 0; i < rooms.Length; i++)
-            {
-                dungeonRooms[i].Pos = new int2(rooms[i].Pos);
-            }
-            
-            return true;
-        }
-        
-        private static void DrawLineScaled(Vector3 a, Vector3 b)
-        {
-            Debug.DrawLine(a * 0.16f, b * 0.16f, Color.magenta, 60f, false);
-        }
-
-        //TODO remove repeating code
-        //copied DungeonRoom but Pos is float2, 
-        private struct JobDungeonRoom
-        {
-            public float2 Pos;
-            public int2 Size { get; }
-
-            public JobDungeonRoom(float2 pos, int2 size)
-            {
-                Pos = pos;
-                Size = size;
-            }
-            
-            public float2 Center => Pos + Size / 2;
-            
-            public bool Intersects(JobDungeonRoom other)
-            {
-                return Pos.x + Size.x >= other.Pos.x && other.Pos.x + other.Size.x >= Pos.x &&
-                       Pos.y + Size.y >= other.Pos.y && other.Pos.y + other.Size.y >= Pos.y;
-            }
-            
-        }
-
-        public void Dispose()
-        {
-            rooms.Dispose();
-        }
-    }
+    
 }
