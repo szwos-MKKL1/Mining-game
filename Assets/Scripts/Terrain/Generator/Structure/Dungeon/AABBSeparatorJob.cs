@@ -38,7 +38,7 @@ namespace Terrain.Generator.Structure.Dungeon
         {
             NativeArray<AABB2D> newRects = new(count, Allocator.Temp); 
             NativeList<int> collidesWithRect = new(count, Allocator.Temp);
-            float2 defmovement = new float2(0.5f, 0.5f);
+            float2 defmovement = new float2();
             bool ok = false;
             int separationTicks = 0;
             while (!ok && separationTicks < 3 * count)
@@ -70,7 +70,10 @@ namespace Terrain.Generator.Structure.Dungeon
                     if (separationCount > 0)
                     {
                         movement = math.normalizesafe(movement, defmovement);
-                        newRect = new AABB2D(currentRect.min - movement, currentRect.max - movement);
+                        if (!movement.Equals(defmovement))
+                        {
+                            newRect = new AABB2D(currentRect.min - movement, currentRect.max - movement);
+                        }
                         ok = false;
                     }
                     
