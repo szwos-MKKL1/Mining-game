@@ -66,10 +66,11 @@ namespace Terrain.Generator.Structure.Dungeon
 
         private void SeparateRooms(List<DungeonRoom> locrooms, float2x2 roomBounds)
         {
+            float time = Time.realtimeSinceStartup;
             float2 center = math.abs(roomBounds.c0-roomBounds.c1)/2f;
             //TODO tmp
-            float2 min = roomBounds.c0 - center * 5;
-            float2 max = roomBounds.c1 + center * 5;
+            float2 min = roomBounds.c0 - center * 2;
+            float2 max = roomBounds.c1 + center * 2;
             AABB2D bounds = new AABB2D(min, max);
             NativeArray<AABB2D> rects = new(locrooms.Count, Allocator.TempJob);
             for (int i = 0; i < locrooms.Count; i++)
@@ -78,7 +79,10 @@ namespace Terrain.Generator.Structure.Dungeon
                 rects[i] = new AABB2D(room.Pos, room.Pos + room.Size);
             }
             AABBSeparatorJob separateRoomsJob = new AABBSeparatorJob(rects, bounds);
-            separateRoomsJob.Execute();
+            Debug.Log($"Init {Time.realtimeSinceStartup-time}");
+            time = Time.realtimeSinceStartup;
+            separateRoomsJob.Schedule().Complete();
+            Debug.Log($"Execute {Time.realtimeSinceStartup-time}");
             for (int i = 0; i < locrooms.Count; i++)
             {
                 AABB2D rect = rects[i];
@@ -136,6 +140,7 @@ namespace Terrain.Generator.Structure.Dungeon
         
         private void MakeCorridors(IEnumerable<DungeonRoom> separatedRooms, IEnumerable<DungeonRoom> connectionRooms)
         {
+            
             return;
         }
         
