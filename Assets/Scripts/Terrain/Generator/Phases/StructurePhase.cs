@@ -33,7 +33,7 @@ namespace Terrain.Generator.Phases
                 new RandomPointCircle(random, new float2(500f, 500f), 50f));
             config.Bounds = new AABB2D(new float2(300, 300), new float2(700, 700));
             DungeonGenerator dungeonGenerator = new DungeonGenerator(config);
-            
+            dungeonGenerator.Dispose();
         }
     }
 }

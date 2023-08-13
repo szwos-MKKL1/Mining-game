@@ -1,51 +1,34 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using DelaunatorSharp;
 using QuikGraph;
-using Unity.Mathematics;
 using UnityEngine;
 
 namespace Terrain.Generator.PathGraph.Graphs
 {
     //Adapter class for delaunator to use unity and quikgraph methods
-    public class DelaunatorGraph
+    public class DelaunatorGraph<T>
     {
         private Delaunator delaunator;
-        
-        public DelaunatorGraph(IEnumerable<Vector2> points)
-        {
-            IPoint[] ipoints = points.Select(v => new Point(v.x, v.y)).Cast<IPoint>().ToArray();
-            delaunator = new Delaunator(ipoints);
-        }
-        
-        public DelaunatorGraph(IEnumerable<float2> points)
-        {
-            IPoint[] ipoints = points.Select(v => new Point(v.x, v.y)).Cast<IPoint>().ToArray();
-            delaunator = new Delaunator(ipoints);
-        }
+        private readonly Dictionary<IPoint, T> pointTDict = new();
 
-        public IEnumerable<IEdge<Vector2>> GetEdges()
+        public DelaunatorGraph(IEnumerable<T> points, Func<T, IPoint> toIPoint)
         {
-            Dictionary<IPoint, Vector2> pointToVector = new();
-            List<IEdge<Vector2>> edges = new();
-            foreach (var edge in delaunator.GetEdges())
+            List<IPoint> ipoints = new();
+            foreach (var t in points)
             {
-                IPoint p = edge.P;
-                IPoint q = edge.Q;
-                if (!pointToVector.TryGetValue(p, out Vector2 vp))
-                {
-                    vp = new Vector2((float)p.X, (float)p.Y);
-                    pointToVector.Add(p, vp);
-                }
-                if (!pointToVector.TryGetValue(q, out Vector2 vq))
-                {
-                    vq = new Vector2((float)q.X, (float)q.Y);
-                    pointToVector.Add(q, vq);
-                }
-                edges.Add(new Edge<Vector2>(vp, vq));
+                IPoint ipoint = toIPoint.Invoke(t);
+                ipoints.Add(ipoint);
+                pointTDict[ipoint] = t;
             }
 
-            return edges;
+            delaunator = new Delaunator(ipoints.ToArray());
+        }
+
+        public IEnumerable<QuikGraph.IEdge<T>> GetEdges()
+        {
+            return delaunator.GetEdges().Select(delEdge => new QuikGraph.Edge<T>(pointTDict[delEdge.P], pointTDict[delEdge.Q])).ToList();
         }
     }
 }

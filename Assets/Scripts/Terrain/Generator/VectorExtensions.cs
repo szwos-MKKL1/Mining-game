@@ -1,4 +1,5 @@
-﻿using Unity.Mathematics;
+﻿using DelaunatorSharp;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Terrain.Generator
@@ -18,6 +19,10 @@ namespace Terrain.Generator
         public static int2 AsInt2(this Vector2Int vector)
         {
             return new int2(vector.x, vector.y);
+        }
+        public static DelaunatorSharp.IPoint AsIPoint(this Vector2 vector)
+        {
+            return new Point(vector.x, vector.y);
         }
     }
 }

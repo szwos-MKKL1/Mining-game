@@ -13,7 +13,7 @@ namespace Terrain.Generator.PathGraph.Graphs
      */
     public class RandomGraph
     {
-        private DelaunatorGraph delaunatorGraph;
+        private DelaunatorGraph<Vector2> delaunatorGraph;
 
         private RandomGraph()
         {
@@ -25,7 +25,7 @@ namespace Terrain.Generator.PathGraph.Graphs
             var pointDistribution = new BestCandidatePoints(size, 6, seed);
             pointDistribution.SampleCount = nodeCount;
 
-            randomGraph.delaunatorGraph = new DelaunatorGraph(pointDistribution.GetSamples());
+            randomGraph.delaunatorGraph = new DelaunatorGraph<Vector2>(pointDistribution.GetSamples(), vector2 => vector2.AsIPoint());
             return randomGraph;
         }
         
@@ -33,7 +33,7 @@ namespace Terrain.Generator.PathGraph.Graphs
         {
             return new RandomGraph
             {
-                delaunatorGraph = new DelaunatorGraph(pointGenerator.GetSamples())
+                delaunatorGraph = new DelaunatorGraph<Vector2>(pointGenerator.GetSamples(),vector2 => vector2.AsIPoint())
             };
         }
         

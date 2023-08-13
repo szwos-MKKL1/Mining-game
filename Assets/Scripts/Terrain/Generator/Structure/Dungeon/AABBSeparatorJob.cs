@@ -39,11 +39,6 @@ namespace Terrain.Generator.Structure.Dungeon
             while (!ok && separationTicks < 3 * count)
             {
                 ok = true;
-                tree.Clear();
-                for (int i = 0; i < count; i++)
-                {
-                    tree.Insert(i, rects[i].Rect);
-                }
                 //TODO this could be processed in multiple threads
                 for (int i = 0; i < count; i++)
                 {
@@ -76,6 +71,11 @@ namespace Terrain.Generator.Structure.Dungeon
                 }
                 
                 (rects, newRects) = (newRects, rects);//Swapping with temporary array to reduce reallocation of memory
+                tree.Clear();
+                for (int i = 0; i < count; i++)
+                {
+                    tree.Insert(i, rects[i].Rect);
+                }
                 separationTicks++;
             }
             if(separationTicks%2!=0) (rects, newRects) = (newRects, rects);//Ensuring that rects is returned

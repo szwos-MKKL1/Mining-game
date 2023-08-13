@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using DelaunatorSharp;
 using InternalDebug;
 using NativeTrees;
 using QuikGraph;
@@ -22,7 +23,7 @@ namespace Terrain.Generator.Structure.Dungeon
     
     //TODO find some way to add pre-made rooms to generation
     
-    public class DungeonGenerator
+    public class DungeonGenerator : IDisposable
     {
         private DungeonRoomTree<DungeonRoom> rooms;//TODO dispose
         private Config config;
@@ -39,8 +40,10 @@ namespace Terrain.Generator.Structure.Dungeon
             rooms.Draw(Color.blue);
             List<DungeonRoom> mainRooms = GetMainRooms(rooms).ToList();
             mainRooms.Draw(Color.red);
-            UndirectedGraph<Vector2, IEdge<Vector2>> connections = GetConnectionGraph(mainRooms);
-            connections.UnityDraw(Color.cyan, 10f);
+            UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> connections = GetConnectionGraph(mainRooms);
+            connections.Edges.Select(roomEdge => 
+                new QuikGraph.Edge<Vector2>(roomEdge.Source.Rect.Center, roomEdge.Target.Rect.Center))
+                .UnityDraw(Color.cyan, 10f);
             // List<DungeonRoom> connectionRooms = FindConnectionRooms(rooms, mainRooms, connections);
             // connectionRooms.Draw(Color.green, 10f);
         }
@@ -81,43 +84,33 @@ namespace Terrain.Generator.Structure.Dungeon
             return sorted.Skip(sorted.Count - mainRoomCount);
         }
         
-        //TODO should return UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>>
-        private UndirectedGraph<Vector2, IEdge<Vector2>> GetConnectionGraph(IEnumerable<DungeonRoom> mainRooms)
+        private UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> GetConnectionGraph(IEnumerable<DungeonRoom> mainRooms)
         {
             //This method could be implemented with many different graph such as minimum spanning tree, gabriel graph
-            UndirectedGraph<Vector2, IEdge<Vector2>> graph = 
-                new DelaunatorGraph(mainRooms.Select(room => new float2(room.Rect.Center)))
+            UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> graph = 
+                new DelaunatorGraph<DungeonRoom>(mainRooms, room =>
+                    {
+                        float2 center = room.Rect.Center;
+                        return (IPoint)new Point(center.x, center.y);
+                    })
                     .GetEdges()
-                .ToUndirectedGraph<Vector2, IEdge<Vector2>>();
+                .ToUndirectedGraph<DungeonRoom, IEdge<DungeonRoom>>();
             
-            return graph.MinimumSpanningTreePrim(edge => DistanceMethods.SqEuclidianDistance(edge.Source, edge.Target))
-                .ToUndirectedGraph<Vector2, IEdge<Vector2>>();
+            return graph.MinimumSpanningTreePrim(edge => DistanceMethods.SqEuclidianDistance(edge.Source.Rect.min, edge.Target.Rect.min))
+                .ToUndirectedGraph<DungeonRoom, IEdge<DungeonRoom>>();
         }
         
-        // private List<DungeonRoom> FindConnectionRooms(
-        //     IEnumerable<DungeonRoom> separatedRooms, 
-        //     IEnumerable<DungeonRoom> mainRooms, //TODO could be replaced with vertices of connectionGraph but it's easier for now to do this
-        //     IEdgeSet<Vector2, IEdge<Vector2>> connectionGraph)
-        // {
-        //     HashSet<DungeonRoom> connectionRooms = new();
-        //     List<DungeonRoom> toProcess = new(separatedRooms);
-        //     foreach (IEdge<Vector2> edge in connectionGraph.Edges)
-        //     {
-        //         //Iterating every room in room list to find which rooms intersect with line
-        //         //TODO this could be made faster by using quad tree collection
-        //         HashSet<DungeonRoom> toRemove = new();
-        //         foreach (var room in toProcess.Where(room => room.Intersects(new int2(edge.Source), new int2(edge.Target))))
-        //         {
-        //             connectionRooms.Add(room);
-        //             toRemove.Add(room);
-        //         }
-        //
-        //         toProcess.RemoveAll(room => toRemove.Contains(room));
-        //     }
-        //
-        //     connectionRooms.RemoveWhere(mainRooms.Contains); //Removes main rooms from list of connection rooms
-        //     return connectionRooms.ToList();
-        // }
+        private List<DungeonRoom> FindConnectionRooms(
+            IEnumerable<DungeonRoom> separatedRooms, 
+            IEnumerable<DungeonRoom> mainRooms, //TODO could be replaced with vertices of connectionGraph but it's easier for now to do this
+            IEdgeSet<Vector2, IEdge<Vector2>> connectionGraph)
+        {
+            HashSet<DungeonRoom> connectionRooms = new();
+            
+        
+            connectionRooms.RemoveWhere(mainRooms.Contains); //Removes main rooms from list of connection rooms
+            return connectionRooms.ToList();
+        }
         
         private void MakeCorridors(IEnumerable<DungeonRoom> separatedRooms, IEnumerable<DungeonRoom> connectionRooms)
         {
@@ -142,6 +135,11 @@ namespace Terrain.Generator.Structure.Dungeon
                 RandomRoomSize = randomRoomSize;
                 RandomPointGenShapes = randomPointGenShapes;
             }
+        }
+
+        public void Dispose()
+        {
+            rooms?.Dispose();
         }
     }
 
