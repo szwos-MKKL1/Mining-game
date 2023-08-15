@@ -6,6 +6,8 @@ using InternalDebug;
 using NativeTrees;
 using QuikGraph;
 using QuikGraph.Algorithms;
+using QuikGraph.Serialization;
+using Random;
 using Terrain.Generator.PathGraph.Graphs;
 using Unity.Burst;
 using Unity.Collections;
@@ -27,9 +29,11 @@ namespace Terrain.Generator.Structure.Dungeon
     {
         private DungeonRoomTree<DungeonRoom> rooms;//TODO dispose
         private Config config;
-        public DungeonGenerator(Config config)
+        private IRandom random;
+        public DungeonGenerator(Config config, IRandom random)
         {
             this.config = config;
+            this.random = random;
             Start();
         }
 
@@ -39,13 +43,15 @@ namespace Terrain.Generator.Structure.Dungeon
             SeparateRooms(rooms);
             rooms.Draw(Color.blue);
             List<DungeonRoom> mainRooms = GetMainRooms(rooms).ToList();
-            mainRooms.Draw(Color.red);
+            //mainRooms.Draw(Color.red);
             UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> connections = GetConnectionGraph(mainRooms);
-            connections.Edges.Select(roomEdge => 
-                new QuikGraph.Edge<Vector2>(roomEdge.Source.Rect.Center, roomEdge.Target.Rect.Center))
-                .UnityDraw(Color.cyan, 10f);
-            // List<DungeonRoom> connectionRooms = FindConnectionRooms(rooms, mainRooms, connections);
-            // connectionRooms.Draw(Color.green, 10f);
+            // connections.Edges.Select(roomEdge => 
+            //     new QuikGraph.Edge<Vector2>(roomEdge.Source.Rect.Center, roomEdge.Target.Rect.Center))
+            //     .UnityDraw(Color.cyan, 10f);
+            UndirectedGraph<Vector2, IEdge<Vector2>> corridorGraph = MakeCorridorGraph(connections);
+            corridorGraph.UnityDraw(Color.magenta, 10f);
+            List<DungeonRoom> connectionRooms = FindConnectionRooms(rooms, mainRooms, corridorGraph);
+            connectionRooms.Draw(Color.green, 10f);
         }
         
         private DungeonRoomTree<DungeonRoom> GetInitialDungeonRooms()
@@ -62,12 +68,6 @@ namespace Terrain.Generator.Structure.Dungeon
             }
 
             return dungeonRoomTree;
-        }
-        
-        //TODO tmp
-        public IEnumerable<DungeonRoom> Rooms()
-        {
-            return rooms;
         }
 
         private void SeparateRooms(DungeonRoomTree<DungeonRoom> dungeonRoomTree)
@@ -99,20 +99,119 @@ namespace Terrain.Generator.Structure.Dungeon
             return graph.MinimumSpanningTreePrim(edge => DistanceMethods.SqEuclidianDistance(edge.Source.Rect.min, edge.Target.Rect.min))
                 .ToUndirectedGraph<DungeonRoom, IEdge<DungeonRoom>>();
         }
-        
-        private List<DungeonRoom> FindConnectionRooms(
-            IEnumerable<DungeonRoom> separatedRooms, 
-            IEnumerable<DungeonRoom> mainRooms, //TODO could be replaced with vertices of connectionGraph but it's easier for now to do this
-            IEdgeSet<Vector2, IEdge<Vector2>> connectionGraph)
+
+        private UndirectedGraph<Vector2, IEdge<Vector2>> MakeCorridorGraph(IEdgeSet<DungeonRoom, IEdge<DungeonRoom>> connectionGraph)
         {
-            HashSet<DungeonRoom> connectionRooms = new();
+            UndirectedGraph<Vector2, IEdge<Vector2>> corridorGraph = new();
+            foreach (IEdge<DungeonRoom> edge in connectionGraph.Edges)
+            {
+                bool useX = false;
+                bool useY = false;
+                AABB2D sourceRect = edge.Source.Rect;
+                AABB2D targetRect = edge.Target.Rect;
+                float2 sourceCenter = sourceRect.Center;
+                float2 targetCenter = targetRect.Center;
+                float2 center = (sourceCenter + targetCenter) / 2f;
+                
+                if (center.x >= sourceRect.min.x && center.x <= sourceRect.max.x &&
+                    center.x >= targetRect.min.x && center.x <= targetRect.max.x) 
+                    useX = true;
+                
+                if (center.y >= sourceRect.min.y && center.y <= sourceRect.max.y &&
+                    center.y >= targetRect.min.y && center.y <= targetRect.max.y) 
+                    useY = true;
+
+                if (useX && useY)
+                {
+                    if (random.NextInt(0, 1) == 0)
+                        useX = false;
+                    else useY = false;
+                }
+
+                if (useX)
+                    corridorGraph.AddVerticesAndEdge(new Edge<Vector2>(new Vector2(center.x, sourceCenter.y), new Vector2(center.x, targetCenter.y)));
+                else if(useY)
+                    corridorGraph.AddVerticesAndEdge(new Edge<Vector2>(new Vector2(sourceCenter.x, center.y), new Vector2(targetCenter.x, center.y)));
+                else
+                {
+                    corridorGraph.AddVerticesAndEdge(
+                        new Edge<Vector2>(
+                            new Vector2(sourceCenter.x, sourceCenter.y),
+                            new Vector2(sourceCenter.x, targetCenter.y)
+                        ));
+                    corridorGraph.AddVerticesAndEdge(
+                        new Edge<Vector2>(
+                            new Vector2(sourceCenter.x, targetCenter.y),
+                            new Vector2(targetCenter.x, targetCenter.y)
+                        ));
+                }
+            }
+
+            return corridorGraph;
+        }
+
+        private List<DungeonRoom> FindConnectionRooms(
+            DungeonRoomTree<DungeonRoom> dungeonRoomTree,
+            ICollection<DungeonRoom> mainRooms,
+            IEdgeSet<Vector2, IEdge<Vector2>> corridorGraph)
+        {
+            NativeParallelHashSet<int> roomIds = new(dungeonRoomTree.Rooms.Length, Allocator.Temp);
+            const float tolerance = 0.05f;
+            const float radius = 3f;
+            foreach (IEdge<Vector2> edge in corridorGraph.Edges)
+            {
+                //TODO repetitive code
+                float2 min;
+                float2 max;
+                if (Math.Abs(edge.Source.x - edge.Target.x) < tolerance)
+                {
+                    //X is equal
+                    if (edge.Source.y < edge.Target.y)
+                    {
+                        min = new float2(edge.Source.x - radius, edge.Source.y - radius);
+                        max = new float2(edge.Source.x + radius, edge.Target.y + radius);
+                    }
+                    else 
+                    {
+                        min = new float2(edge.Source.x - radius, edge.Target.y - radius);
+                        max = new float2(edge.Source.x + radius, edge.Source.y + radius);
+                    }
+                }
+                else
+                {
+                    //Y is equal
+                    if (edge.Source.x < edge.Target.x)
+                    {
+                        min = new float2(edge.Target.x - radius, edge.Source.y - radius);
+                        max = new float2(edge.Source.x + radius, edge.Source.y + radius);
+                    }
+                    else 
+                    {
+                        min = new float2(edge.Source.x - radius, edge.Source.y - radius);
+                        max = new float2(edge.Target.x + radius, edge.Source.y + radius);
+                    }
+                }
+                AABB2D edgeBox = new AABB2D(min, max);
+                edgeBox.Draw(Color.yellow);
+                dungeonRoomTree.Tree.RangeAABBUnique(edgeBox, roomIds);
+            }
+
             
-        
-            connectionRooms.RemoveWhere(mainRooms.Contains); //Removes main rooms from list of connection rooms
-            return connectionRooms.ToList();
+            List<DungeonRoom> connectionRooms = new();
+            using (NativeParallelHashSet<int>.Enumerator enumerator = roomIds.GetEnumerator())
+            {
+                while (enumerator.MoveNext())
+                {
+                    DungeonRoom dungeonRoom = dungeonRoomTree.Rooms[enumerator.Current];
+                    if(!mainRooms.Contains(dungeonRoom))
+                        connectionRooms.Add(dungeonRoom);
+                }
+            }
+            roomIds.Dispose();
+            return connectionRooms;
         }
         
-        private void MakeCorridors(IEnumerable<DungeonRoom> separatedRooms, IEnumerable<DungeonRoom> connectionRooms)
+        private void BuildCorridors(IEnumerable<DungeonRoom> separatedRooms, IEnumerable<DungeonRoom> connectionRooms)
         {
             
             return;
