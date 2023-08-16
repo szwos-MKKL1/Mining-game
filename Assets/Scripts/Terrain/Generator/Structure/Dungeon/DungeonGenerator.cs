@@ -176,23 +176,23 @@ namespace Terrain.Generator.Structure.Dungeon
                         min = new float2(edge.Source.x - radius, edge.Target.y - radius);
                         max = new float2(edge.Source.x + radius, edge.Source.y + radius);
                     }
+                    
                 }
                 else
                 {
                     //Y is equal
                     if (edge.Source.x < edge.Target.x)
                     {
-                        min = new float2(edge.Target.x - radius, edge.Source.y - radius);
-                        max = new float2(edge.Source.x + radius, edge.Source.y + radius);
+                        min = new float2(edge.Source.x + radius, edge.Source.y - radius);
+                        max = new float2(edge.Target.x - radius, edge.Source.y + radius);
                     }
-                    else 
+                    else
                     {
-                        min = new float2(edge.Source.x - radius, edge.Source.y - radius);
-                        max = new float2(edge.Target.x + radius, edge.Source.y + radius);
+                        min = new float2(edge.Target.x + radius, edge.Source.y - radius);
+                        max = new float2(edge.Source.x - radius, edge.Source.y + radius);
                     }
                 }
                 AABB2D edgeBox = new AABB2D(min, max);
-                edgeBox.Draw(Color.yellow);
                 dungeonRoomTree.Tree.RangeAABBUnique(edgeBox, roomIds);
             }
 
@@ -203,7 +203,7 @@ namespace Terrain.Generator.Structure.Dungeon
                 while (enumerator.MoveNext())
                 {
                     DungeonRoom dungeonRoom = dungeonRoomTree.Rooms[enumerator.Current];
-                    if(!mainRooms.Contains(dungeonRoom))
+                    //if(!mainRooms.Contains(dungeonRoom))
                         connectionRooms.Add(dungeonRoom);
                 }
             }
