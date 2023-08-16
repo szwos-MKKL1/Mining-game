@@ -39,21 +39,28 @@ namespace Terrain.Generator.Structure.Dungeon
 
         private void Start()
         {
+            //TODO better names for methods and varibles
+            
+            //Creating boxes in circle to be separated
             rooms = GetInitialDungeonRooms();
+            //Separates rooms //TODO kinda slow
             SeparateRooms(rooms);
-            rooms.Draw(Color.blue);
+            //Chooses which rooms are considered to be most important (based on area)
             List<DungeonRoom> mainRooms = GetMainRooms(rooms).ToList();
-            mainRooms.Draw(Color.red);
-            UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> connections = GetConnectionGraph(mainRooms);
-            // connections.Edges.Select(roomEdge => 
-            //     new QuikGraph.Edge<Vector2>(roomEdge.Source.Rect.Center, roomEdge.Target.Rect.Center))
-            //     .UnityDraw(Color.cyan, 10f);
-            UndirectedGraph<Vector2, IEdge<Vector2>> corridorGraph = MakeCorridorGraph(connections);
-            corridorGraph.UnityDraw(Color.magenta, 10f);
-            List<DungeonRoom> connectionRooms = FindConnectionRooms(rooms, mainRooms, corridorGraph);
-            connectionRooms.Draw(Color.green, 10f);
+            //Creates graph that shows how main rooms are connected
+            UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> mainRoomsPath = GetMainRoomPathGraph(mainRooms);
+            //Takes main room connection graph and makes lines straight (this step could be omitted)
+            UndirectedGraph<Vector2, IEdge<Vector2>> mainRoomHallwayGraph = GetStraightHallways(mainRoomsPath);
+            //Finds rooms that intersect with hallway graph edges, those rooms will be used to walk between main rooms
+            List<DungeonRoom> standardRooms = GetConnectionRooms(rooms, mainRoomHallwayGraph);
+            standardRooms.Draw(Color.green, 10f);//TODO remove debug
+            //Similar to GetMainRoomPathGraph, this graph will show how to connect standard rooms with hallways
+            UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> standardRoomPathGraph = GetStandardRoomPathGraph(standardRooms);
+            //Creates straight hallways
+            UndirectedGraph<Vector2, IEdge<Vector2>> finalHallwayGraph = GetStraightHallways(standardRoomPathGraph);
+            finalHallwayGraph.UnityDraw(Color.magenta, 10f);
+            GeneratePlacement(rooms, standardRooms, finalHallwayGraph);
         }
-        
         private DungeonRoomTree<DungeonRoom> GetInitialDungeonRooms()
         {
             IRandomPointGenShape randomPointGenShape = config.RandomPointGenShapes;
@@ -83,19 +90,22 @@ namespace Terrain.Generator.Structure.Dungeon
             int mainRoomCount = 15;//TODO move to dungeon generator config
             return sorted.Skip(sorted.Count - mainRoomCount);
         }
+
+        private UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> Delanuay(IEnumerable<DungeonRoom> roomList)
+        {
+            return new DelaunatorGraph<DungeonRoom>(roomList, room =>
+                {
+                    float2 center = room.Rect.Center;
+                    return (IPoint)new Point(center.x, center.y);
+                })
+                .GetEdges()
+                .ToUndirectedGraph<DungeonRoom, IEdge<DungeonRoom>>();
+        }
         
-        private UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> GetConnectionGraph(IEnumerable<DungeonRoom> mainRooms)
+        private UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> GetMainRoomPathGraph(IEnumerable<DungeonRoom> roomList)
         {
             //This method could be implemented with many different graph such as minimum spanning tree, gabriel graph
-            UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> graph = 
-                new DelaunatorGraph<DungeonRoom>(mainRooms, room =>
-                    {
-                        float2 center = room.Rect.Center;
-                        return (IPoint)new Point(center.x, center.y);
-                    })
-                    .GetEdges()
-                .ToUndirectedGraph<DungeonRoom, IEdge<DungeonRoom>>();
-
+            UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> graph = Delanuay(roomList);
             List<IEdge<DungeonRoom>> minEdges = graph.MinimumSpanningTreePrim(edge =>
                 DistanceMethods.SqEuclidianDistance(edge.Source.Rect.min, edge.Target.Rect.min)).ToList();
             List<IEdge<DungeonRoom>> graphEdges = graph.Edges.ToList();
@@ -105,8 +115,17 @@ namespace Terrain.Generator.Structure.Dungeon
             }
             return minEdges.ToUndirectedGraph<DungeonRoom, IEdge<DungeonRoom>>();
         }
+        
+        private UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> GetStandardRoomPathGraph(IEnumerable<DungeonRoom> connectionRooms)
+        {
+            UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> graph = Delanuay(connectionRooms);
 
-        private UndirectedGraph<Vector2, IEdge<Vector2>> MakeCorridorGraph(IEdgeSet<DungeonRoom, IEdge<DungeonRoom>> connectionGraph)
+            List<IEdge<DungeonRoom>> minEdges = graph.MinimumSpanningTreePrim(edge =>
+                DistanceMethods.ManhattanDistance(edge.Source.Rect.min, edge.Target.Rect.min)).ToList();
+            return minEdges.ToUndirectedGraph<DungeonRoom, IEdge<DungeonRoom>>();
+        }
+
+        private UndirectedGraph<Vector2, IEdge<Vector2>> GetStraightHallways(IEdgeSet<DungeonRoom, IEdge<DungeonRoom>> connectionGraph)
         {
             UndirectedGraph<Vector2, IEdge<Vector2>> corridorGraph = new();
             foreach (IEdge<DungeonRoom> edge in connectionGraph.Edges)
@@ -156,9 +175,8 @@ namespace Terrain.Generator.Structure.Dungeon
             return corridorGraph;
         }
 
-        private List<DungeonRoom> FindConnectionRooms(
+        private List<DungeonRoom> GetConnectionRooms(
             DungeonRoomTree<DungeonRoom> dungeonRoomTree,
-            ICollection<DungeonRoom> mainRooms,
             IEdgeSet<Vector2, IEdge<Vector2>> corridorGraph)
         {
             NativeParallelHashSet<int> roomIds = new(dungeonRoomTree.Rooms.Length, Allocator.Temp);
@@ -167,6 +185,8 @@ namespace Terrain.Generator.Structure.Dungeon
             foreach (IEdge<Vector2> edge in corridorGraph.Edges)
             {
                 //TODO repetitive code
+                //Making bounding boxes around vertical and horizontal lines
+                //defaults to vertical
                 float2 min;
                 float2 max;
                 if (Math.Abs(edge.Source.x - edge.Target.x) < tolerance)
@@ -207,19 +227,16 @@ namespace Terrain.Generator.Structure.Dungeon
             {
                 while (enumerator.MoveNext())
                 {
-                    DungeonRoom dungeonRoom = dungeonRoomTree.Rooms[enumerator.Current];
-                    if(!mainRooms.Contains(dungeonRoom))
-                        connectionRooms.Add(dungeonRoom);
+                    connectionRooms.Add(dungeonRoomTree.Rooms[enumerator.Current]);
                 }
             }
             roomIds.Dispose();
             return connectionRooms;
         }
         
-        private void BuildCorridors(IEnumerable<DungeonRoom> separatedRooms, IEnumerable<DungeonRoom> connectionRooms)
+        private void GeneratePlacement(DungeonRoomTree<DungeonRoom> dungeonRoomTree, List<DungeonRoom> standardRooms, UndirectedGraph<Vector2, IEdge<Vector2>> finalHallwayGraph)
         {
             
-            return;
         }
         
         //TODO return dungeon structure maybe by rooms and corridors
@@ -239,6 +256,13 @@ namespace Terrain.Generator.Structure.Dungeon
                 RandomRoomSize = randomRoomSize;
                 RandomPointGenShapes = randomPointGenShapes;
             }
+        }
+
+        public enum DungeonBlockTypes
+        {
+            MAIN_ROOM_WALL,
+            STANDARDROOM_WALL,
+            HALLWAY_WALL,
         }
 
         public void Dispose()

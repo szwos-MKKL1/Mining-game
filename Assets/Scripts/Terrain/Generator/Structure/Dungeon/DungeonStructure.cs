@@ -1,4 +1,6 @@
-﻿namespace Terrain.Generator.Structure
+﻿using Terrain.Outputs;
+
+namespace Terrain.Generator.Structure
 {
     public class DungeonStructure : Structure
     {

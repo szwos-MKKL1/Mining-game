@@ -2,7 +2,7 @@
 
 namespace Terrain.Generator.DecorateGenerators.BlockProvider
 {
-    public class RandomizedProvider : IBlockProvider
+    public class RandomizedProvider : IBlockProvider, IContextBlockProvider
     {
         private RandomFromList<BlockBase> randomBlockList;
 
@@ -14,6 +14,11 @@ namespace Terrain.Generator.DecorateGenerators.BlockProvider
         public BlockBase GetNextBlock()
         {
             return randomBlockList.GetRandom();
+        }
+
+        public BlockBase GetNextBlock(IContextBlockProvider.Context context)
+        {
+            return GetNextBlock();
         }
     }
 }

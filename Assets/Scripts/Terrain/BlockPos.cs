@@ -1,14 +1,16 @@
 ﻿using Terrain.Blocks;
+using Terrain.Outputs;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Terrain
 {
-    public readonly struct BlockPos
+    public readonly struct BlockPos : IPositionHolder
     {
         private readonly BlockBase blockBase;
-        private readonly Vector2Int pos;
+        private readonly int2 pos;
 
-        public BlockPos(BlockBase blockBase, Vector2Int pos)
+        public BlockPos(BlockBase blockBase, int2 pos)
         {
             this.blockBase = blockBase;
             this.pos = pos;
@@ -16,6 +18,6 @@ namespace Terrain
 
         public BlockBase BlockBase => blockBase;
 
-        public Vector2Int Pos => pos;
+        public int2 Pos => pos;
     }
 }

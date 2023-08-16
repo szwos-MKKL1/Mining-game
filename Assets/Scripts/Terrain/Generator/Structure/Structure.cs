@@ -1,4 +1,5 @@
 ﻿using System;
+using Terrain.Outputs;
 
 namespace Terrain.Generator.Structure
 {

@@ -2,7 +2,7 @@
 
 namespace Terrain.Generator.DecorateGenerators.BlockProvider
 {
-    public class StandardProvider : IBlockProvider
+    public class StandardProvider : IBlockProvider, IContextBlockProvider
     {
         private readonly BlockBase mBlockBase;
 
@@ -14,6 +14,11 @@ namespace Terrain.Generator.DecorateGenerators.BlockProvider
         public BlockBase GetNextBlock()
         {
             return mBlockBase;
+        }
+
+        public BlockBase GetNextBlock(IContextBlockProvider.Context context)
+        {
+            return GetNextBlock();
         }
     }
 }
