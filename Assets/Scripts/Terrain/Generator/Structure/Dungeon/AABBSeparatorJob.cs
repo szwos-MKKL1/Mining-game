@@ -29,6 +29,7 @@ namespace Terrain.Generator.Structure.Dungeon
         //As quadtree doesn't have a method for updating or removing points, we have to re-insert all elements each iteration
         //To compensate for that I have made it so that all the collision calculations are independent from each other on each iteration,
         // updating quadtree only at the end
+        //TODO implement using sweep and prune
         public void Execute()
         {
             NativeArray<T> newRects = new(count, Allocator.Temp); 
@@ -60,7 +61,7 @@ namespace Terrain.Generator.Structure.Dungeon
                      
                     if (separationCount > 0)
                     {
-                        movement = math.normalizesafe(movement, defmovement);
+                        movement = math.normalizesafe(movement, defmovement)*1.4f;
                         if (!movement.Equals(defmovement))
                         {
                             newRect.Rect = new AABB2D(currentRect.Rect.min - movement, currentRect.Rect.max - movement);

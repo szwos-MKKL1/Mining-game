@@ -12,18 +12,19 @@ namespace Terrain.Generator.Structure.Dungeon
     {
         private readonly IRandom random;
         private readonly int2 width;
-        private readonly int2 height;
+        private readonly float2 heightM;
 
-        public BaseRandomRoomSize(IRandom random, int widthMin, int widthMax, int heightMin, int heightMax)
+        public BaseRandomRoomSize(IRandom random, int widthMin, int widthMax, float heightDeviation)
         {
             this.random = random;
             width = new int2(widthMin, widthMax);
-            height = new int2(heightMin, heightMax);
+            heightM = new float2(1f-heightDeviation, 1f+heightDeviation);
         }
 
         public int2 NextRandomSize()
         {
-            return new int2(random.NextInt(width.x, width.y), random.NextInt(height.x, height.y));
+            int w = random.NextInt(width.x, width.y);
+            return new int2(w, (int)(w*random.NextFloat(0.8f, 1.2f)));
         }
     }
 }
