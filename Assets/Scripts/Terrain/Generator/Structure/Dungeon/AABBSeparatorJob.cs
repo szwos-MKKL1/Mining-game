@@ -49,6 +49,7 @@ namespace Terrain.Generator.Structure.Dungeon
                     int separationCount = 0;
                     foreach (var otherIndex in collidesWithRect)
                     {
+                        if(otherIndex == i) continue;
                         T otherRect = rects[otherIndex];
                         movement += otherRect.Rect.Center - currentRect.Rect.Center;
                         ++separationCount;
