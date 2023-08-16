@@ -43,7 +43,7 @@ namespace Terrain.Generator.Structure.Dungeon
             SeparateRooms(rooms);
             rooms.Draw(Color.blue);
             List<DungeonRoom> mainRooms = GetMainRooms(rooms).ToList();
-            //mainRooms.Draw(Color.red);
+            mainRooms.Draw(Color.red);
             UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> connections = GetConnectionGraph(mainRooms);
             // connections.Edges.Select(roomEdge => 
             //     new QuikGraph.Edge<Vector2>(roomEdge.Source.Rect.Center, roomEdge.Target.Rect.Center))
@@ -80,7 +80,7 @@ namespace Terrain.Generator.Structure.Dungeon
         {
             List<DungeonRoom> sorted = new(separatedRooms);
             sorted.Sort((a,b) => a.Area.CompareTo(b.Area));
-            int mainRoomCount = 10;//TODO move to dungeon generator config
+            int mainRoomCount = 15;//TODO move to dungeon generator config
             return sorted.Skip(sorted.Count - mainRoomCount);
         }
         
@@ -95,9 +95,15 @@ namespace Terrain.Generator.Structure.Dungeon
                     })
                     .GetEdges()
                 .ToUndirectedGraph<DungeonRoom, IEdge<DungeonRoom>>();
-            
-            return graph.MinimumSpanningTreePrim(edge => DistanceMethods.SqEuclidianDistance(edge.Source.Rect.min, edge.Target.Rect.min))
-                .ToUndirectedGraph<DungeonRoom, IEdge<DungeonRoom>>();
+
+            List<IEdge<DungeonRoom>> minEdges = graph.MinimumSpanningTreePrim(edge =>
+                DistanceMethods.SqEuclidianDistance(edge.Source.Rect.min, edge.Target.Rect.min)).ToList();
+            List<IEdge<DungeonRoom>> graphEdges = graph.Edges.ToList();
+            for (int i = 0; i < 5; i++)
+            {
+                minEdges.Add(graphEdges[random.NextInt(0, graphEdges.Count - 1)]);
+            }
+            return minEdges.ToUndirectedGraph<DungeonRoom, IEdge<DungeonRoom>>();
         }
 
         private UndirectedGraph<Vector2, IEdge<Vector2>> MakeCorridorGraph(IEdgeSet<DungeonRoom, IEdge<DungeonRoom>> connectionGraph)
@@ -176,7 +182,6 @@ namespace Terrain.Generator.Structure.Dungeon
                         min = new float2(edge.Source.x - radius, edge.Target.y - radius);
                         max = new float2(edge.Source.x + radius, edge.Source.y + radius);
                     }
-                    
                 }
                 else
                 {
@@ -203,7 +208,7 @@ namespace Terrain.Generator.Structure.Dungeon
                 while (enumerator.MoveNext())
                 {
                     DungeonRoom dungeonRoom = dungeonRoomTree.Rooms[enumerator.Current];
-                    //if(!mainRooms.Contains(dungeonRoom))
+                    if(!mainRooms.Contains(dungeonRoom))
                         connectionRooms.Add(dungeonRoom);
                 }
             }
