@@ -2,7 +2,7 @@
 
 namespace Terrain.Outputs
 {
-    public interface IPositionHolder
+    public interface IPosHolder
     {
         public int2 Pos { get; }
     }
