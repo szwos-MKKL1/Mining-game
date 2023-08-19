@@ -1,5 +1,6 @@
 ﻿using System;
 using NativeTrees;
+using QuikGraph;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -35,6 +36,32 @@ namespace Terrain.Generator.Structure.Dungeon
                 return true; // always keep iterating, we want to catch all objects
             }
         }
+        
+        // public static void LineAABB2D<T, Q>(this NativeQuadtree<T> quadtree, IEdge<Q> range, NativeList<T> results) 
+        //     where T : unmanaged, IEquatable<T>
+        // {
+        //     RangeAABB2DUniqueVisitor<T> visitor = new()
+        //     {
+        //         Results = results
+        //     };
+        //
+        //     quadtree.Raycast(new Ray2D())
+        //     quadtree.Range(range, ref visitor);
+        // }
+        //
+        // private struct RangeAABB2DUniqueVisitor<T> : IQuadtreeRangeVisitor<T> where T : unmanaged, IEquatable<T>
+        // {
+        //     public NativeList<T> Results;
+        //
+        //     public bool OnVisit(T obj, AABB2D objBounds, AABB2D queryRange)
+        //     {
+        //         // check if our object's AABB2D overlaps with the query AABB2D
+        //         if (objBounds.IntersectsRay(queryRange))
+        //             Results.Add(obj);
+        //
+        //         return true; // always keep iterating, we want to catch all objects
+        //     }
+        // }
 
         public static void Draw(this AABB2D aabb2D, Color color, float duration = 10f)
         {

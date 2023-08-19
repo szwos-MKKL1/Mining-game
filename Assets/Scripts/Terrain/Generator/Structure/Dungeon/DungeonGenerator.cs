@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using DelaunatorSharp;
@@ -6,9 +7,11 @@ using InternalDebug;
 using NativeTrees;
 using QuikGraph;
 using QuikGraph.Algorithms;
+using QuikGraph.Collections;
 using QuikGraph.Serialization;
 using Random;
 using Terrain.Generator.PathGraph.Graphs;
+using Terrain.Outputs;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -25,11 +28,12 @@ namespace Terrain.Generator.Structure.Dungeon
     
     //TODO find some way to add pre-made rooms to generation
     
-    public class DungeonGenerator : IDisposable
+    public class DungeonGenerator : IDungeonGenerator, IDisposable
     {
         private DungeonRoomTree<DungeonRoom> rooms;//TODO dispose
         private Config config;
         private IRandom random;
+
         public DungeonGenerator(Config config, IRandom random)
         {
             this.config = config;
@@ -46,20 +50,26 @@ namespace Terrain.Generator.Structure.Dungeon
             //Separates rooms //TODO kinda slow
             SeparateRooms(rooms);
             //Chooses which rooms are considered to be most important (based on area)
-            List<DungeonRoom> mainRooms = GetMainRooms(rooms).ToList();
+            List<DungeonRoom> mainRooms = SelectMainRooms(rooms);
             //Creates graph that shows how main rooms are connected
             UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> mainRoomsPath = GetMainRoomPathGraph(mainRooms);
             //Takes main room connection graph and makes lines straight (this step could be omitted)
-            UndirectedGraph<Vector2, IEdge<Vector2>> mainRoomHallwayGraph = GetStraightHallways(mainRoomsPath);
+            UndirectedGraph<DungeonRoom, DungeonOutput<DungeonRoom>.Hallway> mainRoomHallwayGraph = GetStraightHallways(mainRoomsPath);
             //Finds rooms that intersect with hallway graph edges, those rooms will be used to walk between main rooms
-            List<DungeonRoom> standardRooms = GetConnectionRooms(rooms, mainRoomHallwayGraph);
-            standardRooms.Draw(Color.green, 10f);//TODO remove debug
+            List<DungeonRoom> standardAndMainRooms = GetConnectionRooms(rooms, mainRoomHallwayGraph);
+            standardAndMainRooms.Draw(Color.green, 10f);//TODO remove debug
+            
+            //TODO move to DungeonRoomTree
+            rooms.Rooms.Clear();
+            rooms.Tree.Clear();
+            AddToTree(rooms, standardAndMainRooms);
+
             //Similar to GetMainRoomPathGraph, this graph will show how to connect standard rooms with hallways
-            UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> standardRoomPathGraph = GetStandardRoomPathGraph(standardRooms);
+            UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> standardRoomPathGraph = GetStandardRoomPathGraph(standardAndMainRooms);
             //Creates straight hallways
-            UndirectedGraph<Vector2, IEdge<Vector2>> finalHallwayGraph = GetStraightHallways(standardRoomPathGraph);
-            finalHallwayGraph.UnityDraw(Color.magenta, 10f);
-            GeneratePlacement(rooms, standardRooms, finalHallwayGraph);
+            UndirectedGraph<DungeonRoom, DungeonOutput<DungeonRoom>.Hallway> finalHallwayGraph = GetStraightHallways(standardRoomPathGraph);
+            //finalHallwayGraph.UnityDraw(Color.magenta, 10f); //TODO not working
+            //GeneratePlacement(rooms, standardAndMainRooms, finalHallwayGraph);
         }
         private DungeonRoomTree<DungeonRoom> GetInitialDungeonRooms()
         {
@@ -83,12 +93,27 @@ namespace Terrain.Generator.Structure.Dungeon
             separateRoomsJob.Schedule().Complete();
         }
 
-        private IEnumerable<DungeonRoom> GetMainRooms(IEnumerable<DungeonRoom> separatedRooms)
+        //Updates values in dungeonRoomTree as well as returns main room list
+        private unsafe List<DungeonRoom> SelectMainRooms(DungeonRoomTree<DungeonRoom> dungeonRoomTree)
         {
-            List<DungeonRoom> sorted = new(separatedRooms);
-            sorted.Sort((a,b) => a.Area.CompareTo(b.Area));
+            List<int> indexes = new();
+            int length = dungeonRoomTree.Rooms.Length;
+            DungeonRoom* dungeonRooms = (DungeonRoom*)dungeonRoomTree.Rooms.GetUnsafePtr();
+            for (int i = 0; i < length; i++)
+            {
+                indexes.Add(i);
+            }
+            indexes.Sort((a,b) => dungeonRooms[a].Area.CompareTo(dungeonRooms[b].Area));
             int mainRoomCount = 15;//TODO move to dungeon generator config
-            return sorted.Skip(sorted.Count - mainRoomCount);
+            List<DungeonRoom> mainRooms = new(mainRoomCount);
+            foreach (var mainRoomIndex in indexes.Skip(indexes.Count - mainRoomCount))
+            {
+                if(mainRoomIndex < 0 || mainRoomIndex >= length) continue;
+                dungeonRooms[mainRoomIndex].RoomType = DungeonRoom.DungeonRoomType.MAIN;
+                mainRooms.Add(dungeonRooms[mainRoomIndex]);
+            }
+
+            return mainRooms;
         }
 
         private UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> Delanuay(IEnumerable<DungeonRoom> roomList)
@@ -125,9 +150,9 @@ namespace Terrain.Generator.Structure.Dungeon
             return minEdges.ToUndirectedGraph<DungeonRoom, IEdge<DungeonRoom>>();
         }
 
-        private UndirectedGraph<Vector2, IEdge<Vector2>> GetStraightHallways(IEdgeSet<DungeonRoom, IEdge<DungeonRoom>> connectionGraph)
+        private UndirectedGraph<DungeonRoom, DungeonOutput<DungeonRoom>.Hallway> GetStraightHallways(IEdgeSet<DungeonRoom, IEdge<DungeonRoom>> connectionGraph)
         {
-            UndirectedGraph<Vector2, IEdge<Vector2>> corridorGraph = new();
+            UndirectedGraph<DungeonRoom, DungeonOutput<DungeonRoom>.Hallway> corridorGraph = new();
             foreach (IEdge<DungeonRoom> edge in connectionGraph.Edges)
             {
                 bool useX = false;
@@ -153,92 +178,132 @@ namespace Terrain.Generator.Structure.Dungeon
                     else useY = false;
                 }
 
+                DungeonOutput<DungeonRoom>.Hallway hallway;
+
                 if (useX)
-                    corridorGraph.AddVerticesAndEdge(new Edge<Vector2>(new Vector2(center.x, sourceCenter.y), new Vector2(center.x, targetCenter.y)));
-                else if(useY)
-                    corridorGraph.AddVerticesAndEdge(new Edge<Vector2>(new Vector2(sourceCenter.x, center.y), new Vector2(targetCenter.x, center.y)));
+                    hallway = new DungeonOutput<DungeonRoom>.Hallway(
+                        new List<float2>
+                        {
+                            new(center.x, sourceCenter.y),
+                            new(center.x, targetCenter.y)
+                        }, edge.Source, edge.Target);
+                else if (useY)
+                    hallway = new DungeonOutput<DungeonRoom>.Hallway(
+                        new List<float2>
+                        {
+                            new(sourceCenter.x, center.y),
+                            new(targetCenter.x, center.y)
+                        }, edge.Source, edge.Target);
                 else
                 {
-                    corridorGraph.AddVerticesAndEdge(
-                        new Edge<Vector2>(
-                            new Vector2(sourceCenter.x, sourceCenter.y),
-                            new Vector2(sourceCenter.x, targetCenter.y)
-                        ));
-                    corridorGraph.AddVerticesAndEdge(
-                        new Edge<Vector2>(
-                            new Vector2(sourceCenter.x, targetCenter.y),
-                            new Vector2(targetCenter.x, targetCenter.y)
-                        ));
+                    hallway = new DungeonOutput<DungeonRoom>.Hallway(
+                        new List<float2>
+                        {
+                            new(sourceCenter.x, sourceCenter.y),
+                            new(sourceCenter.x, targetCenter.y),
+                            new(targetCenter.x, targetCenter.y)
+                        }, edge.Source, edge.Target);
                 }
+
+                corridorGraph.AddVerticesAndEdge(hallway);
             }
 
             return corridorGraph;
         }
 
-        private List<DungeonRoom> GetConnectionRooms(
+        private unsafe List<DungeonRoom> GetConnectionRooms(
             DungeonRoomTree<DungeonRoom> dungeonRoomTree,
-            IEdgeSet<Vector2, IEdge<Vector2>> corridorGraph)
+            IEdgeSet<DungeonRoom, DungeonOutput<DungeonRoom>.Hallway> corridorGraph)
         {
             NativeParallelHashSet<int> roomIds = new(dungeonRoomTree.Rooms.Length, Allocator.Temp);
             const float tolerance = 0.05f;
             const float radius = 3f;
-            foreach (IEdge<Vector2> edge in corridorGraph.Edges)
+            foreach (var edge in corridorGraph.Edges)
             {
-                //TODO repetitive code
-                //Making bounding boxes around vertical and horizontal lines
-                //defaults to vertical
-                float2 min;
-                float2 max;
-                if (Math.Abs(edge.Source.x - edge.Target.x) < tolerance)
+                if(!edge.IsValid) continue;
+                List<float2> points = edge.Points;
+                for (int i = 0; i < points.Count-1; i++)
                 {
-                    //X is equal
-                    if (edge.Source.y < edge.Target.y)
+                    //TODO repetitive code
+                    //Making bounding boxes around vertical and horizontal lines
+                    //defaults to vertical
+                    float2 source = points[i];
+                    float2 target = points[i + 1];
+                    float2 min;
+                    float2 max;
+                    if (Math.Abs(source.x - target.x) < tolerance)
                     {
-                        min = new float2(edge.Source.x - radius, edge.Source.y - radius);
-                        max = new float2(edge.Source.x + radius, edge.Target.y + radius);
-                    }
-                    else 
-                    {
-                        min = new float2(edge.Source.x - radius, edge.Target.y - radius);
-                        max = new float2(edge.Source.x + radius, edge.Source.y + radius);
-                    }
-                }
-                else
-                {
-                    //Y is equal
-                    if (edge.Source.x < edge.Target.x)
-                    {
-                        min = new float2(edge.Source.x + radius, edge.Source.y - radius);
-                        max = new float2(edge.Target.x - radius, edge.Source.y + radius);
+                        //X is equal
+                        if (source.y < target.y)
+                        {
+                            min = new float2(source.x - radius, source.y - radius);
+                            max = new float2(source.x + radius, target.y + radius);
+                        }
+                        else 
+                        {
+                            min = new float2(source.x - radius, target.y - radius);
+                            max = new float2(source.x + radius, source.y + radius);
+                        }
                     }
                     else
                     {
-                        min = new float2(edge.Target.x + radius, edge.Source.y - radius);
-                        max = new float2(edge.Source.x - radius, edge.Source.y + radius);
+                        //Y is equal
+                        if (source.x < target.x)
+                        {
+                            min = new float2(source.x + radius, source.y - radius);
+                            max = new float2(target.x - radius, source.y + radius);
+                        }
+                        else
+                        {
+                            min = new float2(target.x + radius, source.y - radius);
+                            max = new float2(source.x - radius, source.y + radius);
+                        }
                     }
+                    AABB2D edgeBox = new AABB2D(min, max);
+                    dungeonRoomTree.Tree.RangeAABBUnique(edgeBox, roomIds);
                 }
-                AABB2D edgeBox = new AABB2D(min, max);
-                dungeonRoomTree.Tree.RangeAABBUnique(edgeBox, roomIds);
             }
 
-            
+            DungeonRoom* dungeonRooms = (DungeonRoom*)dungeonRoomTree.Rooms.GetUnsafePtr();
             List<DungeonRoom> connectionRooms = new();
             using (NativeParallelHashSet<int>.Enumerator enumerator = roomIds.GetEnumerator())
             {
                 while (enumerator.MoveNext())
                 {
-                    connectionRooms.Add(dungeonRoomTree.Rooms[enumerator.Current]);
+                    DungeonRoom currentDungeonRoom = dungeonRooms[enumerator.Current];
+                    if (currentDungeonRoom.RoomType == DungeonRoom.DungeonRoomType.NONE)
+                        dungeonRooms[enumerator.Current].RoomType = DungeonRoom.DungeonRoomType.MAIN; //TODO will currentDungeonRoom.RoomType = ... work?
+                    connectionRooms.Add(currentDungeonRoom);
                 }
             }
             roomIds.Dispose();
             return connectionRooms;
         }
-        
-        private void GeneratePlacement(DungeonRoomTree<DungeonRoom> dungeonRoomTree, List<DungeonRoom> standardRooms, UndirectedGraph<Vector2, IEdge<Vector2>> finalHallwayGraph)
+
+        private void AddToTree(DungeonRoomTree<DungeonRoom> dungeonRoomTree, IEnumerable<DungeonRoom> roomsToAdd)
         {
-            
+            foreach (var room in roomsToAdd)
+            {
+                int i = dungeonRoomTree.Rooms.Length;
+                dungeonRoomTree.Rooms.Add(room);
+                dungeonRoomTree.Tree.Insert(i, room.Rect);
+            }
         }
-        
+
+        private DungeonOutput<DungeonRoom> GenerateOutput(
+            DungeonRoomTree<DungeonRoom> dungeonRoomTree,
+            UndirectedGraph<DungeonRoom, DungeonOutput<DungeonRoom>.Hallway> hallwayGraph)
+        {
+            List<DungeonRoom> roomList;
+            UndirectedGraph<DungeonRoom, DungeonOutput<DungeonRoom>.Hallway> hallways;
+            Dictionary<DungeonRoom, Vector2> roomEntryPoints;
+
+            //TODO implement
+            return null;
+        }
+
+        public DungeonOutput<DungeonRoom> GeneratorOutput { get; }
+
         //TODO return dungeon structure maybe by rooms and corridors
         //well we may also need some way to return caves generated inside dungeon
 
@@ -258,11 +323,31 @@ namespace Terrain.Generator.Structure.Dungeon
             }
         }
 
-        public enum DungeonBlockTypes
+        public struct DungeonBlock : IPosHolder
+        {
+            public DungeonBlock(DungeonBlockTypes blockType, int2 pos)
+            {
+                this.BlockType = blockType;
+                this.Pos = pos;
+            }
+
+            public int2 Pos { get; }
+
+            public DungeonBlockTypes BlockType { get; }
+        }
+
+        public enum DungeonBlockTypes : byte
         {
             MAIN_ROOM_WALL,
-            STANDARDROOM_WALL,
+            STANDARD_ROOM_WALL,
             HALLWAY_WALL,
+        }
+        
+        public enum DungeonRoomTypes : byte
+        {
+            MAIN_ROOM,
+            STANDARD_ROOM,
+            HALLWAY,
         }
 
         public void Dispose()
