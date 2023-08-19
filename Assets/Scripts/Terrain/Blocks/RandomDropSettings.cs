@@ -45,7 +45,7 @@ namespace Terrain.Blocks
 
         public ItemStack Roll()
         {
-            return UnityEngine.Random.value <= chance ? new ItemStack(item, (uint)UnityEngine.Random.Range((int)minCount, (int)maxCount)) : null;
+            return UnityEngine.Random.value <= chance ? new ItemStack(item, (uint)UnityEngine.Random.Range((int)minCount, (int)maxCount)) : new ItemStack();
         }
     }
 }
