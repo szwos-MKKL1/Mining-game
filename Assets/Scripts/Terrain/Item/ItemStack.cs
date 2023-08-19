@@ -1,6 +1,6 @@
 ﻿namespace Terrain.Item
 {
-    public class ItemStack
+    public struct ItemStack
     {
         public ItemBase item;
         public uint count;
