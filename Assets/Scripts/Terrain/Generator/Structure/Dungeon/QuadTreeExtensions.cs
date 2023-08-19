@@ -63,6 +63,20 @@ namespace Terrain.Generator.Structure.Dungeon
         //     }
         // }
 
+        
+        
+        public static void GetWalls(this AABB2D rect, out float2x2 wall1, out float2x2 wall2, out float2x2 wall3, out float2x2 wall4)
+        {
+            float2 min = rect.min;
+            float2 max = rect.max;
+            float2 minmax = new float2(min.x, max.y);
+            float2 maxmin = new float2(max.x, min.y);
+            wall1 = new float2x2(min, maxmin);
+            wall2 = new float2x2(min, minmax);
+            wall3 = new float2x2(minmax, max);
+            wall4 = new float2x2(maxmin, max);
+        }
+        
         public static void Draw(this AABB2D aabb2D, Color color, float duration = 10f)
         {
             float2 min = aabb2D.min;

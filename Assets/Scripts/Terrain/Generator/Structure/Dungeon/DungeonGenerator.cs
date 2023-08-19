@@ -70,6 +70,7 @@ namespace Terrain.Generator.Structure.Dungeon
             UndirectedGraph<DungeonRoom, DungeonOutput<DungeonRoom>.Hallway> finalHallwayGraph = GetStraightHallways(standardRoomPathGraph);
             //finalHallwayGraph.UnityDraw(Color.magenta, 10f); //TODO not working
             //GeneratePlacement(rooms, standardAndMainRooms, finalHallwayGraph);
+            GenerateOutput(rooms, finalHallwayGraph);
         }
         private DungeonRoomTree<DungeonRoom> GetInitialDungeonRooms()
         {
@@ -296,10 +297,69 @@ namespace Terrain.Generator.Structure.Dungeon
         {
             List<DungeonRoom> roomList;
             UndirectedGraph<DungeonRoom, DungeonOutput<DungeonRoom>.Hallway> hallways;
-            Dictionary<DungeonRoom, Vector2> roomEntryPoints;
+            Dictionary<DungeonRoom, List<float2>> roomEntryPoints = new();
+
+            //Places hallway start and end points to the edge of wall in rooms
+            foreach (var hallway in hallwayGraph.Edges)
+            {
+                List<float2> points = hallway.Points;
+                for (int i = 0; i < points.Count-1; i++)
+                {
+                    float2 pointA = points[i];
+                    float2 pointB = points[i+1];
+                    float2 pointAB;
+                    if (i == 0)
+                    {
+                        //First
+                        if (GetIntersectionPoint(pointA, pointB, hallway.Source.Rect, out pointAB))
+                        {
+                            points[i] = pointAB; //TODO add to 'hallways' not change
+                            if (!roomEntryPoints.TryGetValue(hallway.Source, out List<float2> list))
+                                list = new List<float2>();
+                            list.Add(pointAB);
+                        }
+                    }
+                    if (i == points.Count - 2)
+                    {
+                        //Last
+                        if (GetIntersectionPoint(pointA, pointB, hallway.Target.Rect, out pointAB))
+                        {
+                            points[i+1] = pointAB;
+                            if (!roomEntryPoints.TryGetValue(hallway.Target, out List<float2> list))
+                                list = new List<float2>();
+                            list.Add(pointAB);
+                        }
+                    }
+                }
+            }
 
             //TODO implement
             return null;
+        }
+
+        private bool GetIntersectionPoint(float2 A1, float2 A2, AABB2D rect, out float2 point)
+        {
+            rect.GetWalls(out var wall1, out var wall2, out var wall3, out var wall4);
+            return GetIntersectionPoint(A1, A2, wall1.c0, wall1.c1, out point) ||
+                   GetIntersectionPoint(A1, A2, wall2.c0, wall2.c1, out point) ||
+                   GetIntersectionPoint(A1, A2, wall3.c0, wall3.c1, out point) ||
+                   GetIntersectionPoint(A1, A2, wall4.c0, wall4.c1, out point);
+        }
+
+        private bool GetIntersectionPoint(float2 A1, float2 A2, float2 B1, float2 B2, out float2 point)
+        {
+            var a_d = A2 - A1;
+            var b_d = B2 - B1;
+            var s = (-a_d.y * (A1.x - B1.x) + a_d.x * (A1.y - B1.y)) / (-b_d.x * a_d.y + a_d.x * b_d.y);
+            var t = (+b_d.x * (A1.y - B1.y) - b_d.y * (A1.x - B1.x)) / (-b_d.x * a_d.y + a_d.x * b_d.y);
+            if (s is >= 0 and <= 1 && t is >= 0 and <= 1)
+            {
+                point = new float2(A1.x + t * a_d.x, A1.y + t * a_d.x);
+                return true;
+            }
+
+            point = float2.zero;
+            return false;
         }
 
         public DungeonOutput<DungeonRoom> GeneratorOutput { get; }
