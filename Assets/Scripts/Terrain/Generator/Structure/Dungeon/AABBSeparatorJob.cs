@@ -61,7 +61,7 @@ namespace Terrain.Generator.Structure.Dungeon
                      
                     if (separationCount > 0)
                     {
-                        movement = math.normalizesafe(movement, defmovement)*1.4f;
+                        movement = math.normalizesafe(movement, defmovement)*1.6f;
                         if (!movement.Equals(defmovement))
                         {
                             newRect.Rect = new AABB2D(currentRect.Rect.min - movement, currentRect.Rect.max - movement);

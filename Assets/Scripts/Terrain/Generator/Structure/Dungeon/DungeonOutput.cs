@@ -8,7 +8,7 @@ namespace Terrain.Generator.Structure.Dungeon
     //TODO name
     public class DungeonOutput<T> where T : IDungeonRoom
     {
-        public DungeonOutput(List<T> rooms, UndirectedGraph<T,Hallway> hallways, Dictionary<T, float2> roomEntryPoints)
+        public DungeonOutput(List<T> rooms, UndirectedGraph<T,Hallway> hallways, Dictionary<T, List<float2>> roomEntryPoints)
         {
             Rooms = rooms;
             Hallways = hallways;
@@ -17,7 +17,7 @@ namespace Terrain.Generator.Structure.Dungeon
 
         public List<T> Rooms { get; }
         public UndirectedGraph<T,Hallway> Hallways { get; }
-        public Dictionary<T, float2> RoomEntryPoints { get; }
+        public Dictionary<T, List<float2>> RoomEntryPoints { get; }
 
         public class Hallway : IEdge<T>
         {

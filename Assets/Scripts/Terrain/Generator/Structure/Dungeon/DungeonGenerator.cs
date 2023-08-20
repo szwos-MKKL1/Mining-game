@@ -30,7 +30,8 @@ namespace Terrain.Generator.Structure.Dungeon
     
     public class DungeonGenerator : IDungeonGenerator, IDisposable
     {
-        private DungeonRoomTree<DungeonRoom> rooms;//TODO dispose
+        private DungeonRoomTree<DungeonRoom> rooms;
+        private DungeonOutput<DungeonRoom> output;
         private Config config;
         private IRandom random;
 
@@ -57,20 +58,20 @@ namespace Terrain.Generator.Structure.Dungeon
             UndirectedGraph<DungeonRoom, DungeonOutput<DungeonRoom>.Hallway> mainRoomHallwayGraph = GetStraightHallways(mainRoomsPath);
             //Finds rooms that intersect with hallway graph edges, those rooms will be used to walk between main rooms
             List<DungeonRoom> standardAndMainRooms = GetConnectionRooms(rooms, mainRoomHallwayGraph);
-            standardAndMainRooms.Draw(Color.green, 10f);//TODO remove debug
+            //standardAndMainRooms.Draw(Color.green, 10f);//TODO remove debug
             
             //TODO move to DungeonRoomTree
-            rooms.Rooms.Clear();
-            rooms.Tree.Clear();
-            AddToTree(rooms, standardAndMainRooms);
+            //rooms.Rooms.Clear();
+            //rooms.Tree.Clear();
+            //AddToTree(rooms, standardAndMainRooms);
 
             //Similar to GetMainRoomPathGraph, this graph will show how to connect standard rooms with hallways
             UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> standardRoomPathGraph = GetStandardRoomPathGraph(standardAndMainRooms);
             //Creates straight hallways
             UndirectedGraph<DungeonRoom, DungeonOutput<DungeonRoom>.Hallway> finalHallwayGraph = GetStraightHallways(standardRoomPathGraph);
-            //finalHallwayGraph.UnityDraw(Color.magenta, 10f); //TODO not working
+            finalHallwayGraph.Edges.Draw(Color.magenta, 10f); //TODO not working
             //GeneratePlacement(rooms, standardAndMainRooms, finalHallwayGraph);
-            GenerateOutput(rooms, finalHallwayGraph);
+            output = GenerateOutput(rooms, finalHallwayGraph);
         }
         private DungeonRoomTree<DungeonRoom> GetInitialDungeonRooms()
         {
@@ -273,7 +274,7 @@ namespace Terrain.Generator.Structure.Dungeon
                 {
                     DungeonRoom currentDungeonRoom = dungeonRooms[enumerator.Current];
                     if (currentDungeonRoom.RoomType == DungeonRoom.DungeonRoomType.NONE)
-                        dungeonRooms[enumerator.Current].RoomType = DungeonRoom.DungeonRoomType.MAIN; //TODO will currentDungeonRoom.RoomType = ... work?
+                        dungeonRooms[enumerator.Current].RoomType = DungeonRoom.DungeonRoomType.STANDARD; //TODO will currentDungeonRoom.RoomType = ... work?
                     connectionRooms.Add(currentDungeonRoom);
                 }
             }
@@ -295,14 +296,15 @@ namespace Terrain.Generator.Structure.Dungeon
             DungeonRoomTree<DungeonRoom> dungeonRoomTree,
             UndirectedGraph<DungeonRoom, DungeonOutput<DungeonRoom>.Hallway> hallwayGraph)
         {
-            List<DungeonRoom> roomList;
-            UndirectedGraph<DungeonRoom, DungeonOutput<DungeonRoom>.Hallway> hallways;
+            List<DungeonRoom> roomList = new(dungeonRoomTree);
+            UndirectedGraph<DungeonRoom, DungeonOutput<DungeonRoom>.Hallway> hallways = new();
             Dictionary<DungeonRoom, List<float2>> roomEntryPoints = new();
-
             //Places hallway start and end points to the edge of wall in rooms
+            //Also fills roomEntryPoints dictionary
             foreach (var hallway in hallwayGraph.Edges)
             {
-                List<float2> points = hallway.Points;
+                List<float2> points = new(hallway.Points);
+                //TODO very simple solution for this exact problem, doesn't account for paths going thru other rooms than source and target rooms
                 for (int i = 0; i < points.Count-1; i++)
                 {
                     float2 pointA = points[i];
@@ -313,10 +315,11 @@ namespace Terrain.Generator.Structure.Dungeon
                         //First
                         if (GetIntersectionPoint(pointA, pointB, hallway.Source.Rect, out pointAB))
                         {
-                            points[i] = pointAB; //TODO add to 'hallways' not change
+                            points[i] = pointAB;
                             if (!roomEntryPoints.TryGetValue(hallway.Source, out List<float2> list))
                                 list = new List<float2>();
                             list.Add(pointAB);
+                            roomEntryPoints[hallway.Source] = list;
                         }
                     }
                     if (i == points.Count - 2)
@@ -328,13 +331,22 @@ namespace Terrain.Generator.Structure.Dungeon
                             if (!roomEntryPoints.TryGetValue(hallway.Target, out List<float2> list))
                                 list = new List<float2>();
                             list.Add(pointAB);
+                            roomEntryPoints[hallway.Target] = list;
                         }
                     }
-                }
-            }
 
-            //TODO implement
-            return null;
+                }
+
+                hallways.AddVerticesAndEdge(
+                    new DungeonOutput<DungeonRoom>.Hallway(points, hallway.Source, hallway.Target));
+            }
+            return new DungeonOutput<DungeonRoom>(roomList, hallways, roomEntryPoints);
+        }
+
+        private string rectTostring(AABB2D rect, int a)
+        {
+            float2 dif = rect.max - rect.min;
+            return $"({(int)rect.min.x-a},{(int)rect.min.y-a},{(int)dif.x},{(int)dif.y})";
         }
 
         private bool GetIntersectionPoint(float2 A1, float2 A2, AABB2D rect, out float2 point)
@@ -348,21 +360,35 @@ namespace Terrain.Generator.Structure.Dungeon
 
         private bool GetIntersectionPoint(float2 A1, float2 A2, float2 B1, float2 B2, out float2 point)
         {
-            var a_d = A2 - A1;
-            var b_d = B2 - B1;
-            var s = (-a_d.y * (A1.x - B1.x) + a_d.x * (A1.y - B1.y)) / (-b_d.x * a_d.y + a_d.x * b_d.y);
-            var t = (+b_d.x * (A1.y - B1.y) - b_d.y * (A1.x - B1.x)) / (-b_d.x * a_d.y + a_d.x * b_d.y);
-            if (s is >= 0 and <= 1 && t is >= 0 and <= 1)
-            {
-                point = new float2(A1.x + t * a_d.x, A1.y + t * a_d.x);
-                return true;
+            // float dx, dy, da, db, t, s;
+
+            // dx = a2.X - a1.X;
+            // dy = a2.Y - a1.Y;
+            float2 d = A2 - A1;
+            float da = B2.x - B1.x;
+            float db = B2.y - B1.y;
+
+            if (da * d.y - db * d.x == 0) {
+                // The segments are parallel.
+                point = float2.zero;
+                return false;
             }
 
+            float s = (d.x * (B1.y - A1.y) + d.y * (A1.x - B1.x)) / (da * d.y - db * d.x);
+            float t = (da * (A1.y - B1.y) + db * (B1.x - A1.x)) / (db * d.x - da * d.y);
+
+            if ((s >= 0) & (s <= 1) & (t >= 0) & (t <= 1))
+            {
+                point = A1 + t * d;
+                return true;
+                //return new Point((int)(a1.X + t * dx), (int)(a1.Y + t * dy));
+            }
+            
             point = float2.zero;
             return false;
         }
 
-        public DungeonOutput<DungeonRoom> GeneratorOutput { get; }
+        public DungeonOutput<DungeonRoom> GeneratorOutput => output;
 
         //TODO return dungeon structure maybe by rooms and corridors
         //well we may also need some way to return caves generated inside dungeon

@@ -16,6 +16,11 @@ namespace Terrain.Generator
             return new Vector2(vector.x, vector.y);
         }
         
+        public static Vector2 AsVector(this float2 f)
+        {
+            return new Vector2(f.x, f.y);
+        }
+        
         public static int2 AsInt2(this Vector2Int vector)
         {
             return new int2(vector.x, vector.y);
