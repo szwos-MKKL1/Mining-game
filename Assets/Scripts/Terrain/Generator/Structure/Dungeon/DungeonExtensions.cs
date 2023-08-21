@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using NativeTrees;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -63,6 +64,42 @@ namespace Terrain.Generator.Structure.Dungeon
                 DrawLineScaled(point.AsVector() + v, point.AsVector() - v, Color.blue, duration);
                 DrawLineScaled(point.AsVector() + v2, point.AsVector() - v2, Color.blue, duration);
             }
+        }
+
+        public static AABB2D RectOnLine(float2 A, float2 B, float radius, float tolerance = float.Epsilon)
+        {
+            float2 min;
+            float2 max;
+            if (Math.Abs(A.x - B.x) < tolerance)
+            {
+                //X is equal
+                if (A.y < B.y)
+                {
+                    min = new float2(A.x - radius, A.y - radius);
+                    max = new float2(A.x + radius, B.y + radius);
+                }
+                else 
+                {
+                    min = new float2(A.x - radius, B.y - radius);
+                    max = new float2(A.x + radius, A.y + radius);
+                }
+            }
+            else
+            {
+                //Y is equal
+                if (A.x < B.x)
+                {
+                    min = new float2(A.x + radius, A.y - radius);
+                    max = new float2(B.x - radius, A.y + radius);
+                }
+                else
+                {
+                    min = new float2(B.x + radius, A.y - radius);
+                    max = new float2(A.x - radius, A.y + radius);
+                }
+            }
+
+            return new AABB2D(min, max);
         }
     }
 }

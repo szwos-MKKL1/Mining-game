@@ -28,14 +28,14 @@ namespace Terrain.Generator.Structure.Dungeon
     
     //TODO find some way to add pre-made rooms to generation
     
-    public class DungeonGenerator : IDungeonGenerator, IDisposable
+    public class SimpleDungeonGen : IDungeonGenerator, IDisposable
     {
         private DungeonRoomTree<DungeonRoom> rooms;
         private DungeonOutput<DungeonRoom> output;
         private Config config;
         private IRandom random;
 
-        public DungeonGenerator(Config config, IRandom random)
+        public SimpleDungeonGen(Config config, IRandom random)
         {
             this.config = config;
             this.random = random;
@@ -343,12 +343,6 @@ namespace Terrain.Generator.Structure.Dungeon
             return new DungeonOutput<DungeonRoom>(roomList, hallways, roomEntryPoints);
         }
 
-        private string rectTostring(AABB2D rect, int a)
-        {
-            float2 dif = rect.max - rect.min;
-            return $"({(int)rect.min.x-a},{(int)rect.min.y-a},{(int)dif.x},{(int)dif.y})";
-        }
-
         private bool GetIntersectionPoint(float2 A1, float2 A2, AABB2D rect, out float2 point)
         {
             rect.GetWalls(out var wall1, out var wall2, out var wall3, out var wall4);
@@ -407,33 +401,6 @@ namespace Terrain.Generator.Structure.Dungeon
                 RandomRoomSize = randomRoomSize;
                 RandomPointGenShapes = randomPointGenShapes;
             }
-        }
-
-        public struct DungeonBlock : IPosHolder
-        {
-            public DungeonBlock(DungeonBlockTypes blockType, int2 pos)
-            {
-                this.BlockType = blockType;
-                this.Pos = pos;
-            }
-
-            public int2 Pos { get; }
-
-            public DungeonBlockTypes BlockType { get; }
-        }
-
-        public enum DungeonBlockTypes : byte
-        {
-            MAIN_ROOM_WALL,
-            STANDARD_ROOM_WALL,
-            HALLWAY_WALL,
-        }
-        
-        public enum DungeonRoomTypes : byte
-        {
-            MAIN_ROOM,
-            STANDARD_ROOM,
-            HALLWAY,
         }
 
         public void Dispose()

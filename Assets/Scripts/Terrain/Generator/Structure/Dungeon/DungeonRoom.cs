@@ -1,4 +1,5 @@
 ﻿using NativeTrees;
+using Terrain.Outputs;
 using Unity.Mathematics;
 
 namespace Terrain.Generator.Structure.Dungeon
@@ -28,6 +29,35 @@ namespace Terrain.Generator.Structure.Dungeon
             NONE,
             STANDARD,
             MAIN
+        }
+        
+        public struct DungeonBlock : IPosHolder
+        {
+            public DungeonBlock(DungeonBlockTypes blockType, int2 pos)
+            {
+                this.BlockType = blockType;
+                this.Pos = pos;
+            }
+
+            public int2 Pos { get; }
+
+            public DungeonBlockTypes BlockType { get; }
+        }
+
+        public enum DungeonBlockTypes : byte
+        {
+            NONE = 0,
+            MAIN_ROOM_WALL,
+            STANDARD_ROOM_WALL,
+            HALLWAY_WALL,
+        }
+
+        public enum DungeonSpaceType : byte
+        {
+            NONE = 0,
+            STANDARD,
+            MAIN,
+            HALLWAY
         }
     }
 }

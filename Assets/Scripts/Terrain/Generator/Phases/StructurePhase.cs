@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Numerics;
 using InternalDebug;
 using NativeTrees;
 using QuikGraph;
@@ -7,11 +8,14 @@ using Terrain.Blocks;
 using Terrain.Generator.PathGraph;
 using Terrain.Generator.PathGraph.CellularAutomata;
 using Terrain.Generator.PathGraph.Graphs;
+using Terrain.Generator.Structure;
 using Terrain.Generator.Structure.Dungeon;
+using Terrain.Outputs;
 using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine;
 using Random = System.Random;
+using Vector2 = UnityEngine.Vector2;
 
 namespace Terrain.Generator.Phases
 {
@@ -27,14 +31,9 @@ namespace Terrain.Generator.Phases
         
         public void Generate(TerrainData terrainData)
         {
-            IRandom random = new SystemRandom();//TODO replace with random from terrain generator
-            DungeonGenerator.Config config = new DungeonGenerator.Config(120,
-                new BaseRandomRoomSize(new GaussianRandom(random, 0.2f, 0.5f), 20, 40, 0.2f), 
-                new RandomPointCircle(random, new float2(500f, 500f), 50f));
-            config.Bounds = new AABB2D(new float2(300, 300), new float2(700, 700));
-            DungeonGenerator dungeonGenerator = new DungeonGenerator(config, random);
-            dungeonGenerator.GeneratorOutput.Draw(30);
-            dungeonGenerator.Dispose();
+            Structure.Structure dungeonStructure = new DungeonStructure();
+            dungeonStructure.getStructureBlocks(new Structure.Structure.Context(new SystemRandom(0),
+                new Vector2(300, 300))).AddToTerrain(terrainData);
         }
     }
 }

@@ -7,8 +7,14 @@ using UnityEngine;
 
 namespace Terrain.Outputs
 {
-    public class BlockCollector : CollectorBase<BlockPos>
+    public class BlockCollector : CollectorBase<PosPair<BlockBase>>
     {
-        
+        public void AddToTerrain(TerrainData terrainData)
+        {
+            foreach (PosPair<BlockBase> blockPos in Collector)
+            {
+                terrainData.SetBlock(blockPos);
+            }
+        }
     }
 }

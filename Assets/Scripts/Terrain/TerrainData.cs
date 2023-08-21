@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Terrain.Blocks;
 using Terrain.Chunk;
+using Terrain.Outputs;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -21,6 +22,11 @@ namespace Terrain
         public void SetBlock(Vector2Int realPos, BlockBase block)
         {
             GetChunk(realPos).SetBlock(GetLocalPos(realPos), block);
+        }
+
+        public void SetBlock(PosPair<BlockBase> blockPos)
+        {
+            SetBlock(new Vector2Int(blockPos.Pos.x, blockPos.Pos.y), blockPos.Value);
         }
 
         public bool IsBuildable(Vector2Int realPos)

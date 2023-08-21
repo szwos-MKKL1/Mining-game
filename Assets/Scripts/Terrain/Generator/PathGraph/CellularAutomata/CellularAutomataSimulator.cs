@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -81,62 +82,66 @@ namespace Terrain.Generator.PathGraph.CellularAutomata
         {
             cellMap.Dispose();
         }
-    }
-
-    [BurstCompile]
-    public struct CellularAutomataJob : IJobParallelFor
-    {
-        [ReadOnly]
-        public int2 mapSize;
-        [ReadOnly]
-        public NativeArray<bool> oldMap;
-        [WriteOnly]
-        public NativeArray<bool> newMap;
-        [ReadOnly]
-        public int alivethreshold;
-
-        public void Execute(int index)
+        
+        
+        [BurstCompile]
+        public struct CellularAutomataJob : IJobParallelFor
         {
-            int2 pos = IntToPos(index);
-            int count = NeighbourCount(pos) + (oldMap[index] ? 1 : 0);
-            newMap[index] = count >= alivethreshold;
-        }
+            [ReadOnly]
+            public int2 mapSize;
+            [ReadOnly]
+            public NativeArray<bool> oldMap;
+            [WriteOnly]
+            public NativeArray<bool> newMap;
+            [ReadOnly]
+            public int alivethreshold;
 
-        private int NeighbourCount(int2 pos)
-        {
-            int count = 0;
-            //Loop thru all nodes in 3x3 neighborhood of node given by pos
-            for (int xoffset = -1; xoffset < 2; xoffset++)
+            public void Execute(int index)
             {
-                for (int yoffset = -1; yoffset < 2; yoffset++)
-                {
-                    if (xoffset == 0 && yoffset == 0) continue; //Skip parent cell, with 0 offset
-                    int x = pos.x + xoffset;
-                    int y = pos.y + yoffset;
-                    
-                    
-                    //TODO allow user to choose what to do when x,y goes out of map bounds
-                    //If x or y goes outside map bounds, value is looped around
-                    if (x < 0) x = mapSize.x - 1;
-                    else if (x >= mapSize.x) x = 0;
-                    
-                    if (y < 0) y = mapSize.y - 1;
-                    else if (y >= mapSize.y) y = 0;
-
-                    if (oldMap[PosToInt(x, y)]) count++;
-                }
+                int2 pos = IntToPos(index);
+                int count = NeighbourCount(pos) + (oldMap[index] ? 1 : 0);
+                newMap[index] = count >= alivethreshold;
             }
 
-            return count;
+            private int NeighbourCount(int2 pos)
+            {
+                int count = 0;
+                //Loop thru all nodes in 3x3 neighborhood of node given by pos
+                for (int xoffset = -1; xoffset < 2; xoffset++)
+                {
+                    for (int yoffset = -1; yoffset < 2; yoffset++)
+                    {
+                        if (xoffset == 0 && yoffset == 0) continue; //Skip parent cell, with 0 offset
+                        int x = pos.x + xoffset;
+                        int y = pos.y + yoffset;
+                        
+                        
+                        //TODO allow user to choose what to do when x,y goes out of map bounds
+                        //If x or y goes outside map bounds, value is looped around
+                        if (x < 0) x = mapSize.x - 1;
+                        else if (x >= mapSize.x) x = 0;
+                        
+                        if (y < 0) y = mapSize.y - 1;
+                        else if (y >= mapSize.y) y = 0;
+
+                        if (oldMap[PosToInt(x, y)]) count++;
+                    }
+                }
+
+                return count;
+            }
+
+            //index = pos.x + pos.y * mapSize.x
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            private int2 IntToPos(int index) => new int2(index % mapSize.x, index / mapSize.y);
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            private int PosToInt(int2 pos) => pos.x + pos.y * mapSize.x;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            private int PosToInt(int x, int y) => x + y * mapSize.x;
+
+            public int ArraySize => mapSize.x*mapSize.y;
+
+            public NativeArray<bool> Result => newMap;
         }
-
-        //index = pos.x + pos.y * mapSize.x
-        private int2 IntToPos(int index) => new int2(index % mapSize.x, index / mapSize.y);
-        private int PosToInt(int2 pos) => pos.x + pos.y * mapSize.x;
-        private int PosToInt(int x, int y) => x + y * mapSize.x;
-
-        public int ArraySize => mapSize.x*mapSize.y;
-
-        public NativeArray<bool> Result => newMap;
     }
 }

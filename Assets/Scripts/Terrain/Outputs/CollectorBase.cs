@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Terrain.Outputs
 {
-    public class CollectorBase<T> : IEnumerable<T>
+    public class CollectorBase<T> : IEnumerable<T> where T : IPosHolder
     {
         protected readonly List<T> Collector;
 

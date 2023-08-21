@@ -1,5 +1,7 @@
 ﻿using System;
+using Random;
 using Terrain.Outputs;
+using UnityEngine;
 
 namespace Terrain.Generator.Structure
 {
@@ -9,12 +11,14 @@ namespace Terrain.Generator.Structure
 
         public class Context
         {
-            public Context(System.Random random)
+            public Context(IRandom random, Vector2 position)
             {
                 Random = random;
+                Position = position;
             }
 
-            public System.Random Random { get; }
+            public Vector2 Position { get; }
+            public IRandom Random { get; }
         }
     }
 }
