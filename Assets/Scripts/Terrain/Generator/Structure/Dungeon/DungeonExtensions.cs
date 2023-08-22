@@ -66,39 +66,38 @@ namespace Terrain.Generator.Structure.Dungeon
             }
         }
 
-        public static AABB2D RectOnLine(float2 A, float2 B, float radius, float tolerance = float.Epsilon)
+        public static AABB2D RectOnLine(float2 source, float2 target, float radius, float tolerance = float.Epsilon)
         {
             float2 min;
             float2 max;
-            if (Math.Abs(A.x - B.x) < tolerance)
+            if (Math.Abs(source.x - target.x) < tolerance)
             {
                 //X is equal
-                if (A.y < B.y)
+                if (source.y < target.y)
                 {
-                    min = new float2(A.x - radius, A.y - radius);
-                    max = new float2(A.x + radius, B.y + radius);
+                    min = new float2(source.x - radius, source.y - radius);
+                    max = new float2(source.x + radius, target.y + radius);
                 }
                 else 
                 {
-                    min = new float2(A.x - radius, B.y - radius);
-                    max = new float2(A.x + radius, A.y + radius);
+                    min = new float2(source.x - radius, target.y - radius);
+                    max = new float2(source.x + radius, source.y + radius);
                 }
             }
             else
             {
                 //Y is equal
-                if (A.x < B.x)
+                if (source.x < target.x)
                 {
-                    min = new float2(A.x + radius, A.y - radius);
-                    max = new float2(B.x - radius, A.y + radius);
+                    min = new float2(source.x - radius, source.y - radius);
+                    max = new float2(target.x + radius, source.y + radius);
                 }
                 else
                 {
-                    min = new float2(B.x + radius, A.y - radius);
-                    max = new float2(A.x - radius, A.y + radius);
+                    min = new float2(target.x - radius, source.y - radius);
+                    max = new float2(source.x + radius, source.y + radius);
                 }
             }
-
             return new AABB2D(min, max);
         }
     }
