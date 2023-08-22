@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Terrain
+namespace Terrain.Chunk
 {
     public class ChunkedData<T> : IEnumerable<KeyValuePair<Vector2Int, T>> where T : DataChunk
     {

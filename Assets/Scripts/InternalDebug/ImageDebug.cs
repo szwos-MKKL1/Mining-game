@@ -1,5 +1,5 @@
 ﻿using System;
-using Terrain.Noise;
+using Terrain.Generator.Noise;
 using UnityEngine;
 
 namespace InternalDebug
@@ -138,6 +138,28 @@ namespace InternalDebug
                         float v = distanceMap[x+y*texture.width]/500f;
                         Color color = new Color(v, v, v);
                         texture.SetPixel(x, y, color);
+                    }
+                }
+
+                texture.Apply();
+                SaveTextureAsPNG(texture, name);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError("Error while trying to create image of noise " + name + ". " + Environment.NewLine + ex.ToString());
+            }
+        }
+
+        public static void SaveImg<T>(T[] data, Vector2Int size, Func<T, Color> func, string name)
+        {
+            try
+            {
+                Texture2D texture = new Texture2D(size.x, size.y);
+                for (int y = 0; y < texture.height; y++)
+                {
+                    for (int x = 0; x < texture.width; x++)
+                    {
+                        texture.SetPixel(x, y, func(data[x+y*texture.width]));
                     }
                 }
 

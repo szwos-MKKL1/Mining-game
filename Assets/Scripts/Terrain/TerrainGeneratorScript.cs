@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using InternalDebug;
 using QuikGraph;
 using Terrain.Blocks;
-using Terrain.DecorateGenerators;
-using Terrain.DecorateGenerators.BlockProvider;
-using Terrain.Noise;
-using Terrain.PathGraph;
-using Terrain.PathGraph.Graphs;
-using Terrain.Phases;
+using Terrain.Generator;
+using Terrain.Generator.Border;
+using Terrain.Generator.DecorateGenerators;
+using Terrain.Generator.DecorateGenerators.BlockProvider;
+using Terrain.Generator.Phases;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -47,12 +46,13 @@ namespace Terrain
             generationData.generationPhases = new List<IGenerationPhase>()
             {
                 new RawPhase(generationData),
-                 new FillRockPhase(generationData, new StandardProvider(BlockRegistry.ROCK)),
-                 new DecoratorPhase(generationData,
-                     new VeinGenerator(new StandardProvider(BlockRegistry.ORE), 0, 0.05f),
-                     new WormGenerator(new StandardProvider(BlockRegistry.AIR), 0, 0.005f, -0.9f)
-                 ),
-                new CavePathPhase(generationData, out paths)
+                //  new FillRockPhase(generationData, new StandardProvider(BlockRegistry.ROCK)),
+                //  new DecoratorPhase(generationData,
+                //      new VeinGenerator(new StandardProvider(BlockRegistry.ORE), 0, 0.05f),
+                //      new WormGenerator(new StandardProvider(BlockRegistry.AIR), 0, 0.005f, -0.9f)
+                //  ),
+                // new CavePathPhase(generationData, out paths),
+                new StructurePhase(generationData)
             };
             
             //Generate terrain

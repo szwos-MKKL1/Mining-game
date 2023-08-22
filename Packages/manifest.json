@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.bartofzo.nativetrees": "https://github.com/bartofzo/NativeTrees.git?path=/Packages/NativeTrees",
     "com.github-glitchenzo.nugetforunity": "https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity",
     "com.nol1fe.delaunator": "https://github.com/nol1fe/delaunator-sharp.git?path=DelaunatorSharp.Unity",
     "com.unity.collab-proxy": "2.0.0",

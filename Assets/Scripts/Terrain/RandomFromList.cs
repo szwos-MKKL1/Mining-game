@@ -1,9 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
-namespace Terrain.Generators
+namespace Terrain
 {
     public class RandomFromList<T> where T:class
     {
@@ -48,7 +46,7 @@ namespace Terrain.Generators
          */
         public T GetRandom()
         {
-            return Random.value <= chance ? result : null;
+            return UnityEngine.Random.value <= chance ? result : null;
         }
 
         public T Result => result;
