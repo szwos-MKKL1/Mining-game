@@ -1,3 +1,5 @@
+#nullable enable
+using Inventory;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,6 +14,8 @@ public class InventoryGUI : MonoBehaviour
 
     private VisualElement root;
     private VisualElement grid;
+
+    private SlotSelector slotSelector;
 
     //TODO: reconsider this Singleton implementation,why is it in Awake instead of ctor??
     private void Awake()
@@ -31,6 +35,23 @@ public class InventoryGUI : MonoBehaviour
     {
         root = GetComponentInChildren<UIDocument>().rootVisualElement;
         grid = root.Q<VisualElement>("Grid");
+
+        Debug.Log(grid.Children().First().style.width);
+
+        slotSelector = new SlotSelector(slotsAsItemVisuals());
+    }
+
+    private List<ItemVisual> slotsAsItemVisuals()
+    {
+        //TODO: this will not work, because this function returns list of copies of grid.Children(), not references to them,
+        //when they will be handled by SlotSelector like this, they will be completely different objects (which are not even present on screen)        
+        List<ItemVisual> slots = new List<ItemVisual> ();
+        foreach(var s in grid.Children())
+        {
+            slots.Add(s as ItemVisual);
+        }
+
+        return slots;
     }
 
     public bool Add(ItemData itemData)
