@@ -4,6 +4,7 @@ using System.Linq;
 using InternalDebug;
 using NativeTrees;
 using Terrain.Outputs;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -21,6 +22,7 @@ namespace Terrain.Generator.Structure.Dungeon
             FindWallsJob findWallsJob = new FindWallsJob(dungeonOutput);
             findWallsJob.Schedule(findWallsJob.ArraySize, 1024).Complete();
             collector = findWallsJob.GetResult();
+            findWallsJob.Dispose();
         }
 
         public CollectorBase<PosPair<DungeonRoom.DungeonBlockTypes>> GetResult()
@@ -28,6 +30,7 @@ namespace Terrain.Generator.Structure.Dungeon
             return collector;
         }
 
+        [BurstCompile]
         private struct FindWallsJob : IJobParallelFor, IDisposable
         {
             [ReadOnly]
@@ -59,11 +62,12 @@ namespace Terrain.Generator.Structure.Dungeon
                     List<float2> points = hallway.Points;
                     for (int i = 0; i < points.Count-1; i++)
                     {
-                        AABB2D rect = DungeonExtensions.RectOnLine(points[i], points[i + 1], 5);
+                        AABB2D rect = DungeonExtensions.RectOnLine(points[i], points[i + 1], 3, 0.05f);
                         SetRect(blocks, size.x, new int2(rect.min)-minpos, new int2(rect.max)-minpos, (byte)DungeonRoom.DungeonSpaceType.HALLWAY);
                     }
                 }
 
+                int2 roomOffset = new int2(1, 1);
                 foreach (var room in dungeonOutput.Rooms)
                 {
                     byte v;
@@ -78,19 +82,19 @@ namespace Terrain.Generator.Structure.Dungeon
                         default:
                             continue;
                     }
-                    SetRect(blocks, size.x, new int2(room.Rect.min)-minpos, new int2(room.Rect.max)-minpos, v);
+                    SetRect(blocks, size.x, new int2(room.Rect.min)-minpos+roomOffset, new int2(room.Rect.max)-minpos-roomOffset, v);
                 }
-                ImageDebug.SaveImg(blocks.ToArray(), new Vector2Int(size.x, size.y), type =>
-                {
-                    return type switch
-                    {
-                        DungeonRoom.DungeonSpaceType.NONE => Color.black,
-                        DungeonRoom.DungeonSpaceType.STANDARD => Color.green,
-                        DungeonRoom.DungeonSpaceType.MAIN => Color.red,
-                        DungeonRoom.DungeonSpaceType.HALLWAY => Color.cyan,
-                        _ => Color.black
-                    };
-                }, "blocks.png");
+                // ImageDebug.SaveImg(blocks.ToArray(), new Vector2Int(size.x, size.y), type =>
+                // {
+                //     return type switch
+                //     {
+                //         DungeonRoom.DungeonSpaceType.NONE => Color.black,
+                //         DungeonRoom.DungeonSpaceType.STANDARD => Color.green,
+                //         DungeonRoom.DungeonSpaceType.MAIN => Color.red,
+                //         DungeonRoom.DungeonSpaceType.HALLWAY => Color.cyan,
+                //         _ => Color.black
+                //     };
+                // }, "blocks.png");
                 result = new NativeArray<DungeonRoom.DungeonBlockTypes>(count, Allocator.TempJob);
             }
 
@@ -124,9 +128,9 @@ namespace Terrain.Generator.Structure.Dungeon
                 }
                 int2 pos = new int2(index % size.x, index / size.x);
                 bool hasNoneNeighbour = false;
-                bool hasMainNeighbour = false;
-                bool hasStandardNeighbour = false;
-                bool hasHallwayNeighbour = false;
+                // bool hasMainNeighbour = false;
+                // bool hasStandardNeighbour = false;
+                // bool hasHallwayNeighbour = false;
                 for (int xoffset = -1; xoffset < 2; xoffset++)
                 {
                     for (int yoffset = -1; yoffset < 2; yoffset++)
@@ -141,15 +145,15 @@ namespace Terrain.Generator.Structure.Dungeon
                             case DungeonRoom.DungeonSpaceType.NONE:
                                 hasNoneNeighbour = true;
                                 break;
-                            case DungeonRoom.DungeonSpaceType.STANDARD:
-                                hasStandardNeighbour = true;
-                                break;
-                            case DungeonRoom.DungeonSpaceType.MAIN:
-                                hasMainNeighbour = true;
-                                break;
-                            case DungeonRoom.DungeonSpaceType.HALLWAY:
-                                hasHallwayNeighbour = true;
-                                break;
+                            // case DungeonRoom.DungeonSpaceType.STANDARD:
+                            //     hasStandardNeighbour = true;
+                            //     break;
+                            // case DungeonRoom.DungeonSpaceType.MAIN:
+                            //     hasMainNeighbour = true;
+                            //     break;
+                            // case DungeonRoom.DungeonSpaceType.HALLWAY:
+                            //     hasHallwayNeighbour = true;
+                            //     break;
                         }
                     }
                 }
@@ -157,7 +161,7 @@ namespace Terrain.Generator.Structure.Dungeon
 
                 if (!hasNoneNeighbour)
                 {
-                    result[index] = DungeonRoom.DungeonBlockTypes.NONE;
+                    result[index] = DungeonRoom.DungeonBlockTypes.AIR;
                     return;
                 }
 
@@ -174,17 +178,17 @@ namespace Terrain.Generator.Structure.Dungeon
 
             public CollectorBase<PosPair<DungeonRoom.DungeonBlockTypes>> GetResult()
             {
-                ImageDebug.SaveImg(result.ToArray(), new Vector2Int(size.x, size.y), type =>
-                {
-                    return type switch
-                    {
-                        DungeonRoom.DungeonBlockTypes.NONE => Color.black,
-                        DungeonRoom.DungeonBlockTypes.STANDARD_ROOM_WALL => Color.green,
-                        DungeonRoom.DungeonBlockTypes.MAIN_ROOM_WALL => Color.red,
-                        DungeonRoom.DungeonBlockTypes.HALLWAY_WALL => Color.cyan,
-                        _ => Color.black
-                    };
-                }, "result.png");
+                // ImageDebug.SaveImg(result.ToArray(), new Vector2Int(size.x, size.y), type =>
+                // {
+                //     return type switch
+                //     {
+                //         DungeonRoom.DungeonBlockTypes.NONE => Color.black,
+                //         DungeonRoom.DungeonBlockTypes.STANDARD_ROOM_WALL => Color.green,
+                //         DungeonRoom.DungeonBlockTypes.MAIN_ROOM_WALL => Color.red,
+                //         DungeonRoom.DungeonBlockTypes.HALLWAY_WALL => Color.cyan,
+                //         _ => Color.black
+                //     };
+                // }, "result.png");
                 
                 CollectorBase<PosPair<DungeonRoom.DungeonBlockTypes>> collector = new();
                 

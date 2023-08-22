@@ -58,19 +58,12 @@ namespace Terrain.Generator.Structure.Dungeon
             UndirectedGraph<DungeonRoom, DungeonOutput<DungeonRoom>.Hallway> mainRoomHallwayGraph = GetStraightHallways(mainRoomsPath);
             //Finds rooms that intersect with hallway graph edges, those rooms will be used to walk between main rooms
             List<DungeonRoom> standardAndMainRooms = GetConnectionRooms(rooms, mainRoomHallwayGraph);
-            //standardAndMainRooms.Draw(Color.green, 10f);//TODO remove debug
-            
-            //TODO move to DungeonRoomTree
-            //rooms.Rooms.Clear();
-            //rooms.Tree.Clear();
-            //AddToTree(rooms, standardAndMainRooms);
-
             //Similar to GetMainRoomPathGraph, this graph will show how to connect standard rooms with hallways
             UndirectedGraph<DungeonRoom, IEdge<DungeonRoom>> standardRoomPathGraph = GetStandardRoomPathGraph(standardAndMainRooms);
             //Creates straight hallways
             UndirectedGraph<DungeonRoom, DungeonOutput<DungeonRoom>.Hallway> finalHallwayGraph = GetStraightHallways(standardRoomPathGraph);
-            finalHallwayGraph.Edges.Draw(Color.magenta, 10f); //TODO not working
-            //GeneratePlacement(rooms, standardAndMainRooms, finalHallwayGraph);
+            
+            //Generates and saves final output
             output = GenerateOutput(rooms, finalHallwayGraph);
         }
         private DungeonRoomTree<DungeonRoom> GetInitialDungeonRooms()
@@ -226,43 +219,9 @@ namespace Terrain.Generator.Structure.Dungeon
                 List<float2> points = edge.Points;
                 for (int i = 0; i < points.Count-1; i++)
                 {
-                    //TODO repetitive code
                     //Making bounding boxes around vertical and horizontal lines
                     //defaults to vertical
-                    float2 source = points[i];
-                    float2 target = points[i + 1];
-                    float2 min;
-                    float2 max;
-                    if (Math.Abs(source.x - target.x) < tolerance)
-                    {
-                        //X is equal
-                        if (source.y < target.y)
-                        {
-                            min = new float2(source.x - radius, source.y - radius);
-                            max = new float2(source.x + radius, target.y + radius);
-                        }
-                        else 
-                        {
-                            min = new float2(source.x - radius, target.y - radius);
-                            max = new float2(source.x + radius, source.y + radius);
-                        }
-                    }
-                    else
-                    {
-                        //Y is equal
-                        if (source.x < target.x)
-                        {
-                            min = new float2(source.x + radius, source.y - radius);
-                            max = new float2(target.x - radius, source.y + radius);
-                        }
-                        else
-                        {
-                            min = new float2(target.x + radius, source.y - radius);
-                            max = new float2(source.x - radius, source.y + radius);
-                        }
-                    }
-                    AABB2D edgeBox = new AABB2D(min, max);
-                    dungeonRoomTree.Tree.RangeAABBUnique(edgeBox, roomIds);
+                    dungeonRoomTree.Tree.RangeAABBUnique(DungeonExtensions.RectOnLine(points[i], points[i + 1], radius, tolerance), roomIds);
                 }
             }
 
@@ -280,16 +239,6 @@ namespace Terrain.Generator.Structure.Dungeon
             }
             roomIds.Dispose();
             return connectionRooms;
-        }
-
-        private void AddToTree(DungeonRoomTree<DungeonRoom> dungeonRoomTree, IEnumerable<DungeonRoom> roomsToAdd)
-        {
-            foreach (var room in roomsToAdd)
-            {
-                int i = dungeonRoomTree.Rooms.Length;
-                dungeonRoomTree.Rooms.Add(room);
-                dungeonRoomTree.Tree.Insert(i, room.Rect);
-            }
         }
 
         private DungeonOutput<DungeonRoom> GenerateOutput(

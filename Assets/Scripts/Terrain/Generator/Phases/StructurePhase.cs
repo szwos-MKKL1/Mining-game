@@ -32,7 +32,7 @@ namespace Terrain.Generator.Phases
         public void Generate(TerrainData terrainData)
         {
             Structure.Structure dungeonStructure = new DungeonStructure();
-            dungeonStructure.getStructureBlocks(new Structure.Structure.Context(new SystemRandom(0),
+            dungeonStructure.getStructureBlocks(new Structure.Structure.Context(new SystemRandom(),
                 new Vector2(300, 300))).AddToTerrain(terrainData);
         }
     }

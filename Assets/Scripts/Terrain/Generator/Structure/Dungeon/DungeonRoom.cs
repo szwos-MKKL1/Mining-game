@@ -47,6 +47,7 @@ namespace Terrain.Generator.Structure.Dungeon
         public enum DungeonBlockTypes : byte
         {
             NONE = 0,
+            AIR,
             MAIN_ROOM_WALL,
             STANDARD_ROOM_WALL,
             HALLWAY_WALL,

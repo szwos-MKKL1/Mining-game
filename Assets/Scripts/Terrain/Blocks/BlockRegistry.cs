@@ -11,6 +11,7 @@ namespace Terrain.Blocks
         public static readonly BlockBase ORE = new RockBlock((TileBase)AssetDatabase.LoadAssetAtPath("Assets/Sprites/Tiles/piiiXL texture pack/Textures-16_7 1.asset", typeof(TileBase)));
         public static readonly BlockBase BEDROCK = new RockBlock((TileBase)AssetDatabase.LoadAssetAtPath("Assets/Sprites/Tiles/piiiXL texture pack/Textures-16_9.asset", typeof(TileBase)));
         public static readonly BlockBase DUNGEONBLOCK = new RockBlock((TileBase)AssetDatabase.LoadAssetAtPath("Assets/Sprites/Tiles/piiiXL texture pack/Textures-16_0.asset", typeof(TileBase)));
+        public static readonly BlockBase DUNGEONHALLWAY = new RockBlock((TileBase)AssetDatabase.LoadAssetAtPath("Assets/Sprites/Tiles/piiiXL texture pack/Textures-16_0 1.asset", typeof(TileBase)));
         
     }
 }

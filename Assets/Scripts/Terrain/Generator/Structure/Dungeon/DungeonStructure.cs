@@ -1,15 +1,16 @@
 ﻿using NativeTrees;
 using Random;
 using Terrain.Blocks;
-using Terrain.Generator.Structure.Dungeon;
 using Terrain.Outputs;
 using Unity.Mathematics;
 
-namespace Terrain.Generator.Structure
+namespace Terrain.Generator.Structure.Dungeon
 {
     public class DungeonStructure : Structure
     {
-        private BlockBase Wall = BlockRegistry.DUNGEONBLOCK;
+        private readonly BlockBase wall = BlockRegistry.DUNGEONBLOCK;
+        private BlockBase wallHallway = BlockRegistry.DUNGEONHALLWAY;
+        private BlockBase air = BlockRegistry.AIR;
         public DungeonStructure()
         {
             
@@ -31,7 +32,26 @@ namespace Terrain.Generator.Structure
             BlockCollector blockCollector = new BlockCollector();
             foreach (PosPair<DungeonRoom.DungeonBlockTypes> dungeonBlock in dungeonCollector)
             {
-                blockCollector.Add(new PosPair<BlockBase>(Wall, dungeonBlock.Pos));
+                BlockBase blockBase;
+                switch (dungeonBlock.Value)
+                {
+                    case DungeonRoom.DungeonBlockTypes.AIR:
+                        blockBase = air;
+                        break;
+                    case DungeonRoom.DungeonBlockTypes.MAIN_ROOM_WALL:
+                        blockBase = wall;
+                        break;
+                    case DungeonRoom.DungeonBlockTypes.STANDARD_ROOM_WALL:
+                        blockBase = wall;
+                        break;
+                    case DungeonRoom.DungeonBlockTypes.HALLWAY_WALL:
+                        blockBase = wallHallway;
+                        break;
+                    case DungeonRoom.DungeonBlockTypes.NONE:
+                    default:
+                        continue;
+                }
+                blockCollector.Add(new PosPair<BlockBase>(blockBase, dungeonBlock.Pos));
             }
 
             dungeonGenerator.Dispose();

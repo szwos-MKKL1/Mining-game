@@ -133,7 +133,7 @@ namespace Terrain.Generator.PathGraph.CellularAutomata
 
             //index = pos.x + pos.y * mapSize.x
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private int2 IntToPos(int index) => new int2(index % mapSize.x, index / mapSize.y);
+            private int2 IntToPos(int index) => new int2(index % mapSize.x, index / mapSize.x);
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private int PosToInt(int2 pos) => pos.x + pos.y * mapSize.x;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

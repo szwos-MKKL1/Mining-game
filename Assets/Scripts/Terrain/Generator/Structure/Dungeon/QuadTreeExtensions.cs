@@ -91,5 +91,10 @@ namespace Terrain.Generator.Structure.Dungeon
         {
             Debug.DrawLine(new Vector2(a.x, a.y) * 0.16f, new Vector2(b.x, b.y) * 0.16f, color, duration, false);
         }
+
+        public static string RectToString(this AABB2D aabb2D)
+        {
+            return $"(min:{aabb2D.min},max:{aabb2D.max})";
+        }
     }
 }

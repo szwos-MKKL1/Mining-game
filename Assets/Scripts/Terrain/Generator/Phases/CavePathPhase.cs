@@ -122,17 +122,10 @@ namespace Terrain.Generator.Phases
             linePathGen.Dispose();
             
             var sim = CellularAutomataSimulator.CreateFromMap(terrainData.RealSize, initial);
-            ImageDebug.SaveImg(sim.CellMap.ToArray(), terrainData.RealSize, "step"+0+".png");
             sim.AliveThreshold = 5;
-            int j = 1;
             for (int i = 0; i < 11; i++)
             {
                 sim.ExecuteStep();
-                if (i % 2 == 0)
-                {
-                    ImageDebug.SaveImg(sim.CellMap.ToArray(), terrainData.RealSize, "step"+j+".png");
-                    j++;
-                }
             }
             #endregion
 
@@ -152,7 +145,6 @@ namespace Terrain.Generator.Phases
                     }
                 }
             }
-            ImageDebug.SaveImg(finalMap, terrainData.RealSize, "final cave map.png");
             sim.Dispose();
         }
     }
