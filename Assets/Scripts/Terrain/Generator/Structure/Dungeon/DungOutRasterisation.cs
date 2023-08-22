@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using InternalDebug;
 using NativeTrees;
 using Terrain.Outputs;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace Terrain.Generator.Structure.Dungeon
 {
@@ -17,7 +19,7 @@ namespace Terrain.Generator.Structure.Dungeon
         public DungOutRasterisation(DungeonOutput<DungeonRoom> dungeonOutput)
         {
             FindWallsJob findWallsJob = new FindWallsJob(dungeonOutput);
-            findWallsJob.Schedule(findWallsJob.ArraySize, 64).Complete();
+            findWallsJob.Schedule(findWallsJob.ArraySize, 1024).Complete();
             collector = findWallsJob.GetResult();
         }
 
@@ -78,7 +80,17 @@ namespace Terrain.Generator.Structure.Dungeon
                     }
                     SetRect(blocks, size.x, new int2(room.Rect.min)-minpos, new int2(room.Rect.max)-minpos, v);
                 }
-
+                ImageDebug.SaveImg(blocks.ToArray(), new Vector2Int(size.x, size.y), type =>
+                {
+                    return type switch
+                    {
+                        DungeonRoom.DungeonSpaceType.NONE => Color.black,
+                        DungeonRoom.DungeonSpaceType.STANDARD => Color.green,
+                        DungeonRoom.DungeonSpaceType.MAIN => Color.red,
+                        DungeonRoom.DungeonSpaceType.HALLWAY => Color.cyan,
+                        _ => Color.black
+                    };
+                }, "blocks.png");
                 result = new NativeArray<DungeonRoom.DungeonBlockTypes>(count, Allocator.TempJob);
             }
 
@@ -110,7 +122,7 @@ namespace Terrain.Generator.Structure.Dungeon
                     result[index] = DungeonRoom.DungeonBlockTypes.NONE;
                     return;
                 }
-                int2 pos = new int2(index % size.x, index / size.y);
+                int2 pos = new int2(index % size.x, index / size.x);
                 bool hasNoneNeighbour = false;
                 bool hasMainNeighbour = false;
                 bool hasStandardNeighbour = false;
@@ -123,9 +135,6 @@ namespace Terrain.Generator.Structure.Dungeon
                         int x = pos.x + xoffset;
                         int y = pos.y + yoffset;
                         
-                        
-                        //TODO allow user to choose what to do when x,y goes out of map bounds
-                        //If x or y goes outside map bounds, value is looped around
                         if (x < 0 || x >= size.x || y < 0 || y >= size.y) continue;
                         switch (blocks[x + y * size.x])
                         {
@@ -141,8 +150,6 @@ namespace Terrain.Generator.Structure.Dungeon
                             case DungeonRoom.DungeonSpaceType.HALLWAY:
                                 hasHallwayNeighbour = true;
                                 break;
-                            default:
-                                throw new ArgumentOutOfRangeException();
                         }
                     }
                 }
@@ -167,6 +174,18 @@ namespace Terrain.Generator.Structure.Dungeon
 
             public CollectorBase<PosPair<DungeonRoom.DungeonBlockTypes>> GetResult()
             {
+                ImageDebug.SaveImg(result.ToArray(), new Vector2Int(size.x, size.y), type =>
+                {
+                    return type switch
+                    {
+                        DungeonRoom.DungeonBlockTypes.NONE => Color.black,
+                        DungeonRoom.DungeonBlockTypes.STANDARD_ROOM_WALL => Color.green,
+                        DungeonRoom.DungeonBlockTypes.MAIN_ROOM_WALL => Color.red,
+                        DungeonRoom.DungeonBlockTypes.HALLWAY_WALL => Color.cyan,
+                        _ => Color.black
+                    };
+                }, "result.png");
+                
                 CollectorBase<PosPair<DungeonRoom.DungeonBlockTypes>> collector = new();
                 
                 for (int y = 0; y < size.y; y++)
