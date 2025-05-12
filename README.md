@@ -5,3 +5,6 @@ Game focused on mining, crafting (sounds familiar huh?), roguelike progress, and
 Settings:
 * Random cost min and max, lower values produce more scattered and curved paths (works well with negative values)
 * Distance multiplier, higher values make path more straight, following the best path
+
+You can play on
+https://szwos.itch.io/to-the-bottom
